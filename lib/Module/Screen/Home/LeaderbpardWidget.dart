@@ -36,10 +36,40 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
       FirebaseFirestore.instance.collection('leaderboard_record').snapshots();
 
   List? data;
+  List? data2;
   List? normal_data;
   var particularData;
   bool ?played;
 
+  Future getGame(context, selectedValue) async {
+    DataProvider dataProvider =
+    Provider.of<DataProvider>(context, listen: false);
+    var response =
+    await http.get(Uri.parse('https://poolq.app/getnlf/REG${selectedValue}'), headers: {
+      'Content-Type': 'application/json; charset=UTF-8',
+    }).timeout(Duration(seconds: 20));
+    var body = json.decode(response.body);
+    // print(body);
+    // print(body);
+    List body1 = body;
+    setState(() {
+      data2 = body1;
+    });
+    // List<Agents> AgentLists = body1.map((data) {
+    //   return Agents.fromJson(data);
+    // }).toList();
+    // if (response.statusCode == 200 ||
+    //     response.statusCode == 201 ||
+    //     response.statusCode == 202) {
+    //
+    // } else {
+    //   print('failed');
+    // }
+    return body;
+  }
+
+
+  // https://poolq.app/getnlf/REG${widget.selectedValue}
   Future getLeaderBoard(context, selectedValue) async {
     // print('https://poolq.app/getleaderboard/REG${selectedValue}');
     var response = await http.get(
@@ -77,6 +107,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
         Provider.of<DataProvider>(context, listen: false);
     selectedValue = dataProvider.game!["name"].toString().replaceAll("REG", "");
     getLeaderBoard(context, selectedValue);
+    getGame(context, selectedValue);
     // _model = createModel(context, () => LeaderboardModel());
   }
 
@@ -325,13 +356,30 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                           return index == 0? InkWell(
                             onTap: () {
                               if(data![index]["uid"]==user!.uid){
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => EditPlayWidget()
-                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                  ),
-                                );
+                                DateTime currentDate = DateTime.now();
+                                DateTime targetDate = dataProvider.formatStringDate(data2![0]["date"]);
+
+                                if (currentDate.isAfter(targetDate) || currentDate.isAtSameMomentAs(targetDate)) {
+                                  print('Current date is greater than or equal to the target date.');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => PickedWidget(
+                                            userId: data![index]["uid"],
+                                            selectedValue: selectedValue)
+                                      // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                    ),
+                                  );
+                                } else {
+                                  print('Current date is before the target date.');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => EditPlayWidget()
+                                      // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                    ),
+                                  );
+                                }
                               }else{
                                 Navigator.push(
                                   context,
@@ -671,13 +719,31 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                           return index == 0? InkWell(
                             onTap: () {
                               if(data![index]["uid"]==user!.uid){
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => EditPlayWidget()
-                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                  ),
-                                );
+                                DateTime currentDate = DateTime.now();
+                                DateTime targetDate = dataProvider.formatStringDate(data2![0]["date"]);
+
+                                if (currentDate.isAfter(targetDate) || currentDate.isAtSameMomentAs(targetDate)) {
+                                  print('Current date is greater than or equal to the target date.');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => PickedWidget(
+                                            userId: data![index]["uid"],
+                                            selectedValue: selectedValue)
+                                      // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                    ),
+                                  );
+                                } else {
+                                  print('Current date is before the target date.');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => EditPlayWidget()
+                                      // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                    ),
+                                  );
+                                }
+
                               }else{
                                 Navigator.push(
                                   context,
@@ -1270,6 +1336,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                             data = null;
                           });
                           getLeaderBoard(context, selectedValue);
+                          getGame(context, selectedValue);
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.transparent,
