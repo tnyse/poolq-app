@@ -23,15 +23,18 @@ import '../../../Constants/value.dart';
 import 'HomePage.dart';
 import 'LeaderbpardWidget.dart';
 
-// import 'player_picks_model.dart';
-// export 'player_picks_model.dart';
+
 
 class PlayerPicksWidget extends StatefulWidget {
   const PlayerPicksWidget({
-    Key? key,
+  this.edit,
     this.pick,
-  }) : super(key: key);
+    this.id,
+  });
 
+
+  final bool ?edit;
+  final String ?id;
   final String? pick;
 
   @override
@@ -75,11 +78,23 @@ List ?data;
     var body = json.decode(response.body);
     // print(body);
     // print(body);
-    List body1 = body;
-    setState(() {
-      data = body1;
-    });
-    return body;
+    // print();
+if(body.runtimeType.toString() == "_Map<String, dynamic>"){
+  Map body1 = body;
+  // setState(() {
+  //   data = body1;
+  // });
+  return body;
+}else{
+
+  List body1 = body;
+  setState(() {
+    data = body1;
+  });
+  return body;
+}
+    // if(body.runtimeType.toString() == )
+
   }
 
   @override
@@ -276,30 +291,30 @@ List ?data;
                                       ),
                                     ),
                                   ),
-                                  SizedBox(
-                                    // borderWidth: 1,
-                                    // buttonSize: 60,
-                                    child: TextButton(
-                                      style: ButtonStyle(
-                                        // borderColor: Colors.transparent,
-                                        // borderRadius: 30,
-                                      ),
-
-                                      child: Icon(
-                                        Icons.check,
-                                        color: Color(0xFF049304),
-                                        size: 30,
-                                      ),
-                                      onPressed: () async {
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => LeaderboardWidget(),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                  // SizedBox(
+                                  //   // borderWidth: 1,
+                                  //   // buttonSize: 60,
+                                  //   child: TextButton(
+                                  //     style: ButtonStyle(
+                                  //       // borderColor: Colors.transparent,
+                                  //       // borderRadius: 30,
+                                  //     ),
+                                  //
+                                  //     child: Icon(
+                                  //       Icons.check,
+                                  //       color: Color(0xFF049304),
+                                  //       size: 30,
+                                  //     ),
+                                  //     onPressed: () async {
+                                  //       await Navigator.push(
+                                  //         context,
+                                  //         MaterialPageRoute(
+                                  //           builder: (context) => LeaderboardWidget(),
+                                  //         ),
+                                  //       );
+                                  //     },
+                                  //   ),
+                                  // ),
                                 ],
                               ),
                             ),
@@ -312,7 +327,7 @@ List ?data;
                                   Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
                                     child: Text(
-                                      'user',
+                                      'Picks',
                                       style: TextStyle(
                                         fontFamily: 'Lexend Deca',
                                         color: Color(0xFF4B39EF),
@@ -529,7 +544,27 @@ List ?data;
                                           },
                                         );
                                       }else{
-                                        if(!snapshot.data!.docs.isEmpty){
+                                        if(widget.edit == true){
+                                          circularCustom(context);
+                                          final picksCreateData = {
+                                            "week": dataProvider.game!["name"],
+                                            "tiebreaker": dataProvider.tiebreaker.toString(),
+                                            'date': FieldValue.serverTimestamp(),
+                                            'picks': dataProvider.playerPicks,
+                                            'uid': user!.uid,
+                                            "displayName": user!.displayName,
+                                            "photoURL": user!.photoURL,
+                                          };
+                                          CollectionReference pickrecord = FirebaseFirestore.instance.collection('pickrecord');
+                                          await pickrecord.doc(widget.id).update(picksCreateData);
+                                          await calculateScore(context);
+                                          // https://poolq.app/calculate_score
+                                          Navigator.pop(context);
+                                          Navigator.pop(context);
+                                          Navigator.pop(context);
+
+                                        }
+                                        else if(!snapshot.data!.docs.isEmpty){
                                           customSnackbar(context, 'You have already submited picks for week ${dataProvider.game!["name"].toString().replaceAll("REG", "")}');
                                         }else{
                                           if(dataProvider.game!=null){
@@ -544,7 +579,7 @@ List ?data;
 
 
                                     },
-                                    child: Text('submit', style: TextStyle(color: Colors.white),),
+                                    child: Text("${widget.edit==true?"save":"submit"}", style: TextStyle(color: Colors.white),),
                                     style: ButtonStyle(
                                         padding: MaterialStateProperty.all(EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0)),
                                         // iconPadding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
@@ -625,6 +660,8 @@ Navigator.pop(context);
         await pickrecord.add(picksCreateData);
         await calculateScore(context);
         // https://poolq.app/calculate_score
+        Navigator.pop(context);
+        Navigator.pop(context);
         Navigator.pop(context);
         Navigator.push(
           context,

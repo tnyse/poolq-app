@@ -76,6 +76,17 @@ class _RegisterWidgetState extends State<RegisterWidget>
           top: true,
           child: Stack(
             children: [
+              Container(
+                child: Image.asset("assets/images/gb.jpeg", fit: BoxFit.cover),
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+              ),
+              Container(
+                child: Text(""),
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                decoration: BoxDecoration(color: Colors.white38),
+              ),
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(32, 32, 32, 32),
                 child: Container(
@@ -262,41 +273,32 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 // ),
                                                                 enabledBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .alternate,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .primary,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 errorBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
@@ -304,22 +306,17 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 ),
                                                                 focusedErrorBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 filled: true,
-                                                                // fillColor: FlutterFlowTheme
-                                                                //     .of(context)
-                                                                //     .secondaryBackground,
+                                                                    fillColor: Colors.white,
                                                                 // contentPadding:
                                                                 // EdgeInsetsDirectional
                                                                 //     .fromSTEB(
@@ -377,64 +374,50 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 // ),
                                                                 enabledBorder:
                                                                 OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .alternate,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
                                                                   borderRadius:
                                                                   BorderRadius
                                                                       .circular(
-                                                                      40),
+                                                                      5),
                                                                 ),
                                                                 focusedBorder:
                                                                 OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .primary,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
                                                                   borderRadius:
                                                                   BorderRadius
                                                                       .circular(
-                                                                      40),
+                                                                      5),
                                                                 ),
                                                                 errorBorder:
                                                                 OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
                                                                   borderRadius:
                                                                   BorderRadius
                                                                       .circular(
-                                                                      40),
+                                                                      5),
                                                                 ),
                                                                 focusedErrorBorder:
                                                                 OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
                                                                   borderRadius:
                                                                   BorderRadius
                                                                       .circular(
-                                                                      40),
+                                                                      5),
                                                                 ),
                                                                 filled: true,
-                                                                // fillColor: FlutterFlowTheme
-                                                                //     .of(context)
-                                                                //     .secondaryBackground,
+                                                                fillColor: Colors.white,
                                                                 // contentPadding:
                                                                 // EdgeInsetsDirectional
                                                                 //     .fromSTEB(
@@ -491,64 +474,50 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 // ),
                                                                 enabledBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .alternate,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .primary,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 errorBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedErrorBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 filled: true,
-                                                                // fillColor: FlutterFlowTheme
-                                                                //     .of(context)
-                                                                //     .secondaryBackground,
+                                                                    fillColor: Colors.white,
                                                                 // contentPadding:
                                                                 // EdgeInsetsDirectional
                                                                 //     .fromSTEB(
@@ -624,64 +593,50 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 // ),
                                                                 enabledBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .alternate,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .primary,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 errorBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedErrorBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .error,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 filled: true,
-                                                                // fillColor: FlutterFlowTheme
-                                                                //     .of(context)
-                                                                //     .secondaryBackground,
+                                                                fillColor: Colors.white,
                                                                 // contentPadding:
                                                                 // EdgeInsetsDirectional
                                                                 //     .fromSTEB(
@@ -914,15 +869,14 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 //     .labelLarge,
                                                                 enabledBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: primary,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedBorder:
                                                                     OutlineInputBorder(
@@ -935,35 +889,29 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 errorBorder:
                                                                     OutlineInputBorder(
-                                                                  borderSide:
+                                                                      borderSide:
                                                                       BorderSide(
-                                                                    // color: FlutterFlowTheme.of(
-                                                                    //     context)
-                                                                    //     .alternate,
-                                                                    width: 2,
-                                                                  ),
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedErrorBorder:
                                                                     OutlineInputBorder(
-                                                                  borderSide:
+                                                                      borderSide:
                                                                       BorderSide(
-                                                                    // color: FlutterFlowTheme.of(
-                                                                    //     context)
-                                                                    //     .alternate,
-                                                                    width: 2,
-                                                                  ),
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 // filled: true,
                                                                 // fillColor: FlutterFlowTheme
@@ -1019,60 +967,48 @@ class _RegisterWidgetState extends State<RegisterWidget>
                                                                 //     .labelLarge,
                                                                 enabledBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .alternate,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
                                                                 focusedBorder:
                                                                     OutlineInputBorder(
-                                                                  // borderSide:
-                                                                  // BorderSide(
-                                                                  //   color: FlutterFlowTheme.of(
-                                                                  //       context)
-                                                                  //       .primary,
-                                                                  //   width: 2,
-                                                                  // ),
+                                                                      borderSide:
+                                                                      BorderSide(
+                                                                        color: Colors.black26,
+                                                                      ),
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
-                                                                              40),
+                                                                              5),
                                                                 ),
-                                                                // errorBorder:
-                                                                // OutlineInputBorder(
-                                                                //   borderSide:
-                                                                //   BorderSide(
-                                                                //     color: FlutterFlowTheme.of(
-                                                                //         context)
-                                                                //         .error,
-                                                                //     width: 2,
-                                                                //   ),
-                                                                //   borderRadius:
-                                                                //   BorderRadius
-                                                                //       .circular(
-                                                                //       40),
-                                                                // ),
-                                                                // focusedErrorBorder:
-                                                                // OutlineInputBorder(
-                                                                //   borderSide:
-                                                                //   BorderSide(
-                                                                //     color: FlutterFlowTheme.of(
-                                                                //         context)
-                                                                //         .error,
-                                                                //     width: 2,
-                                                                //   ),
-                                                                //   borderRadius:
-                                                                //   BorderRadius
-                                                                //       .circular(
-                                                                //       40),
-                                                                // ),
+                                                                errorBorder:
+                                                                OutlineInputBorder(
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
+                                                                  borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                      5),
+                                                                ),
+                                                                focusedErrorBorder:
+                                                                OutlineInputBorder(
+                                                                  borderSide:
+                                                                  BorderSide(
+                                                                    color: Colors.black26,
+                                                                  ),
+                                                                  borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                      5),
+                                                                ),
                                                                 filled: true,
                                                                 fillColor:
                                                                     secondaryBackground,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../main.dart';
 import '../../../Provider/AuthProvider.dart';
@@ -1031,160 +1032,7 @@ TextEditingController username = TextEditingController();
                                 Divider(),
                                 ListTile(
                                   onTap: (){
-                                    Navigator.pop(context);
-                                    showModalBottomSheet(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-                                      ),
-                                      backgroundColor: Colors.white,
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return Padding(
-                                          padding: EdgeInsets.only(
-                                              bottom: MediaQuery.of(context).viewInsets.bottom),
-                                          child: Container(
-                                            width: MediaQuery.of(context).size.width,
-                                            height: 220,
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Align(
-                                                    alignment: Alignment.topCenter,
-                                                    child: Container(
-                                                      width: 60,
-                                                      height: 5,
-                                                      decoration: BoxDecoration(
-                                                          borderRadius: BorderRadius.circular(5),
-                                                          color: Colors.black12
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
 
-
-
-                                                Padding(
-                                                  padding:
-                                                  EdgeInsetsDirectional
-                                                      .fromSTEB(10,
-                                                      30, 10, 16),
-                                                  child: Container(
-                                                    width:
-                                                    double.infinity,
-                                                    child:
-                                                    TextFormField(
-                                                      controller:
-                                                      username,
-                                                      autofocus: true,
-                                                      autofillHints: [
-                                                        AutofillHints
-                                                            .name
-                                                      ],
-                                                      obscureText:
-                                                      false,
-                                                      decoration:
-                                                      InputDecoration(
-                                                        labelText:
-                                                        'Username tag',
-                                                        // labelStyle:
-                                                        // FlutterFlowTheme.of(
-                                                        //     context)
-                                                        //     .titleMedium
-                                                        //     .override(
-                                                        //   fontFamily:
-                                                        //   'Poppins',
-                                                        //   color: FlutterFlowTheme.of(
-                                                        //       context)
-                                                        //       .secondaryText,
-                                                        // ),
-                                                        enabledBorder:
-                                                        OutlineInputBorder(
-                                                          // borderSide:
-                                                          // BorderSide(
-                                                          //   color: FlutterFlowTheme.of(
-                                                          //       context)
-                                                          //       .alternate,
-                                                          //   width: 2,
-                                                          // ),
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                              40),
-                                                        ),
-                                                        focusedBorder:
-                                                        OutlineInputBorder(
-                                                          // borderSide:
-                                                          // BorderSide(
-                                                          //   color: FlutterFlowTheme.of(
-                                                          //       context)
-                                                          //       .primary,
-                                                          //   width: 2,
-                                                          // ),
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                              40),
-                                                        ),
-                                                        errorBorder:
-                                                        OutlineInputBorder(
-                                                          // borderSide:
-                                                          // BorderSide(
-                                                          //   color: FlutterFlowTheme.of(
-                                                          //       context)
-                                                          //       .error,
-                                                          //   width: 2,
-                                                          // ),
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                              40),
-                                                        ),
-                                                        focusedErrorBorder:
-                                                        OutlineInputBorder(
-                                                          // borderSide:
-                                                          // BorderSide(
-                                                          //   color: FlutterFlowTheme.of(
-                                                          //       context)
-                                                          //       .error,
-                                                          //   width: 2,
-                                                          // ),
-                                                          borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                              40),
-                                                        ),
-                                                        filled: true,
-                                                        // fillColor: FlutterFlowTheme
-                                                        //     .of(context)
-                                                        //     .secondaryBackground,
-                                                        // contentPadding:
-                                                        // EdgeInsetsDirectional
-                                                        //     .fromSTEB(
-                                                        //     24,
-                                                        //     24,
-                                                        //     24,
-                                                        //     24),
-                                                      ),
-                                                      // style: FlutterFlowTheme
-                                                      //     .of(context)
-                                                      //     .titleMedium,
-                                                      keyboardType:
-                                                      TextInputType
-                                                          .text,
-                                                      // validator: _model
-                                                      //     .emailAddressController1Validator
-                                                      //     .asValidator(
-                                                      //     context),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
                                   },
                                   leading: Icon(Icons.home_work_outlined, color: Color(0xFF063a73) ),
                                   trailing: Icon(Icons.arrow_forward_ios, color: Color(0xFF063a73)),
@@ -1313,6 +1161,44 @@ TextEditingController username = TextEditingController();
                                 ),
                                     (route) => false,
                               );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 0.0, bottom: 15),
+                        child: Container(
+                          width: MediaQuery.of(context).size.width * 0.81,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xFF063a73)),
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                                elevation: MaterialStateProperty.all(0),
+                                backgroundColor:
+                                MaterialStateProperty.all(Colors.transparent),
+                                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ))),
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.81,
+                              height: 50,
+                              alignment: Alignment.center,
+                              decoration:
+                              BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                              child: Text(
+                                'Share App',
+                                style: TextStyle(fontSize: 20, color: Color(0xFF063a73)),
+                              ),
+                            ),
+                            onPressed: () async {
+                              Share.share('check out my website https://example.com', subject: 'Look what I made!');
                             },
                           ),
                         ),

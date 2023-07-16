@@ -25,16 +25,16 @@ import 'PlayerPickWidget.dart';
 // import 'play_model.dart';
 // export 'play_model.dart';
 
-class PlayWidget extends StatefulWidget {
-  const PlayWidget({Key? key}) : super(key: key);
+class EditPlayWidget extends StatefulWidget {
+  const EditPlayWidget({Key? key}) : super(key: key);
 
   @override
-  _PlayWidgetState createState() => _PlayWidgetState();
+  _EditPlayWidgetState createState() => _EditPlayWidgetState();
 }
 
-class _PlayWidgetState extends State<PlayWidget> {
+class _EditPlayWidgetState extends State<EditPlayWidget> {
   // late PlayModel _model;
-
+  String ?id;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   List? data;
 
@@ -44,7 +44,7 @@ class _PlayWidgetState extends State<PlayWidget> {
     DataProvider dataProvider =
     Provider.of<DataProvider>(context, listen: false);
     var response =
-        await http.get(Uri.parse('https://poolq.app/getnlf/${dataProvider.game!["name"]}'), headers: {
+    await http.get(Uri.parse('https://poolq.app/getnlf/${dataProvider.game!["name"]}'), headers: {
       'Content-Type': 'application/json; charset=UTF-8',
     }).timeout(Duration(seconds: 20));
     var body = json.decode(response.body);
@@ -56,14 +56,27 @@ class _PlayWidgetState extends State<PlayWidget> {
     });
     return body;
   }
-  Stream<QuerySnapshot> ?_pickrecord;
+  Future<QuerySnapshot<Map<String, dynamic>>> ?_pickrecord;
   @override
   void initState() {
     super.initState();
     DataProvider dataProvider =
     Provider.of<DataProvider>(context, listen: false);
+    dataProvider.setPlayerPicks([]);
+
+    dataProvider.setPlayerPicks([]);
     _pickrecord =
-        FirebaseFirestore.instance.collection('pickrecord').where("uid", isEqualTo: user!.uid).where("week", isEqualTo: dataProvider.game!["name"]).snapshots();
+        FirebaseFirestore.instance.collection('pickrecord').where("uid", isEqualTo: user!.uid).where("week", isEqualTo: dataProvider.game!["name"]).get();
+
+    _pickrecord!.then((value) {
+      List<String> data = [...value.docs[0].get("picks")];
+       dataProvider.setPlayerPicks(data);
+      dataProvider.setTieBreaker(int.parse(value.docs[0].get("tiebreaker")));
+      tieBreakerController.text = dataProvider.tiebreaker.toString();
+      id = value.docs[0].id;
+    });
+
+    print("lllll");
     getGame(context);
     // _model = createModel(context, () => PlayModel());
 
@@ -87,7 +100,7 @@ class _PlayWidgetState extends State<PlayWidget> {
   Widget build(BuildContext context) {
     // context.watch<FFAppState>();
     DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: true);
+    Provider.of<DataProvider>(context, listen: true);
 
 
     return Scaffold(
@@ -126,14 +139,15 @@ class _PlayWidgetState extends State<PlayWidget> {
                           children: [
                             Padding(
                               padding: EdgeInsetsDirectional.fromSTEB(
-                                  20, 20, 120, 0),
-                              child: Image.asset(
-                                'assets/images/poolq.png',
-                                width: 67,
-                                height: 90,
-                                fit: BoxFit.cover,
+                                  0, 20, 0, 0),
+                              child:IconButton(
+                                icon: Icon(Icons.arrow_back_ios_new),
+                                onPressed: (){
+                                  Navigator.pop(context);
+                                },
                               ),
                             ),
+                            Spacer(),
                             Padding(
                               padding: EdgeInsetsDirectional.fromSTEB(
                                   20, 20, 0, 0),
@@ -149,7 +163,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                             ),
                             Padding(
                               padding: EdgeInsetsDirectional.fromSTEB(
-                                  5, 20, 0, 0),
+                                  5, 20, 15, 0),
                               child: Text(
                                 '${dataProvider.game!["name"].toString().replaceAll("REG", "")}',
                                 textAlign: TextAlign.center,
@@ -167,7 +181,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                 ),
               ),
               Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 120, 0, 0),
+                padding: EdgeInsetsDirectional.fromSTEB(0, 90, 0, 0),
                 child: Container(
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
@@ -662,14 +676,14 @@ class _PlayWidgetState extends State<PlayWidget> {
                                 //     .showBottomSheet((context) {
                                 //   return  RulesWidget();
                                 // });
-                                 Navigator.push(
+
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         RulesWidget(),
                                   ),
                                 );
-
                               },
                               child: Container(
                                   height: 50,
@@ -798,7 +812,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          PlayerPicksWidget(),
+                                          PlayerPicksWidget(edit: true, id: id,),
                                     ),
                                   );
                                   if (_shouldSetState) setState(() {});

@@ -17,7 +17,10 @@ import '../Auth/Signup.dart';
 import 'Play.dart';
 
 class HomePageWidget extends StatefulWidget {
-  const HomePageWidget({Key? key}) : super(key: key);
+   PageController? controller;
+   bool? isEmpty;
+
+   HomePageWidget({required this.controller, this.isEmpty});
 
   @override
   _HomePageWidgetState createState() => _HomePageWidgetState();
@@ -107,7 +110,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
             child: Align(
               alignment: AlignmentDirectional(0, 0),
               child: Image.asset(
-                'assets/images/assets.aboutamazon.jpg',
+                'assets/images/gb.jpeg',
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height * 1,
                 fit: BoxFit.cover,
@@ -115,11 +118,10 @@ class _HomePageWidgetState extends State<HomePageWidget> {
             ),
           ),
           Container(
+            child: Text(""),
             width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height * 1,
-            decoration: BoxDecoration(
-              color: Color(0x6DFFFFFF),
-            ),
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(color: Colors.white38),
           ),
           Align(
             alignment: AlignmentDirectional(0, -0.9),
@@ -183,7 +185,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0, 0, 10, 20),
+                    padding: EdgeInsetsDirectional.fromSTEB(0, 0, 10, 10),
                     child: Align(
                         alignment: AlignmentDirectional(0, 0.58),
                         child: SizedBox(
@@ -194,6 +196,11 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                               if( dataProvider.data == null || dataProvider.game == null){
                                 customSnackbar(context, 'loading games');
 
+                              }else if(widget.isEmpty==false){
+                                 setState(() {
+                                   widget.controller!.jumpToPage(1);
+                                   dataProvider.setValue(1);
+                                 });
                               }else{
                                 await Navigator.push(
                                   context,
@@ -229,6 +236,10 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           ),
                         )),
                   ),
+                  widget.isEmpty==true?Text("You haven't play upcoming game yet",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                  ):
+                  Container(),
                 ],
               ),
             ),
@@ -248,7 +259,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           padding: const EdgeInsets.all(3.0),
                           child: Center(
                               child: Text(
-                            "NEXT GAME CLOSES BY: ${dataProvider.data != null ? dataProvider.data![0] : ""}",
+                            "ENTRY DEADLINE: ${dataProvider.data != null ? dataProvider.data![0] : ""}",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),
@@ -265,6 +276,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                     color: primary,
                   ),
                 ),
+
           dataProvider.data == null || dataProvider.game == null
           ?Center(
               child: Column(

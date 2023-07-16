@@ -150,7 +150,7 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
                               padding: EdgeInsetsDirectional.fromSTEB(
                                   20, 20, 10, 0),
                               child: Text(
-                                'Welcome \nto week',
+                                'Welcome \nto week'.toUpperCase(),
                                 textAlign: TextAlign.end,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',

@@ -7,6 +7,7 @@ import 'package:pollapp/Module/Screen/Home/landingPage.dart';
 import 'package:pollapp/Provider/AuthProvider.dart';
 import 'package:pollapp/Provider/homeProvider.dart';
 import 'package:provider/provider.dart';
+import 'package:rive/rive.dart';
 
 import 'Module/Screen/Auth/Signup.dart';
 import 'Module/Screen/Home/HomePage.dart';
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'PoolQ',
       home: Home(),
     );
   }
@@ -49,16 +50,13 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
-
-
   @override
   void initState() {
     DataProvider dataProvider =
     Provider.of<DataProvider>(context, listen: false);
     dataProvider.getWeek();
     WidgetsBinding.instance.addPostFrameCallback((_)  {
-      Future.delayed(Duration(seconds: 1), () async {
+      Future.delayed(Duration(seconds: 5), () async {
         return decideFirstWidget();
       });
 
@@ -113,6 +111,16 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(child: Container());
+    return Container(
+      height: MediaQuery.of(context).size.height,
+      width: MediaQuery.of(context).size.width,
+      color: Colors.white,
+      child: Center(
+        child: RiveAnimation.asset(
+          'assets/riv/football_intro.riv',
+          fit: BoxFit.cover,
+        ),
+      )
+    );
   }
 }

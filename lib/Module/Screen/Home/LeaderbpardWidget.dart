@@ -13,6 +13,7 @@ import 'package:pollapp/Module/Screen/Home/picks.dart';
 import 'package:pollapp/Provider/AuthProvider.dart';
 import 'package:pollapp/Provider/homeProvider.dart';
 import 'package:provider/provider.dart';
+import 'EditPlay.dart';
 import 'games.dart';
 
 //
@@ -35,20 +36,34 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
       FirebaseFirestore.instance.collection('leaderboard_record').snapshots();
 
   List? data;
+  List? normal_data;
+  var particularData;
+  bool ?played;
 
   Future getLeaderBoard(context, selectedValue) async {
-    print('https://poolq.app/getleaderboard/REG${selectedValue}');
+    // print('https://poolq.app/getleaderboard/REG${selectedValue}');
     var response = await http.get(
         Uri.parse('https://poolq.app/getleaderboard/REG${selectedValue}'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
         }).timeout(Duration(seconds: 20));
     var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    List body1 = body;
+
+    List body1 = body["leaderboardList"];
+    bool played = body["played"];
     setState(() {
       data = body1;
+      normal_data = [...body1];
+      this.played = played;
+      particularData = data!.singleWhere((element) => element['uid']==user!.uid, orElse: ()=> "null");
+      if(particularData == "null"){
+      print("done");
+      }else{
+        data!.remove(particularData);
+        data = [particularData,...?data];
+      }
+      // print(particularData);
+      // print(data);
     });
     return body;
   }
@@ -195,46 +210,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                   ),
                                 ),
 
-                                // Padding(
-                                //   padding: const EdgeInsets.only(top: 0.0),
-                                //   child: Center(
-                                //     child: DropdownButtonHideUnderline(
-                                //       child: DropdownButton2(
-                                //         items: items
-                                //             .map((item) => DropdownMenuItem<String>(
-                                //           value: item,
-                                //           child: Text(
-                                //             item,
-                                //             textAlign: TextAlign.center,
-                                //             style: TextStyle(
-                                //               fontWeight: FontWeight.bold,
-                                //               fontFamily: 'Poppins',
-                                //               fontSize: 16,
-                                //             ),
-                                //           ),
-                                //         ))
-                                //             .toList(),
-                                //         value: selectedValue,
-                                //         onChanged: (value) {
-                                //           setState(() {
-                                //             selectedValue = value as String;
-                                //             setState(() {
-                                //               data = null;
-                                //             });
-                                //             getLeaderBoard(context, selectedValue);
-                                //           });
-                                //         },
-                                //         buttonStyleData: const ButtonStyleData(
-                                //           height: 40,
-                                //           width: 60,
-                                //         ),
-                                //         menuItemStyleData: const MenuItemStyleData(
-                                //           // height: 40,
-                                //         ),
-                                //       ),
-                                //     ),
-                                //   ),
-                                // ),
+
                               ],
                             ),
                           ),
@@ -305,9 +281,10 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                     ),
                   ],
                 ),
-                Builder(
+
+                played==false||played==null? Builder(
                   builder: (BuildContext context) {
-                    if (data == null) {
+                    if (data == null||particularData==null) {
                       return Center(
                           child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -336,44 +313,188 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                         ],
                       ));
                     } else if (data!.isEmpty) {
-                      return Text("No Data");
+                      return Padding(
+                        padding: const EdgeInsets.all(40.0),
+                        child: Text("No Game Play Yet!", style: TextStyle(fontSize: 25),),
+                      );
                     }
                     return Expanded(
-                      child: ListView(
-                        children: data!.map((document) {
-                          Map<String, dynamic> data =
-                              document as Map<String, dynamic>;
-                          return InkWell(
+                      child: ListView.builder(
+                        itemCount: data!.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return index == 0? InkWell(
+                            onTap: () {
+                              if(data![index]["uid"]==user!.uid){
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => EditPlayWidget()
+                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                  ),
+                                );
+                              }else{
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => PickedWidget(
+                                          userId: data![index]["uid"],
+                                          selectedValue: selectedValue)
+                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                  ),
+                                );
+                              }
+
+                            },
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      10, 0, 10, 10),
+                                  child: Container(
+                                        width: MediaQuery.of(context).size.width,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF3474E0),
+                                          // image: DecorationImage(
+                                          //     image: AssetImage("assets/images/winner.png"),
+                                          //   fit: BoxFit.cover
+                                          // ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x411D2429),
+                                              offset: Offset(0, 1),
+                                            )
+                                          ],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child:Padding(
+                                              padding: EdgeInsetsDirectional.fromSTEB(
+                                                  8, 8, 8, 8),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.max,
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                    EdgeInsetsDirectional.fromSTEB(
+                                                        15, 1, 1, 1),
+                                                    child: Container(
+                                                      height: 50,
+                                                      width: 50,
+                                                      child: data![index]['photoURL']
+                                                          .toString() ==
+                                                          "" ||
+                                                          data![index]['photoURL'] == null
+                                                          ? Image.asset(
+                                                          "assets/images/user.png", fit: BoxFit.cover)
+                                                          : Image.network(
+                                                          data![index]['photoURL']
+                                                              .toString(), fit: BoxFit.cover),
+                                                    ),
+
+
+                                                  ),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding: EdgeInsetsDirectional
+                                                          .fromSTEB(14, 8, 4, 0),
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.max,
+                                                        mainAxisAlignment:
+                                                        MainAxisAlignment.center,
+                                                        crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            '${data![index]['displayName']}'.toUpperCase(),
+                                                            style: TextStyle(
+                                                              fontFamily: 'Lexend Deca',
+                                                              color: Colors.white,
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                              FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                            child: Padding(
+                                                              padding:
+                                                              EdgeInsetsDirectional
+                                                                  .fromSTEB(
+                                                                  0, 4, 8, 0),
+                                                              child: AutoSizeText(
+                                                                'week ${selectedValue}'.toUpperCase(),
+                                                                textAlign:
+                                                                TextAlign.start,
+                                                                style: TextStyle(
+                                                                  fontFamily:
+                                                                  'Lexend Deca',
+                                                                  color: Colors.white,
+                                                                  fontSize: 13,
+                                                                  fontWeight:
+                                                                  FontWeight.bold,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Column(
+                                                    mainAxisSize: MainAxisSize.max,
+                                                    mainAxisAlignment:
+                                                    MainAxisAlignment.spaceBetween,
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                    children: [
+                                                      Padding(
+                                                        padding: EdgeInsetsDirectional
+                                                            .fromSTEB(0, 0, 0, 0),
+                                                        child: Icon(
+                                                          Icons.chevron_right_rounded,
+                                                          color: Colors.white,
+                                                          size: 35,
+                                                        ),
+                                                      ),
+                                                      Padding(
+                                                        padding: EdgeInsetsDirectional
+                                                            .fromSTEB(0, 0, 0, 2),
+                                                        child: Text(
+                                                          'Score  ${'${data![index]['score']}'}'.toUpperCase(),
+                                                          textAlign: TextAlign.end,
+                                                          style: TextStyle(
+                                                            fontFamily: 'Lexend Deca',
+                                                            color: Colors.white,
+                                                            fontSize: 14,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+
+                                      ),
+
+                                ),
+                              ],
+                            ),
+                          ):
+                            InkWell(
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => PickedWidget(
-                                        userId: data["uid"],
+                                        userId: data![index]["uid"],
                                         selectedValue: selectedValue)
-                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                    ),
+                                  // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                ),
                               );
                             },
                             child: Column(
                               children: [
-                                // ListTile(
-                                //   title: Text(
-                                //     'Player name',
-                                //     // style: FlutterFlowTheme.of(context).headlineSmall,
-                                //   ),
-                                //   subtitle: Text(
-                                //     'score 12',
-                                //     // style: FlutterFlowTheme.of(context).titleSmall,
-                                //   ),
-                                //   trailing: Icon(
-                                //     Icons.arrow_forward_ios,
-                                //     color: Color(0xFF303030),
-                                //     size: 20,
-                                //   ),
-                                //   tileColor: Color(0xFFF5F5F5),
-                                //   dense: false,
-                                // ),
                                 Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       10, 0, 10, 10),
@@ -381,7 +502,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                     width: MediaQuery.of(context).size.width,
                                     height: 70,
                                     decoration: BoxDecoration(
-                                      color: Color(0xFFD5D6D8),
+                                      color: Color(0xFF3474E0),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Color(0x411D2429),
@@ -398,73 +519,62 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                         children: [
                                           Padding(
                                             padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    0, 1, 1, 1),
-                                            child: CircleAvatar(
-                                              foregroundColor: Colors.white,
-                                              backgroundColor: Colors.white,
-                                              radius: 47,
-                                              backgroundImage: data['photoURL']
-                                                              .toString() ==
-                                                          "" ||
-                                                      data['photoURL'] == null
-                                                  ? AssetImage(
-                                                      "assets/images/user.png")
-                                                  : NetworkImage(
-                                                          data['photoURL']
-                                                              .toString())
-                                                      as ImageProvider,
+                                            EdgeInsetsDirectional.fromSTEB(
+                                                15, 1, 1, 1),
+                                            child: Container(
+                                              height: 50,
+                                              width: 50,
+                                              child: data![index]['photoURL']
+                                                  .toString() ==
+                                                  "" ||
+                                                  data![index]['photoURL'] == null
+                                                  ? Image.asset(
+                                                  "assets/images/user.png", fit: BoxFit.cover)
+                                                  : Image.network(
+                                                  data![index]['photoURL']
+                                                      .toString(), fit: BoxFit.cover),
                                             ),
 
-                                            // ClipRRect(
-                                            //   borderRadius: BorderRadius.circular(12),
-                                            //   child: Image.network(
-                                            //     '${data['photoURL']}',
-                                            //     width: 50,
-                                            //     height: 50,
-                                            //     fit: BoxFit.cover,
-                                            //   ),
-                                            // ),
+
                                           ),
                                           Expanded(
                                             child: Padding(
                                               padding: EdgeInsetsDirectional
-                                                  .fromSTEB(8, 8, 4, 0),
+                                                  .fromSTEB(14, 8, 4, 0),
                                               child: Column(
                                                 mainAxisSize: MainAxisSize.max,
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                                 crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                                CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    '${data['displayName']}',
+                                                    '${data![index]['displayName']}'.toUpperCase(),
                                                     style: TextStyle(
                                                       fontFamily: 'Lexend Deca',
-                                                      color: Color(0xFF090F13),
-                                                      fontSize: 20,
+                                                      color: Colors.white,
+                                                      fontSize: 16,
                                                       fontWeight:
-                                                          FontWeight.w500,
+                                                      FontWeight.w500,
                                                     ),
                                                   ),
                                                   Expanded(
                                                     child: Padding(
                                                       padding:
-                                                          EdgeInsetsDirectional
-                                                              .fromSTEB(
-                                                                  0, 4, 8, 0),
+                                                      EdgeInsetsDirectional
+                                                          .fromSTEB(
+                                                          0, 4, 8, 0),
                                                       child: AutoSizeText(
-                                                        'week ${selectedValue}',
+                                                        'week ${selectedValue}'.toUpperCase(),
                                                         textAlign:
-                                                            TextAlign.start,
+                                                        TextAlign.start,
                                                         style: TextStyle(
                                                           fontFamily:
-                                                              'Lexend Deca',
-                                                          color:
-                                                              Color(0xFF57636C),
-                                                          fontSize: 14,
+                                                          'Lexend Deca',
+                                                          color: Colors.white,
+                                                          fontSize: 13,
                                                           fontWeight:
-                                                              FontWeight.normal,
+                                                          FontWeight.bold,
                                                         ),
                                                       ),
                                                     ),
@@ -476,28 +586,28 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                           Column(
                                             mainAxisSize: MainAxisSize.max,
                                             mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                            MainAxisAlignment.spaceBetween,
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                            CrossAxisAlignment.end,
                                             children: [
                                               Padding(
                                                 padding: EdgeInsetsDirectional
-                                                    .fromSTEB(0, 4, 0, 0),
+                                                    .fromSTEB(0, 0, 0, 0),
                                                 child: Icon(
                                                   Icons.chevron_right_rounded,
-                                                  color: Color(0xFF57636C),
-                                                  size: 24,
+                                                  color: Colors.white,
+                                                  size: 35,
                                                 ),
                                               ),
                                               Padding(
                                                 padding: EdgeInsetsDirectional
-                                                    .fromSTEB(0, 0, 4, 8),
+                                                    .fromSTEB(0, 0, 0, 2),
                                                 child: Text(
-                                                  'Score  ${'${data['score']}'}',
+                                                  'Score  ${'${data![index]['score']}'}'.toUpperCase(),
                                                   textAlign: TextAlign.end,
                                                   style: TextStyle(
                                                     fontFamily: 'Lexend Deca',
-                                                    color: Color(0xFF4B39EF),
+                                                    color: Colors.white,
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w500,
                                                   ),
@@ -513,7 +623,521 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                               ],
                             ),
                           );
-                        }).toList(),
+                        },
+                        ),
+                    );
+                  },
+                ):
+                Builder(
+                  builder: (BuildContext context) {
+                    if (data == null||particularData==null) {
+                      return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: ColorScheme.fromSwatch()
+                                        .copyWith(secondary: Color(0xFF063a73)),
+                                  ),
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF063a73)),
+                                    strokeWidth: 2,
+                                    backgroundColor: Colors.white,
+                                    //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
+                                  )),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Text('Loading',
+                                  style: TextStyle(
+                                      color: Color(0xFF333333),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ));
+                    } else if (data!.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(40.0),
+                        child: Text("No Game Play Yet!", style: TextStyle(fontSize: 25),),
+                      );
+                    }
+                    return Expanded(
+                      child: ListView.builder(
+                        itemCount: data!.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return index == 0? InkWell(
+                            onTap: () {
+                              if(data![index]["uid"]==user!.uid){
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => EditPlayWidget()
+                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                  ),
+                                );
+                              }else{
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => PickedWidget(
+                                          userId: data![index]["uid"],
+                                          selectedValue: selectedValue)
+                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                  ),
+                                );
+                              }
+
+                            },
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      10, 0, 10, 10),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      color: normal_data![0]["uid"]==data![index]["uid"]?null:Color(0xFF3474E0),
+                                      image: normal_data![0]["uid"]==data![index]["uid"]?DecorationImage(
+                                          image: AssetImage("assets/images/winner.png"),
+                                          fit: BoxFit.cover
+                                      ):null,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x411D2429),
+                                          offset: Offset(0, 1),
+                                        )
+                                      ],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsetsDirectional.fromSTEB(
+                                          8, 8, 8, 8),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                            EdgeInsetsDirectional.fromSTEB(
+                                                15, 1, 1, 1),
+                                            child: Container(
+                                              height: 50,
+                                              width: 50,
+                                              child: data![index]['photoURL']
+                                                  .toString() ==
+                                                  "" ||
+                                                  data![index]['photoURL'] == null
+                                                  ? Image.asset(
+                                                  "assets/images/user.png", fit: BoxFit.cover)
+                                                  : Image.network(
+                                                  data![index]['photoURL']
+                                                      .toString(), fit: BoxFit.cover),
+                                            ),
+
+
+                                          ),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: EdgeInsetsDirectional
+                                                  .fromSTEB(14, 8, 4, 0),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${data![index]['displayName']}'.toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontFamily: 'Lexend Deca',
+                                                      color: Colors.white,
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                      FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding:
+                                                      EdgeInsetsDirectional
+                                                          .fromSTEB(
+                                                          0, 4, 8, 0),
+                                                      child: AutoSizeText(
+                                                        'week ${selectedValue}'.toUpperCase(),
+                                                        textAlign:
+                                                        TextAlign.start,
+                                                        style: TextStyle(
+                                                          fontFamily:
+                                                          'Lexend Deca',
+                                                          color: Colors.white,
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                          FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Column(
+                                            mainAxisSize: MainAxisSize.max,
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(0, 0, 0, 0),
+                                                child: Icon(
+                                                  Icons.chevron_right_rounded,
+                                                  color: Colors.white,
+                                                  size: 35,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(0, 0, 0, 2),
+                                                child: Text(
+                                                  'Score  ${'${data![index]['score']}'}'.toUpperCase(),
+                                                  textAlign: TextAlign.end,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Lexend Deca',
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ):
+                          index == 1? normal_data![0]["uid"]==user!.uid?null:
+                          InkWell(
+                            onTap: () {
+                              if(normal_data![0]["uid"]==user!.uid){
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => EditPlayWidget()
+                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                  ),
+                                );
+                              }else{
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => PickedWidget(
+                                          userId: normal_data![0]["uid"],
+                                          selectedValue: selectedValue)
+                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                  ),
+                                );
+                              }
+
+                            },
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      10, 0, 10, 10),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                          image: AssetImage("assets/images/winner.png"),
+                                          fit: BoxFit.cover
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x411D2429),
+                                          offset: Offset(0, 1),
+                                        )
+                                      ],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          width: MediaQuery.of(context).size.width,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white10,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(""),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsetsDirectional.fromSTEB(
+                                              8, 8, 8, 8),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.max,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                    15, 1, 1, 1),
+                                                child: Container(
+                                                  height: 50,
+                                                  width: 50,
+                                                  child: normal_data![0]['photoURL']
+                                                      .toString() ==
+                                                      "" ||
+                                                      normal_data![0]['photoURL'] == null
+                                                      ? Image.asset(
+                                                      "assets/images/user.png", fit: BoxFit.cover)
+                                                      : Image.network(
+                                                      normal_data![0]['photoURL']
+                                                          .toString(), fit: BoxFit.cover),
+                                                ),
+
+
+                                              ),
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: EdgeInsetsDirectional
+                                                      .fromSTEB(14, 8, 4, 0),
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.max,
+                                                    mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        '${normal_data![0]['displayName']}'.toUpperCase(),
+                                                        style: TextStyle(
+                                                          fontFamily: 'Lexend Deca',
+                                                          color: Colors.white,
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                          FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        child: Padding(
+                                                          padding:
+                                                          EdgeInsetsDirectional
+                                                              .fromSTEB(
+                                                              0, 4, 8, 0),
+                                                          child: AutoSizeText(
+                                                            'week ${selectedValue}'.toUpperCase(),
+                                                            textAlign:
+                                                            TextAlign.start,
+                                                            style: TextStyle(
+                                                              fontFamily:
+                                                              'Lexend Deca',
+                                                              color: Colors.white,
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                              FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              Column(
+                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                                children: [
+                                                  Padding(
+                                                    padding: EdgeInsetsDirectional
+                                                        .fromSTEB(0, 0, 0, 0),
+                                                    child: Icon(
+                                                      Icons.chevron_right_rounded,
+                                                      color: Colors.white,
+                                                      size: 35,
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding: EdgeInsetsDirectional
+                                                        .fromSTEB(0, 0, 0, 2),
+                                                    child: Text(
+                                                      'Score  ${'${normal_data![0]['score']}'}'.toUpperCase(),
+                                                      textAlign: TextAlign.end,
+                                                      style: TextStyle(
+                                                        fontFamily: 'Lexend Deca',
+                                                        color: Colors.white,
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ):
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => PickedWidget(
+                                        userId:data![index]["uid"],
+                                        selectedValue: selectedValue)
+                                  // Picks(userId:data["uid"], selectedValue:selectedValue),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      10, 0, 10, 10),
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF3474E0),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x411D2429),
+                                          offset: Offset(0, 1),
+                                        )
+                                      ],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsetsDirectional.fromSTEB(
+                                          8, 8, 8, 8),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                            EdgeInsetsDirectional.fromSTEB(
+                                                15, 1, 1, 1),
+                                            child: Container(
+                                              height: 50,
+                                              width: 50,
+                                              child:  data![index]['photoURL']
+                                                  .toString() ==
+                                                  "" ||
+                                                  data![index]['photoURL'] == null
+                                                  ? Image.asset(
+                                                  "assets/images/user.png", fit: BoxFit.cover)
+                                                  : Image.network(
+                                                  data![index]['photoURL']
+                                                      .toString(), fit: BoxFit.cover),
+                                            ),
+
+
+                                          ),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: EdgeInsetsDirectional
+                                                  .fromSTEB(14, 8, 4, 0),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${ data![index]['displayName']}'.toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontFamily: 'Lexend Deca',
+                                                      color: Colors.white,
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                      FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding:
+                                                      EdgeInsetsDirectional
+                                                          .fromSTEB(
+                                                          0, 4, 8, 0),
+                                                      child: AutoSizeText(
+                                                        'week ${selectedValue}'.toUpperCase(),
+                                                        textAlign:
+                                                        TextAlign.start,
+                                                        style: TextStyle(
+                                                          fontFamily:
+                                                          'Lexend Deca',
+                                                          color: Colors.white,
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                          FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Column(
+                                            mainAxisSize: MainAxisSize.max,
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(0, 0, 0, 0),
+                                                child: Icon(
+                                                  Icons.chevron_right_rounded,
+                                                  color: Colors.white,
+                                                  size: 35,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(0, 0, 0, 2),
+                                                child: Text(
+                                                  'Score  ${'${data![index]['score']}'}'.toUpperCase(),
+                                                  textAlign: TextAlign.end,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Lexend Deca',
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
@@ -587,7 +1211,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                       backgroundColor: Colors.white,
                       itemExtent: 30,
                       scrollController:
-                          FixedExtentScrollController(initialItem: 0),
+                          FixedExtentScrollController(initialItem: (int.parse(selectedValue.toString())-1)),
                       children: [
                         Text('Week 1'),
                         Text('Week 2'),

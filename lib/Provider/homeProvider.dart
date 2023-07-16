@@ -10,11 +10,29 @@ import '../Model/games.dart';
 class DataProvider with ChangeNotifier {
     List<String> ?playerPicks= [];
    bool  picked= false;
+    int pageIndex = 0;
 
+
+
+    setPlayerPicks(List<String> value){
+       playerPicks = value;
+      notifyListeners();
+    }
 
    int ?tiebreaker;
 
+
+    setTieBreaker(value){
+      tiebreaker = value;
+      notifyListeners();
+    }
+
    int ?amount;
+
+   setValue(value){
+     pageIndex = value;
+     notifyListeners();
+   }
 
 
     int countGames(List<String>? playerPicks) {

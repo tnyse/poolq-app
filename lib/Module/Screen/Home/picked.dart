@@ -259,7 +259,7 @@ class _PickedWidgetState extends State<PickedWidget> {
                                                 padding: EdgeInsetsDirectional.fromSTEB(
                                                     20, 20, 10, 0),
                                                 child: Text(
-                                                  'Welcome \nto week',
+                                                  'Welcome \nto week'.toUpperCase(),
                                                   textAlign: TextAlign.end,
                                                   style: TextStyle(
                                                     fontFamily: 'Poppins',
@@ -610,17 +610,28 @@ class _PickedWidgetState extends State<PickedWidget> {
                                                                         ),
                                                                         // if (FFAppState().picked !=
                                                                         //     null)
-                                                                        Text(
-                                                                          'MAKE THE PICK!',
-                                                                          // style:
-                                                                          // FlutterFlowTheme.of(
-                                                                          //     context)
-                                                                          //     .bodyMedium
-                                                                          //     .override(
-                                                                          //   fontFamily:
-                                                                          //   'Poppins',
-                                                                          //   fontSize: 12,
-                                                                          // ),
+                                                                        Row(
+                                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                                          children: [
+                                                                            new_data.contains(gameItem[
+                                                                            "abbreviation"])
+                                                                                ? winners!.contains(gameItem[
+                                                                            "abbreviation"])?  Text(
+                                                                                'CORRECT'):Text(
+                                                                                'INCORRECT')
+                                                                                : Container(),
+
+
+
+                                                                            new_data.contains(gameItem[
+                                                                            "abbreviation2"])
+                                                                                ? winners!.contains(gameItem[
+                                                                            "abbreviation2"])?  Text(
+                                                                                'CORRECT'):Text(
+                                                                                'INCORRECT')
+                                                                                : Container()
+
+                                                                          ],
                                                                         ),
                                                                       ],
                                                                     ),
