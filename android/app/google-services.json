@@ -1,0 +1,203 @@
+{
+  "project_info": {
+    "project_number": "841410602650",
+    "firebase_url": "https://poolr-b5392.firebaseio.com",
+    "project_id": "poolr-b5392",
+    "storage_bucket": "poolr-b5392.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841410602650:android:8fb3a39dae3e56f6602123",
+        "android_client_info": {
+          "package_name": "com.example.poolqadmin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "841410602650-77np1178u05u2lenu6mabn65mfpab16q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.poolqadmin",
+            "certificate_hash": "dfa5db75021dc125efbcad79eb939cdb0a7233c6"
+          }
+        },
+        {
+          "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7VcNeorUEyvgeSZ5BLPtOn89JDCpNe8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "841410602650-h04ib21gtl5bau1atm80cb3s58d3jn23.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.poolq"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841410602650:android:68d3f1d7e59df7a4",
+        "android_client_info": {
+          "package_name": "com.example.poolr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "841410602650-3p6eqrirjak34mlg8uvlt42aqt8ffapk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.poolr",
+            "certificate_hash": "198f707c5b45765fac6fcbea21202b0cd4802adb"
+          }
+        },
+        {
+          "client_id": "841410602650-qp5emrl36ejafpekprbm6psgmd4om5i4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.poolr",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7VcNeorUEyvgeSZ5BLPtOn89JDCpNe8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "841410602650-h04ib21gtl5bau1atm80cb3s58d3jn23.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.poolq"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841410602650:android:bdb5eee0323c54eb602123",
+        "android_client_info": {
+          "package_name": "com.mycompany.poolq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "841410602650-327jaup3ue8bjmt8vvbsh384uj3pka3n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mycompany.poolq",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7VcNeorUEyvgeSZ5BLPtOn89JDCpNe8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "841410602650-h04ib21gtl5bau1atm80cb3s58d3jn23.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.poolq"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841410602650:android:ddef5b5188a17159602123",
+        "android_client_info": {
+          "package_name": "com.poolq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "841410602650-g4pv91902l5crmo35o84han8o7bckp16.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.poolq",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "841410602650-jjlha7hjle1obvktnc4373atans0eqlb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.poolq",
+            "certificate_hash": "dfa5db75021dc125efbcad79eb939cdb0a7233c6"
+          }
+        },
+        {
+          "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7VcNeorUEyvgeSZ5BLPtOn89JDCpNe8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "841410602650-ucn9k0dffqj9u8cljfs04f9fp1dbo3e6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "841410602650-h04ib21gtl5bau1atm80cb3s58d3jn23.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.poolq"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
