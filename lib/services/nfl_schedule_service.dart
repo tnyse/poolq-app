@@ -169,21 +169,34 @@ class NFLScheduleService {
     }
   }
 
-  /// Helper method to format dates consistently
+  /// Helper method to format dates consistently for the app
   String _formatGameDate(String isoDate) {
     try {
-      if (isoDate.isEmpty) return DateTime.now().toIso8601String();
+      if (isoDate.isEmpty) return _formatDateForApp(DateTime.now());
       
       // Parse the ISO date
       DateTime dateTime = DateTime.parse(isoDate);
       
-      // Format it consistently with what the app expects
-      // The app seems to expect format like "2024-01-15T18:00:00.000Z"
-      return dateTime.toUtc().toIso8601String();
+      // Format it in the app's expected format: "Thursday September 4TH, 2025"
+      return _formatDateForApp(dateTime);
     } catch (e) {
       print('Error formatting date $isoDate: $e');
-      return DateTime.now().toIso8601String();
+      return _formatDateForApp(DateTime.now());
     }
+  }
+
+  /// Format date in the app's expected format: "Thursday September 4TH, 2025"
+  String _formatDateForApp(DateTime dateTime) {
+    final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    String weekday = weekdays[dateTime.weekday - 1];
+    String month = months[dateTime.month - 1];
+    String day = '${dateTime.day}${_getOrdinalSuffix(dateTime.day)}';
+    String year = '${dateTime.year}';
+    
+    return '$weekday $month $day, $year';
   }
 
   /// Parse games from NFL.com API response
@@ -260,7 +273,7 @@ class NFLScheduleService {
     
     return [
       {
-        'date': gameDate1.toUtc().toIso8601String(), // Consistent date format
+        'date': _formatDateForApp(gameDate1), // Use consistent app format
         'home': 'Kansas City Chiefs',
         'away': 'San Francisco 49ers', 
         'abbreviation': 'KC',
@@ -272,7 +285,7 @@ class NFLScheduleService {
         'status': 'completed'
       },
       {
-        'date': gameDate2.toUtc().toIso8601String(), // Consistent date format
+        'date': _formatDateForApp(gameDate2), // Use consistent app format
         'home': 'Baltimore Ravens',
         'away': 'Buffalo Bills',
         'abbreviation': 'BAL', 
@@ -284,7 +297,7 @@ class NFLScheduleService {
         'status': 'completed'
       },
       {
-        'date': gameDate3.toUtc().toIso8601String(), // Consistent date format  
+        'date': _formatDateForApp(gameDate3), // Use consistent app format  
         'home': 'Detroit Lions',
         'away': 'Tampa Bay Buccaneers',
         'abbreviation': 'DET',
