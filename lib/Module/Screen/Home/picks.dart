@@ -11,6 +11,11 @@ import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
+// Color constants
+const Color primary = Color(0xFF1A237E);
+const Color textPrimary = Color(0xFF212121);
+const Color textSecondary = Color(0xFF757575);
+
 class Picks extends StatefulWidget {
   const Picks({this.userId, this.selectedValue});
 
@@ -27,6 +32,7 @@ class _PickstState extends State<Picks> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final _unfocusNode = FocusNode();
   late final Stream<QuerySnapshot>? _pickrecordStream;
+  List<QueryDocumentSnapshot>? data;
 
   @override
   void initState() {
@@ -80,264 +86,348 @@ class _PickstState extends State<Picks> {
         body: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
-            Stack(
-              children: [
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
-                        child: Image.asset(
-                          'assets/images/poolq12.png',
-                          width: 67,
-                          height: 90,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(20, 20, 0, 0),
-                        child: Text(
-                          'Leaderboard week ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(5, 20, 0, 0),
-                        child: Text(
-                          '${widget.selectedValue}',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 30,
-                          ),
-                        ),
-                      ),
-                    ],
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
                   ),
-                ),
-              ],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 20),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/poolq12.png',
+                    width: 100,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                  SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hello, ${user!.displayName}',
-                        style: TextStyle(
-                          fontFamily: 'Lexend Deca',
-                          color: Color(0xFF090F13),
-                          fontSize: 20,
+                        'Leaderboard',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
                           fontWeight: FontWeight.w600,
+                          color: textPrimary,
                         ),
                       ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () async {
-                          scaffoldKey.currentState!.openDrawer();
-                        },
-                        child: Container(
-                          width: 50,
-                          height: 50,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black45),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: CircleAvatar(
-                              foregroundColor: Colors.white,
-                              backgroundColor: Colors.white,
-                              radius: 47,
-                              backgroundImage: authProvider.image.toString() ==
-                                      ""
-                                  ? AssetImage("assets/images/user.png")
-                                  : NetworkImage(authProvider.image.toString())
-                                      as ImageProvider,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        // borderWidth: 1,
-                        // buttonSize: 60,
-                        child: TextButton(
-                          style: ButtonStyle(
-                              // borderColor: Colors.transparent,
-                              // borderRadius: 30,
-                              ),
-                          child: Icon(
-                            Icons.check,
-                            color: Color(0xFF049304),
-                            size: 30,
-                          ),
-                          onPressed: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LeaderboardWidget(),
-                              ),
-                            );
-                          },
+                      Text(
+                        'Week ${widget.selectedValue}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
-                        child: Text(
-                          'user',
-                          style: TextStyle(
-                            fontFamily: 'Lexend Deca',
-                            color: Color(0xFF4B39EF),
-                            fontSize: 32,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Padding(
-                //   padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 20),
-                //   child: Text(
-                //     'some games have not been picked',
-                //     style: TextStyle(
-                //       fontFamily: 'Poppins',
-                //       color: Color(0xFFD30909),
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-            Container(
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                color: Color(0xFFEEEEEE),
+                ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  StreamBuilder<QuerySnapshot>(
-                    stream: _pickrecordStream,
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if (snapshot.hasError) {
-                        return Text('Something went wrong');
-                      }
+            ),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _pickrecordStream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Something went wrong',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: textSecondary,
+                        ),
+                      ),
+                    );
+                  }
 
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                            child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: ColorScheme.fromSwatch()
-                                      .copyWith(secondary: Color(0xFF063a73)),
-                                ),
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFF063a73)),
-                                  strokeWidth: 2,
-                                  backgroundColor: Colors.white,
-                                  //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
-                                )),
-                            SizedBox(
-                              height: 10,
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(primary),
+                      ),
+                    );
+                  }
+
+                  final data = snapshot.data?.docs;
+                  if (data == null || data.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No picks found',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          color: textSecondary,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: data.length,
+                    itemBuilder: (context, index) {
+                      final pick = data[index].data() as Map<String, dynamic>;
+                      return Card(
+                        elevation: 2,
+                        margin: EdgeInsets.only(bottom: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white,
+                                Colors.grey.shade50,
+                              ],
                             ),
-                            Text('Loading',
-                                style: TextStyle(
-                                    color: Color(0xFF333333),
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600)),
-                          ],
-                        ));
-                      }
-
-                      return Container(
-                        height: 140,
-                        width: MediaQuery.of(context).size.width,
-                        child: ListView(
-                          children: snapshot.data!.docs
-                              .map((DocumentSnapshot document) {
-                            Map<String, dynamic> data =
-                                document.data()! as Map<String, dynamic>;
-                            return Column(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                      // color: FlutterFlowTheme.of(context)
-                                      //     .secondaryBackground,
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Game ${index + 1}',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: textPrimary,
                                       ),
-                                  child: Text(
-                                    data["picks"]
-                                        .toString()
-                                        .replaceAll("[", "")
-                                        .replaceAll("]", ""),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontFamily: 'Poppins',
-                                      fontSize: 18,
                                     ),
-                                  ),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        pick['gameTime'] ?? 'TBD',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      0, 20, 0, 0),
+                                SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.1),
+                                                  blurRadius: 4,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Image.network(
+                                              pick['team1Image'] ?? '',
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Icon(Icons.sports_football, size: 80);
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            pick['team1'] ?? '',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: primary.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Text(
+                                        'VS',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: primary,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.1),
+                                                  blurRadius: 4,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Image.network(
+                                              pick['team2Image'] ?? '',
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Icon(Icons.sports_football, size: 80);
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            pick['team2'] ?? '',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 16),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                   child: Row(
-                                    mainAxisSize: MainAxisSize.max,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        'Tie Breaker total - ',
-                                        // style: FlutterFlowTheme.of(context).bodyMedium,
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: primary,
+                                        size: 20,
                                       ),
+                                      SizedBox(width: 8),
                                       Text(
-                                        "${data["tiebreaker"]}",
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 18,
+                                        'Picked: ${pick['selectedTeam'] ?? 'Not picked'}',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: primary,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
-                            );
-                            ;
-                          }).toList(),
+                            ),
+                          ),
                         ),
                       );
                     },
-                  ),
-                ],
+                  );
+                },
               ),
             ),
+            if (data != null && data!.isNotEmpty)
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tiebreaker',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.timer,
+                            color: primary,
+                            size: 24,
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Points Prediction',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  '${data![0]['tiebreaker'] ?? 'Not set'} points',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

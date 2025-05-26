@@ -61,6 +61,7 @@ dependencies:
   # share_plus: ^10.0.2
   # admob_flutter: ^3.0.0
   firebase_auth: ^5.1.4
+  fl_chart: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +90,9 @@ flutter:
     - assets/images/
     - assets/svg/
     - assets/riv/
+    - assets/images/winner.png
+    - assets/images/user.png
+    - assets/images/userAvatar.png
     - assets/.env
 
   # An image asset can refer to one or more resolution-specific "variants", see

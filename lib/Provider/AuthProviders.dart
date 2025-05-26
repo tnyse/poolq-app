@@ -10,9 +10,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // String mainUrl = "https://api.poolq.app";
-String mainUrl = "http://10.0.2.2:3000";
+String mainUrl = kIsWeb ? "https://api.poolq.app" : "http://10.0.2.2:3000";
 
 class AuthProviders with ChangeNotifier {
   String image = "";
@@ -22,12 +23,65 @@ class AuthProviders with ChangeNotifier {
   static GetStorage box = GetStorage();
   // String mode = box.read("mode")==null||box.read("mode")=="null"?"REG":box.read("mode");
   FirebaseAuth auth = FirebaseAuth.instance;
+  bool _isInitialized = false;
 
-// changeMode(value){
-//     mode = value;
-//     box.write("mode", mode);
-//   notifyListeners();
-// }
+  // Initialize persistence
+  Future<void> initializePersistence() async {
+    if (_isInitialized) return;
+    
+    try {
+      // Set persistence for web
+      if (kIsWeb) {
+        await auth.setPersistence(Persistence.LOCAL);
+      }
+      
+      // Initialize shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Check for existing session
+      final savedEmail = prefs.getString('user_email');
+      final savedPassword = prefs.getString('user_password');
+      
+      if (savedEmail != null && savedPassword != null) {
+        try {
+          await auth.signInWithEmailAndPassword(
+            email: savedEmail,
+            password: savedPassword,
+          );
+        } catch (e) {
+          // Clear invalid credentials
+          await prefs.remove('user_email');
+          await prefs.remove('user_password');
+        }
+      }
+      
+      _isInitialized = true;
+    } catch (e) {
+      print('Error initializing persistence: $e');
+    }
+  }
+
+  // Save credentials for persistence
+  Future<void> _saveCredentials(String email, String password) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_email', email);
+      await prefs.setString('user_password', password);
+    } catch (e) {
+      print('Error saving credentials: $e');
+    }
+  }
+
+  // Clear saved credentials
+  Future<void> _clearCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_email');
+      await prefs.remove('user_password');
+    } catch (e) {
+      print('Error clearing credentials: $e');
+    }
+  }
 
   uploadImage({imagePath, context}) async {
     final _firebaseStorage = FirebaseStorage.instance;
@@ -74,11 +128,54 @@ class AuthProviders with ChangeNotifier {
     email = user.email!;
   }
 
+  // Method used by the new screens
+  Future<bool> registerUser(String email, String password) async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        throw 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        throw 'The account already exists for that email.';
+      } else {
+        throw e.message ?? 'An error occurred during registration';
+      }
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  // Method used by the new screens
+  Future<bool> loginUser(String email, String password) async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        throw 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        throw 'Wrong password provided for that user.';
+      } else {
+        throw e.message ?? 'An error occurred during login';
+      }
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  // Modified register method
   Future register(context, email, password, displayName) async {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
       await userCredential.user!.updateDisplayName(displayName);
+      
+      // Save credentials for persistence
+      await _saveCredentials(email, password);
+      
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -86,24 +183,17 @@ class AuthProviders with ChangeNotifier {
         ),
         (r) => false,
       );
-      // return true;
     } on FirebaseAuthException catch (e) {
       print(e);
       Navigator.pop(context);
       if (e.code == 'weak-password') {
-        // print('The password provided is too weak.');
         customSnackbar(context, 'The password provided is too weak.');
-        // return false;
       } else if (e.code == 'email-already-in-use') {
-        // print('The account already exists for that email.');
         customSnackbar(context, 'The account already exists for that email.');
-        // return false;
       }
     } catch (e) {
       Navigator.pop(context);
-      // print(e);
       customSnackbar(context, e.toString());
-      // return false;
     }
   }
 
@@ -123,12 +213,17 @@ class AuthProviders with ChangeNotifier {
     }
   }
 
+  // Modified login method
   Future login(context, email, password) async {
     print(email);
     print(password);
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+      
+      // Save credentials for persistence
+      await _saveCredentials(email, password);
+      
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -136,28 +231,31 @@ class AuthProviders with ChangeNotifier {
         ),
         (r) => false,
       );
-      // return true;
     } on FirebaseAuthException catch (e) {
       print(e);
       Navigator.pop(context);
       if (e.code == 'user-not-found') {
         customSnackbar(context, "No user found for that email.");
-        // return false;
-        // print('No user found for that email.');
       } else if (e.code == 'wrong-password') {
-        // print('Wrong password provided for that user.');
         customSnackbar(context, "Wrong password provided for that user.");
-        // return false;
       } else {
         customSnackbar(context, e.message.toString());
-        // return false;
       }
-      // Navigator.pop(context);
     } catch (e) {
       Navigator.pop(context);
       print(e);
       customSnackbar(context, e.toString());
       return false;
+    }
+  }
+
+  // Modified sign out method
+  Future<void> signOut() async {
+    try {
+      await auth.signOut();
+      await _clearCredentials();
+    } catch (e) {
+      print('Error signing out: $e');
     }
   }
 }

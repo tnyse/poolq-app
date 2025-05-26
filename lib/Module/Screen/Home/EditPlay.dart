@@ -9,14 +9,12 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import '../../../Provider/homeProvider.dart';
+import '../../../Provider/AuthProviders.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
-
-
 
 class EditPlayWidget extends StatefulWidget {
   const EditPlayWidget({Key? key}) : super(key: key);
@@ -26,41 +24,81 @@ class EditPlayWidget extends StatefulWidget {
 }
 
 class _EditPlayWidgetState extends State<EditPlayWidget> {
-  // late PlayModel _model;
   String? id;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   List? data;
+  bool isLoading = true;
+  String? errorMessage;
 
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
+  
   Future getGame(context) async {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    var response = await http.get(
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    try {
+      print('Fetching games for edit from: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
+      
+      var response = await http.get(
         Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Access-Control-Allow-Origin': '*',
-        }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    List body1 = body;
-    setState(() {
-      data = body1;
-    });
-    return body;
+        },
+      ).timeout(Duration(seconds: 30));
+      
+      print('API Response status: ${response.statusCode}');
+      print('API Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        var body = json.decode(response.body);
+        
+        if (body is List && body.isNotEmpty) {
+          List body1 = body;
+          setState(() {
+            data = body1;
+            isLoading = false;
+            errorMessage = null;
+          });
+          print('Successfully loaded ${body1.length} games for editing');
+          return body;
+        } else {
+          throw Exception('No games data received from API');
+        }
+      } else {
+        throw Exception('API request failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching games for edit: $e');
+      setState(() {
+        errorMessage = 'Failed to load games: $e';
+        isLoading = false;
+      });
+      
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading games: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    }
   }
 
   Future<QuerySnapshot<Map<String, dynamic>>>? _pickrecord;
+  
   @override
   void initState() {
     super.initState();
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    // Reset player picks to current selections
     dataProvider.setPlayerPicks([]);
 
-    dataProvider.setPlayerPicks([]);
+    // Load existing picks data
     _pickrecord = FirebaseFirestore.instance
         .collection('pickrecord')
         .where("uid", isEqualTo: user!.uid)
@@ -68,18 +106,20 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
         .get();
 
     _pickrecord!.then((value) {
-      List<String> data = [...value.docs[0].get("picks")];
-      dataProvider.setPlayerPicks(data);
-      dataProvider.setTieBreaker(int.parse(value.docs[0].get("tiebreaker")));
-      tieBreakerController.text = dataProvider.tiebreaker.toString();
-      id = value.docs[0].id;
+      if (value.docs.isNotEmpty) {
+        List<String> existingPicks = [...value.docs[0].get("picks")];
+        dataProvider.setPlayerPicks(existingPicks);
+        dataProvider.setTieBreaker(int.parse(value.docs[0].get("tiebreaker")));
+        tieBreakerController.text = dataProvider.tiebreaker.toString();
+        id = value.docs[0].id;
+        print('Loaded existing picks: $existingPicks');
+      }
+    }).catchError((error) {
+      print('Error loading existing picks: $error');
     });
 
-    print("lllll");
+    print("Initializing EditPlay widget");
     getGame(context);
-    // _model = createModel(context, () => PlayModel());
-
-    // _model.tieBreakerController ??= TextEditingController();
   }
 
   @override
@@ -192,20 +232,117 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                     child: Builder(
                       // future: getGame(),
                       builder: (context) {
-                        // Customize what your widget looks like when it's loading.
-                        if (data == null) {
+                        // Show loading state
+                        if (isLoading) {
                           return Center(
-                            child: SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: CircularProgressIndicator(
-                                color: primary,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: CircularProgressIndicator(
+                                    color: primary,
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+                                Text(
+                                  'Loading games for editing...',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }
+                        
+                        // Show error state
+                        if (errorMessage != null) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.red,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Error Loading Games',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  errorMessage!,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      isLoading = true;
+                                      errorMessage = null;
+                                    });
+                                    getGame(context);
+                                  },
+                                  child: Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        
+                        // Show empty state
+                        if (data == null || data!.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.sports_football,
+                                  size: 64,
+                                  color: Colors.white70,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No Games Available',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'No games found for this week.',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        
                         final listViewGetScheduleResponse = data;
-                        // print(data);
+                        print('Rendering ${data!.length} games for editing');
+                        
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 100.0),
                           child: Builder(
@@ -322,6 +459,9 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                           TextButton(
                                                             onPressed:
                                                                 () async {
+                                                              print('Team 1 button pressed: ${gameItem["abbreviation"]}');
+                                                              print('Current picks: ${dataProvider.playerPicks}');
+                                                              
                                                               if (dataProvider
                                                                   .playerPicks!
                                                                   .contains(
@@ -334,13 +474,15 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                       (alertDialogContext) {
                                                                     return AlertDialog(
                                                                       title: Text(
-                                                                          'already picked!'),
+                                                                          'Already picked!'),
+                                                                      content: Text(
+                                                                          'You have already picked ${gameItem["abbreviation"]} for this game.'),
                                                                       actions: [
                                                                         TextButton(
                                                                           onPressed: () =>
                                                                               Navigator.pop(alertDialogContext),
                                                                           child:
-                                                                              Text('Ok'),
+                                                                              Text('OK'),
                                                                         ),
                                                                       ],
                                                                     );
@@ -354,28 +496,25 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                   SnackBar(
                                                                     content:
                                                                         Text(
-                                                                      gameItem[
-                                                                          "abbreviation"],
+                                                                      'Selected: ${gameItem["abbreviation"]}',
                                                                       style:
                                                                           TextStyle(
                                                                         color: Colors
                                                                             .white,
                                                                         fontSize:
-                                                                            24,
+                                                                            16,
                                                                       ),
                                                                     ),
                                                                     duration: Duration(
                                                                         milliseconds:
-                                                                            500),
+                                                                            1000),
                                                                     backgroundColor:
-                                                                        Color(
-                                                                            0x85114802),
+                                                                        Colors.green,
                                                                   ),
                                                                 );
                                                               }
-                                                              //
-                                                              // FFAppState()
-                                                              //     .update(() {
+                                                              
+                                                              // Remove opposing team and add selected team
                                                               dataProvider
                                                                   .removeFromPlayerPicks(
                                                                       gameItem[
@@ -384,74 +523,58 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                   .addToPlayerPicks(
                                                                       gameItem[
                                                                           "abbreviation"]);
-                                                              // });
+                                                              print('Updated picks: ${dataProvider.playerPicks}');
                                                             },
-                                                            child: Row(
-                                                              children: [
-                                                                Text(
-                                                                  gameItem[
-                                                                      "abbreviation"],
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white),
-                                                                ),
-                                                                dataProvider
+                                                            child: Container(
+                                                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                              decoration: BoxDecoration(
+                                                                color: dataProvider
                                                                         .playerPicks!
                                                                         .contains(gameItem[
                                                                             "abbreviation"])
-                                                                    ? Icon(
-                                                                        Icons
-                                                                            .check,
-                                                                        color: Colors
-                                                                            .white)
-                                                                    : Container()
-                                                              ],
-                                                            ),
-                                                            style: ButtonStyle(
-                                                              padding: MaterialStateProperty.all(
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          35,
-                                                                          5,
-                                                                          35,
-                                                                          5)),
-                                                              backgroundColor:
-                                                                  MaterialStateProperty
-                                                                      .all(Color(
-                                                                          0x733474E0)),
-                                                              foregroundColor:
-                                                                  MaterialStateProperty
-                                                                      .all(Color(
-                                                                          0x733474E0)),
-                                                              textStyle:
-                                                                  MaterialStateProperty
-                                                                      .all(
-                                                                          TextStyle(
-                                                                fontFamily:
-                                                                    'Poppins',
-                                                                color: Colors
-                                                                    .white,
-                                                              )),
-                                                              elevation:
-                                                                  MaterialStateProperty
-                                                                      .all(2),
-                                                              shape: MaterialStateProperty
-                                                                  .all(
-                                                                      RoundedRectangleBorder(
-                                                                side:
-                                                                    BorderSide(
-                                                                  color: Colors
-                                                                      .transparent,
-                                                                  width: 1,
+                                                                    ? Colors.green
+                                                                    : Color(0x733474E0),
+                                                                borderRadius: BorderRadius.circular(25),
+                                                                border: Border.all(
+                                                                  color: dataProvider
+                                                                          .playerPicks!
+                                                                          .contains(gameItem[
+                                                                              "abbreviation"])
+                                                                      ? Colors.greenAccent
+                                                                      : Colors.white,
+                                                                  width: 2,
                                                                 ),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            30),
-                                                              )),
+                                                              ),
+                                                              child: Row(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                children: [
+                                                                  Text(
+                                                                    gameItem[
+                                                                        "abbreviation"],
+                                                                    style: TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .bold,
+                                                                        color: Colors
+                                                                            .white,
+                                                                        fontSize: 16),
+                                                                  ),
+                                                                  if (dataProvider
+                                                                      .playerPicks!
+                                                                      .contains(gameItem[
+                                                                          "abbreviation"]))
+                                                                    Container(
+                                                                      margin: EdgeInsets.only(left: 8),
+                                                                      child: Icon(
+                                                                        Icons
+                                                                            .check_circle,
+                                                                        color: Colors
+                                                                            .white,
+                                                                        size: 20,
+                                                                      ),
+                                                                    )
+                                                                ],
+                                                              ),
                                                             ),
                                                           ),
                                                           Column(
@@ -538,6 +661,9 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               ),
                                                               onPressed:
                                                                   () async {
+                                                                print('Team 2 button pressed: ${gameItem["abbreviation2"]}');
+                                                                print('Current picks: ${dataProvider.playerPicks}');
+                                                                
                                                                 if (dataProvider
                                                                     .playerPicks!
                                                                     .contains(
@@ -550,13 +676,15 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                         (alertDialogContext) {
                                                                       return AlertDialog(
                                                                         title: Text(
-                                                                            'already picked!'),
+                                                                            'Already picked!'),
+                                                                        content: Text(
+                                                                            'You have already picked ${gameItem["abbreviation2"]} for this game.'),
                                                                         actions: [
                                                                           TextButton(
                                                                             onPressed: () =>
                                                                                 Navigator.pop(alertDialogContext),
                                                                             child:
-                                                                                Text('Ok'),
+                                                                                Text('OK'),
                                                                           ),
                                                                         ],
                                                                       );
@@ -570,37 +698,28 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                     SnackBar(
                                                                       content:
                                                                           Text(
-                                                                        // getJsonField(
-                                                                        gameItem[
-                                                                            "abbreviation2"],
-                                                                        //   r'''$.home''',
-                                                                        // ).toString(),,
+                                                                        'Selected: ${gameItem["abbreviation2"]}',
                                                                         style:
                                                                             TextStyle(
                                                                           color:
                                                                               Colors.white,
                                                                           fontSize:
-                                                                              24,
+                                                                              16,
                                                                         ),
                                                                       ),
                                                                       duration: Duration(
                                                                           milliseconds:
-                                                                              500),
+                                                                              1000),
                                                                       backgroundColor:
-                                                                          Color(
-                                                                              0x85114802),
+                                                                          Colors.green,
                                                                     ),
                                                                   );
-                                                                  // FFAppState()
-                                                                  //     .update(() {
                                                                   dataProvider
                                                                           .picked =
                                                                       true;
-                                                                  // });
                                                                 }
 
-                                                                // FFAppState()
-                                                                //     .update(() {
+                                                                // Remove opposing team and add selected team
                                                                 dataProvider
                                                                     .removeFromPlayerPicks(
                                                                         gameItem[
@@ -609,10 +728,30 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                     .addToPlayerPicks(
                                                                         gameItem[
                                                                             "abbreviation2"]);
-                                                                // });
+                                                                print('Updated picks: ${dataProvider.playerPicks}');
                                                               },
-                                                              child: Center(
+                                                              child: Container(
+                                                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                                decoration: BoxDecoration(
+                                                                  color: dataProvider
+                                                                          .playerPicks!
+                                                                          .contains(gameItem[
+                                                                              "abbreviation2"])
+                                                                      ? Colors.green
+                                                                      : Color(0x733474E0),
+                                                                  borderRadius: BorderRadius.circular(25),
+                                                                  border: Border.all(
+                                                                    color: dataProvider
+                                                                            .playerPicks!
+                                                                            .contains(gameItem[
+                                                                                "abbreviation2"])
+                                                                        ? Colors.greenAccent
+                                                                        : Colors.white,
+                                                                    width: 2,
+                                                                  ),
+                                                                ),
                                                                 child: Row(
+                                                                  mainAxisSize: MainAxisSize.min,
                                                                   children: [
                                                                     Text(
                                                                       gameItem[
@@ -621,26 +760,26 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                           fontWeight: FontWeight
                                                                               .bold,
                                                                           color:
-                                                                              Colors.white),
+                                                                              Colors.white,
+                                                                          fontSize: 16),
                                                                     ),
-                                                                    dataProvider
-                                                                            .playerPicks!
-                                                                            .contains(gameItem[
-                                                                                "abbreviation2"])
-                                                                        ? Icon(
-                                                                            Icons
-                                                                                .check,
-                                                                            color:
-                                                                                Colors.white)
-                                                                        : Container()
+                                                                    if (dataProvider
+                                                                        .playerPicks!
+                                                                        .contains(gameItem[
+                                                                            "abbreviation2"]))
+                                                                      Container(
+                                                                        margin: EdgeInsets.only(left: 8),
+                                                                        child: Icon(
+                                                                          Icons
+                                                                              .check_circle,
+                                                                          color:
+                                                                              Colors.white,
+                                                                          size: 20,
+                                                                        ),
+                                                                      )
                                                                   ],
                                                                 ),
                                                               )
-                                                              // getJsonField(
-                                                              //   gameItem,
-                                                              //   r'''$.home''',
-                                                              // ).toString(),
-                                                              // options:
 
                                                               ),
                                                           SvgPicture.network(
@@ -798,9 +937,8 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                   child:
                                       Image.asset("assets/images/checked.png")),
                               onPressed: () async {
-                                var _shouldSetState = false;
-                                if (tieBreakerController.text == null ||
-                                    tieBreakerController.text == '') {
+                                var shouldSetState = false;
+                                if (tieBreakerController.text.isEmpty) {
                                   await showDialog(
                                     context: context,
                                     builder: (alertDialogContext) {
@@ -817,8 +955,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                       );
                                     },
                                   );
-                                  // if (_shouldSetState) setState(() {});
-                                  // return;
+                                  return;
                                 } else if (dataProvider.playerPicks!.length !=
                                     data!.length) {
                                   await showDialog(
@@ -838,26 +975,26 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                     },
                                   );
                                 } else {
-                                  // FFAppState().update(() {
                                   dataProvider.tiebreaker =
                                       int.parse(tieBreakerController.text);
-                                  // });
                                   dataProvider.amount =
-                                      await dataProvider.countGames(
+                                      dataProvider.countGames(
                                     dataProvider.playerPicks!.toList(),
                                   );
-                                  _shouldSetState = true;
+                                  shouldSetState = true;
 
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PlayerPicksWidget(
-                                        edit: true,
-                                        id: id,
+                                  if (mounted) {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PlayerPicksWidget(
+                                          edit: true,
+                                          id: id,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                  if (_shouldSetState) setState(() {});
+                                    );
+                                  }
+                                  if (shouldSetState && mounted) setState(() {});
                                 }
                               },
                             ),

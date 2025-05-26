@@ -14,6 +14,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/picks.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
+import 'Play.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 class LeaderboardWidget extends StatefulWidget {
@@ -313,7 +314,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                       padding: EdgeInsetsDirectional.fromSTEB(16, 15, 16, 0),
                       child: Row(
                         mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
@@ -326,29 +327,58 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                               ),
                             ),
                           ),
-                          Spacer(),
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => GamePlayWidget(
-                                      selectedValue: selectedValue),
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PlayWidget(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primary,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                              );
-                            },
-                            child: Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
-                              child: Text(
-                                'View Game Scores'.toUpperCase(),
-                                style: TextStyle(
-                                  fontFamily: 'Lexend Deca',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                                child: Text(
+                                  'Play Now',
+                                  style: TextStyle(
+                                    fontFamily: 'Lexend Deca',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
+                              SizedBox(width: 16),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => GamePlayWidget(
+                                          selectedValue: selectedValue),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
+                                  child: Text(
+                                    'View Game Scores'.toUpperCase(),
+                                    style: TextStyle(
+                                      fontFamily: 'Lexend Deca',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -531,20 +561,54 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                 CrossAxisAlignment
                                                                     .start,
                                                             children: [
-                                                              Text(
-                                                                '${data![index]['displayName']}'
-                                                                    .toUpperCase(),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontFamily:
-                                                                      'Lexend Deca',
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                ),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                    '${data![index]['displayName']}'
+                                                                        .toUpperCase(),
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontFamily:
+                                                                          'Lexend Deca',
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontSize: 16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                    ),
+                                                                  ),
+                                                                  if (data![index]["uid"] == user!.uid && 
+                                                                      DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
+                                                                    Container(
+                                                                      margin: EdgeInsets.only(left: 8),
+                                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.green.withOpacity(0.2),
+                                                                        borderRadius: BorderRadius.circular(12),
+                                                                        border: Border.all(color: Colors.green, width: 1),
+                                                                      ),
+                                                                      child: Row(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.edit,
+                                                                            color: Colors.green,
+                                                                            size: 12,
+                                                                          ),
+                                                                          SizedBox(width: 4),
+                                                                          Text(
+                                                                            'Editable',
+                                                                            style: TextStyle(
+                                                                              color: Colors.green,
+                                                                              fontSize: 12,
+                                                                              fontWeight: FontWeight.w500,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                ],
                                                               ),
                                                               Expanded(
                                                                 child: Padding(
@@ -727,20 +791,54 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                 CrossAxisAlignment
                                                                     .start,
                                                             children: [
-                                                              Text(
-                                                                '${data![index]['displayName']}'
-                                                                    .toUpperCase(),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontFamily:
-                                                                      'Lexend Deca',
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                ),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                    '${data![index]['displayName']}'
+                                                                        .toUpperCase(),
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontFamily:
+                                                                          'Lexend Deca',
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontSize: 16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                    ),
+                                                                  ),
+                                                                  if (data![index]["uid"] == user!.uid && 
+                                                                      DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
+                                                                    Container(
+                                                                      margin: EdgeInsets.only(left: 8),
+                                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.green.withOpacity(0.2),
+                                                                        borderRadius: BorderRadius.circular(12),
+                                                                        border: Border.all(color: Colors.green, width: 1),
+                                                                      ),
+                                                                      child: Row(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.edit,
+                                                                            color: Colors.green,
+                                                                            size: 12,
+                                                                          ),
+                                                                          SizedBox(width: 4),
+                                                                          Text(
+                                                                            'Editable',
+                                                                            style: TextStyle(
+                                                                              color: Colors.green,
+                                                                              fontSize: 12,
+                                                                              fontWeight: FontWeight.w500,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                ],
                                                               ),
                                                               Expanded(
                                                                 child: Padding(
@@ -1025,20 +1123,54 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                 CrossAxisAlignment
                                                                     .start,
                                                             children: [
-                                                              Text(
-                                                                '${data![index]['displayName']}'
-                                                                    .toUpperCase(),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontFamily:
-                                                                      'Lexend Deca',
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                ),
+                                                              Row(
+                                                                children: [
+                                                                  Text(
+                                                                    '${data![index]['displayName']}'
+                                                                        .toUpperCase(),
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontFamily:
+                                                                          'Lexend Deca',
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontSize: 16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                    ),
+                                                                  ),
+                                                                  if (data![index]["uid"] == user!.uid && 
+                                                                      DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
+                                                                    Container(
+                                                                      margin: EdgeInsets.only(left: 8),
+                                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.green.withOpacity(0.2),
+                                                                        borderRadius: BorderRadius.circular(12),
+                                                                        border: Border.all(color: Colors.green, width: 1),
+                                                                      ),
+                                                                      child: Row(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.edit,
+                                                                            color: Colors.green,
+                                                                            size: 12,
+                                                                          ),
+                                                                          SizedBox(width: 4),
+                                                                          Text(
+                                                                            'Editable',
+                                                                            style: TextStyle(
+                                                                              color: Colors.green,
+                                                                              fontSize: 12,
+                                                                              fontWeight: FontWeight.w500,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                ],
                                                               ),
                                                               Expanded(
                                                                 child: Padding(
@@ -1420,11 +1552,8 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                           Padding(
                                                             padding:
                                                                 EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        15,
-                                                                        1,
-                                                                        1,
-                                                                        1),
+                                                                    .fromSTEB(15, 1,
+                                                                        1, 1),
                                                             child: Container(
                                                               height: 50,
                                                               width: 50,
@@ -1450,8 +1579,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                             child: Padding(
                                                               padding:
                                                                   EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          14,
+                                                                      .fromSTEB(14,
                                                                           8,
                                                                           4,
                                                                           0),
@@ -1501,8 +1629,8 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                             TextStyle(
                                                                           fontFamily:
                                                                               'Lexend Deca',
-                                                                          color:
-                                                                              Colors.white,
+                                                                          color: Colors
+                                                                              .white,
                                                                           fontSize:
                                                                               13,
                                                                           fontWeight:
