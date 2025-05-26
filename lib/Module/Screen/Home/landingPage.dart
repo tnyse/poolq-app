@@ -1,4 +1,5 @@
 import 'Play.dart';
+import 'EditPlay.dart';
 import 'dart:convert';
 import '../Auth/Forget.dart';
 import '../Auth/Signup.dart';
@@ -251,11 +252,11 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   dataProvider.game == null) {
                                 customSnackbar(context, 'loading games');
                               } else {
-                                // Always navigate to PlayWidget for entry form
+                                // Navigate to EditPlayWidget for entry form (same as leaderboard Play Now)
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PlayWidget(),
+                                    builder: (context) => EditPlayWidget(),
                                   ),
                                 );
                               }
