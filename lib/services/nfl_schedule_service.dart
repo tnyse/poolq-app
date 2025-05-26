@@ -65,7 +65,7 @@ class NFLScheduleService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return _parseGamesFromESPN(data);
+        return _parseESPNResponse(data);
       } else {
         print('ESPN API returned status: ${response.statusCode}');
         return [];
@@ -123,52 +123,67 @@ class NFLScheduleService {
 
     // Use mock data as last resort
     print('Using mock data for week $weekName');
-    return _getMockGamesForWeek(weekName);
+    return _createMockData();
   }
 
   /// Parse games from ESPN API response
-  List<Map<String, dynamic>> _parseGamesFromESPN(Map<String, dynamic> data) {
-    List<Map<String, dynamic>> games = [];
-    
-    final events = data['events'] as List?;
-    if (events == null) return games;
-
-    for (var event in events) {
-      try {
-        final competitions = event['competitions'] as List?;
-        if (competitions == null || competitions.isEmpty) continue;
-        
-        final competition = competitions[0];
-        final competitors = competition['competitors'] as List?;
-        if (competitors == null || competitors.length < 2) continue;
-
-        final homeTeam = competitors.firstWhere((c) => c['homeAway'] == 'home');
-        final awayTeam = competitors.firstWhere((c) => c['homeAway'] == 'away');
-
-        final game = {
-          '_id': event['id'],
-          'date': _formatDate(event['date']),
-          'time': _formatTime(event['date']),
-          'year': '2025',
-          'week': data['week']?['number']?.toString() ?? '1',
-          'abbreviation': _getTeamAbbreviation(awayTeam['team']['abbreviation']),
-          'abbreviation2': _getTeamAbbreviation(homeTeam['team']['abbreviation']),
-          'fullname': awayTeam['team']['displayName'],
-          'fullname2': homeTeam['team']['displayName'],
-          'picture': awayTeam['team']['logo'],
-          'picture2': homeTeam['team']['logo'],
-          'score': awayTeam['score']?.toString() ?? '0',
-          'score2': homeTeam['score']?.toString() ?? '0',
-          'status': competition['status']['type']['description'] ?? 'Scheduled',
-        };
-
-        games.add(game);
-      } catch (e) {
-        print('Error parsing game from ESPN: $e');
+  List<Map<String, dynamic>> _parseESPNResponse(Map<String, dynamic> data) {
+    try {
+      List<Map<String, dynamic>> games = [];
+      
+      if (data['events'] != null) {
+        for (var event in data['events']) {
+          var competition = event['competitions']?[0];
+          if (competition != null) {
+            var competitors = competition['competitors'];
+            if (competitors != null && competitors.length >= 2) {
+              // Parse the ISO date and format it consistently
+              String originalDate = event['date'] ?? '';
+              String formattedDate = _formatGameDate(originalDate);
+              
+              var homeTeam = competitors.firstWhere((c) => c['homeAway'] == 'home', orElse: () => competitors[0]);
+              var awayTeam = competitors.firstWhere((c) => c['homeAway'] == 'away', orElse: () => competitors[1]);
+              
+              games.add({
+                'date': formattedDate, // Use consistently formatted date
+                'home': homeTeam['team']['displayName'] ?? 'TBD',
+                'away': awayTeam['team']['displayName'] ?? 'TBD',
+                'abbreviation': _getTeamAbbreviation(homeTeam['team']['displayName'] ?? ''),
+                'abbreviation2': _getTeamAbbreviation(awayTeam['team']['displayName'] ?? ''),
+                'picture': homeTeam['team']['logo'] ?? '',
+                'picture2': awayTeam['team']['logo'] ?? '',
+                'score': homeTeam['score']?.toString() ?? '0',
+                'score2': awayTeam['score']?.toString() ?? '0',
+                'status': competition['status']['type']['name'] ?? 'scheduled',
+              });
+            }
+          }
+        }
       }
+      
+      print('Successfully parsed ${games.length} games from ESPN API');
+      return games;
+    } catch (e) {
+      print('Error parsing ESPN response: $e');
+      return [];
     }
+  }
 
-    return games;
+  /// Helper method to format dates consistently
+  String _formatGameDate(String isoDate) {
+    try {
+      if (isoDate.isEmpty) return DateTime.now().toIso8601String();
+      
+      // Parse the ISO date
+      DateTime dateTime = DateTime.parse(isoDate);
+      
+      // Format it consistently with what the app expects
+      // The app seems to expect format like "2024-01-15T18:00:00.000Z"
+      return dateTime.toUtc().toIso8601String();
+    } catch (e) {
+      print('Error formatting date $isoDate: $e');
+      return DateTime.now().toIso8601String();
+    }
   }
 
   /// Parse games from NFL.com API response
@@ -234,25 +249,51 @@ class NFLScheduleService {
     }
   }
 
-  /// Mock data fallback
-  List<Map<String, dynamic>> _getMockGamesForWeek(String weekName) {
-    // Return basic mock data structure
+  List<Map<String, dynamic>> _createMockData() {
+    print('Creating mock NFL schedule data...');
+    
+    // Get current date and add some days for realistic game dates
+    DateTime now = DateTime.now();
+    DateTime gameDate1 = now.add(Duration(days: 1));
+    DateTime gameDate2 = now.add(Duration(days: 3));
+    DateTime gameDate3 = now.add(Duration(days: 7));
+    
     return [
       {
-        '_id': 'mock_game_1',
-        'date': 'Sunday September 7th, 2025',
-        'time': '1:00 PM',
-        'year': '2025',
-        'week': '1',
+        'date': gameDate1.toUtc().toIso8601String(), // Consistent date format
+        'home': 'Kansas City Chiefs',
+        'away': 'San Francisco 49ers', 
         'abbreviation': 'KC',
         'abbreviation2': 'SF',
-        'fullname': 'Kansas City Chiefs',
-        'fullname2': 'San Francisco 49ers',
-        'picture': 'https://static.www.nfl.com/image/private/f_auto/league/ujshjqvmnxce8m4obmvs',
-        'picture2': 'https://static.www.nfl.com/image/private/f_auto/league/dxibuyxbk0b9ua5ih9hn',
-        'score': '0',
-        'score2': '0',
-        'status': 'Scheduled',
+        'picture': 'https://a.espncdn.com/i/teamlogos/nfl/500/kc.png',
+        'picture2': 'https://a.espncdn.com/i/teamlogos/nfl/500/sf.png',
+        'score': '28',
+        'score2': '21',
+        'status': 'completed'
+      },
+      {
+        'date': gameDate2.toUtc().toIso8601String(), // Consistent date format
+        'home': 'Baltimore Ravens',
+        'away': 'Buffalo Bills',
+        'abbreviation': 'BAL', 
+        'abbreviation2': 'BUF',
+        'picture': 'https://a.espncdn.com/i/teamlogos/nfl/500/bal.png',
+        'picture2': 'https://a.espncdn.com/i/teamlogos/nfl/500/buf.png',
+        'score': '24',
+        'score2': '17',
+        'status': 'completed'
+      },
+      {
+        'date': gameDate3.toUtc().toIso8601String(), // Consistent date format  
+        'home': 'Detroit Lions',
+        'away': 'Tampa Bay Buccaneers',
+        'abbreviation': 'DET',
+        'abbreviation2': 'TB', 
+        'picture': 'https://a.espncdn.com/i/teamlogos/nfl/500/det.png',
+        'picture2': 'https://a.espncdn.com/i/teamlogos/nfl/500/tb.png',
+        'score': '31',
+        'score2': '23', 
+        'status': 'completed'
       }
     ];
   }
