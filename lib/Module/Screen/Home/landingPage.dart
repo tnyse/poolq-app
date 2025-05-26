@@ -14,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/Module/Screen/Home/LeaderbpardWidget.dart';
+import '../../../services/nfl_schedule_service.dart';
 
 // import '/auth/firebase_auth/auth_util.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
@@ -35,28 +36,62 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   List<GamesModel>? data;
 
   Future getGame(context) async {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    print('${mainUrl}/getnlf/${dataProvider.game!["name"]}');
-    print('${mainUrl}/getnlf/${dataProvider.game!["name"]}');
-
-    var response = await http.get(
-        Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    List body1 = body;
-    List<GamesModel> gameModel = body1.map((data) {
-      return GamesModel.fromJson(data);
-    }).toList();
-    setState(() {
-      data = gameModel;
-      print(data);
-    });
-    return body;
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final scheduleService = NFLScheduleService();
+    
+    try {
+      print('Fetching games for home page from multiple sources...');
+      
+      // Try the new schedule service with multiple fallback options
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(
+        dataProvider.game!["name"]
+      );
+      
+      // If no games from live APIs, try the original custom API
+      if (games.isEmpty) {
+        print('Trying original API: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
+        
+        var response = await http.get(
+          Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(Duration(seconds: 20));
+        
+        if (response.statusCode == 200) {
+          var body = json.decode(response.body);
+          if (body is List && body.isNotEmpty) {
+            // Convert to GamesModel format if needed
+            List<GamesModel> gameModel = body.map((data) {
+              return GamesModel.fromJson(data);
+            }).toList();
+            setState(() {
+              data = gameModel;
+              print('Loaded ${data!.length} games from custom API');
+            });
+            return body;
+          }
+        }
+      } else {
+        // Convert Map format to GamesModel format
+        List<GamesModel> gameModel = games.map((gameData) {
+          return GamesModel.fromJson(gameData);
+        }).toList();
+        setState(() {
+          data = gameModel;
+          print('Loaded ${data!.length} games from NFL APIs');
+        });
+        return games;
+      }
+      
+    } catch (e) {
+      print('Error fetching games for home page: $e');
+      // Provide fallback mock data
+      setState(() {
+        data = [];
+      });
+    }
   }
 
   @override
@@ -215,21 +250,15 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                               if (dataProvider.data == null ||
                                   dataProvider.game == null) {
                                 customSnackbar(context, 'loading games');
-                              } else if (widget.isEmpty == false) {
-                                setState(() {
-                                  widget.controller!.jumpToPage(1);
-                                  dataProvider.setValue(1);
-                                });
                               } else {
+                                // Always navigate to PlayWidget for entry form
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => PlayWidget(),
                                   ),
-                                  // (r) => false,
                                 );
                               }
-                              // await authManager.signOut();
                             },
                             child: Text(
                               'Let\'s Play!',

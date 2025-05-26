@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
+import '../../../services/nfl_schedule_service.dart';
 
 
 class PlayWidget extends StatefulWidget {
@@ -33,24 +34,61 @@ class _PlayWidgetState extends State<PlayWidget> {
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
   Future getGame(context) async {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    print('${mainUrl}/getnlf/${dataProvider.game!["name"]}');
-    var response = await http.get(
-        Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Access-Control-Allow-Origin': '*',
-        }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    print("loading games");
-    print(body);
-    // print(body);
-    List body1 = body;
-    setState(() {
-      data = body1;
-    });
-    return body;
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final scheduleService = NFLScheduleService();
+    
+    try {
+      print('Fetching games from multiple sources...');
+      
+      // Try the new schedule service with multiple fallback options
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(
+        dataProvider.game!["name"]
+      );
+      
+      // If no games from live APIs, try the original custom API
+      if (games.isEmpty) {
+        print('Trying original API: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
+        
+        var response = await http.get(
+          Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(Duration(seconds: 20));
+        
+        if (response.statusCode == 200) {
+          var body = json.decode(response.body);
+          if (body is List && body.isNotEmpty) {
+            games = body.cast<Map<String, dynamic>>();
+            print('Successfully loaded ${games.length} games from custom API');
+          }
+        }
+      }
+      
+      if (games.isNotEmpty) {
+        setState(() {
+          data = games;
+        });
+        print("Successfully loaded ${games.length} games");
+        return games;
+      } else {
+        throw Exception('No games data available from any source');
+      }
+      
+    } catch (e) {
+      print('Error fetching games: $e');
+      // Show error to user but still try to continue with empty data
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading games: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Stream<QuerySnapshot>? _pickrecord;

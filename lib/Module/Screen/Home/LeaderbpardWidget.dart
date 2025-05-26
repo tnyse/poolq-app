@@ -15,6 +15,7 @@ import 'package:poolqapp/Module/Screen/Home/picks.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
 import 'Play.dart';
+import '../../../services/nfl_schedule_service.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 class LeaderboardWidget extends StatefulWidget {
@@ -39,28 +40,51 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   bool? played;
 
   Future getGame(context, selectedValue) async {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    AuthProviders authProvider =
-        Provider.of<AuthProviders>(context, listen: false);
-    var response = await http.get(
-        Uri.parse(
-            '${mainUrl}/getnlf/${dataProvider.game!["mode"]}${selectedValue}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Access-Control-Allow-Origin': '*',
-        }).timeout(Duration(seconds: 20));
-    // print(response.body);
-    // print(response.body);
-    var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    List body1 = body;
-    setState(() {
-      data2 = body1;
-    });
-
-    return body;
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final scheduleService = NFLScheduleService();
+    
+    try {
+      print('Fetching games for leaderboard from multiple sources...');
+      
+      String weekName = "${dataProvider.game!["mode"]}$selectedValue";
+      
+      // Try the new schedule service with multiple fallback options
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(weekName);
+      
+      // If no games from live APIs, try the original custom API
+      if (games.isEmpty) {
+        print('Trying original API for leaderboard: ${mainUrl}/getnlf/$weekName');
+        
+        var response = await http.get(
+          Uri.parse('${mainUrl}/getnlf/$weekName'),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(Duration(seconds: 20));
+        
+        if (response.statusCode == 200) {
+          var body = json.decode(response.body);
+          if (body is List && body.isNotEmpty) {
+            setState(() {
+              data2 = body;
+            });
+            return body;
+          }
+        }
+      } else {
+        setState(() {
+          data2 = games;
+        });
+        print('Successfully loaded ${games.length} games for leaderboard from NFL APIs');
+        return games;
+      }
+      
+    } catch (e) {
+      print('Error fetching games for leaderboard: $e');
+    }
+    
+    return [];
   }
 
   // ${mainUrl}/getnlf/${dataProvider.game!["mode"]}${widget.selectedValue}

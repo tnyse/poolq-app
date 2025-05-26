@@ -14,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../services/nfl_schedule_service.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 // import 'play_model.dart';
@@ -36,35 +37,51 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
   Future getGame(context) async {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    AuthProviders authProvider =
-        Provider.of<AuthProviders>(context, listen: false);
-    var response = await http.get(
-        Uri.parse(
-            '${mainUrl}/getnlf/${dataProvider.game!["mode"]}${widget.selectedValue}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Access-Control-Allow-Origin': '*',
-        }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    List body1 = body;
-    setState(() {
-      data = body1;
-    });
-    // List<Agents> AgentLists = body1.map((data) {
-    //   return Agents.fromJson(data);
-    // }).toList();
-    // if (response.statusCode == 200 ||
-    //     response.statusCode == 201 ||
-    //     response.statusCode == 202) {
-    //
-    // } else {
-    //   print('failed');
-    // }
-    return body;
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final scheduleService = NFLScheduleService();
+    
+    try {
+      print('Fetching games for GamePlayWidget from multiple sources...');
+      
+      String weekName = "${dataProvider.game!["mode"]}${widget.selectedValue}";
+      
+      // Try the new schedule service with multiple fallback options
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(weekName);
+      
+      // If no games from live APIs, try the original custom API
+      if (games.isEmpty) {
+        print('Trying original API for GamePlayWidget: ${mainUrl}/getnlf/$weekName');
+        
+        var response = await http.get(
+          Uri.parse('${mainUrl}/getnlf/$weekName'),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(Duration(seconds: 20));
+        
+        if (response.statusCode == 200) {
+          var body = json.decode(response.body);
+          if (body is List && body.isNotEmpty) {
+            setState(() {
+              data = body;
+            });
+            return body;
+          }
+        }
+      } else {
+        setState(() {
+          data = games;
+        });
+        print('Successfully loaded ${games.length} games for GamePlayWidget from NFL APIs');
+        return games;
+      }
+      
+    } catch (e) {
+      print('Error fetching games for GamePlayWidget: $e');
+    }
+    
+    return [];
   }
 
   Stream<QuerySnapshot>? _pickrecord;

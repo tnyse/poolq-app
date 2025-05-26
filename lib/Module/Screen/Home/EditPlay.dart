@@ -15,6 +15,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
+import '../../../services/nfl_schedule_service.dart';
 
 class EditPlayWidget extends StatefulWidget {
   const EditPlayWidget({Key? key}) : super(key: key);
@@ -35,39 +36,54 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
   
   Future getGame(context) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final scheduleService = NFLScheduleService();
     
     try {
-      print('Fetching games for edit from: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      print('Fetching games for edit from multiple sources...');
       
-      var response = await http.get(
-        Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Access-Control-Allow-Origin': '*',
-        },
-      ).timeout(Duration(seconds: 30));
+      // Try the new schedule service with multiple fallback options
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(
+        dataProvider.game!["name"]
+      );
       
-      print('API Response status: ${response.statusCode}');
-      print('API Response body: ${response.body}');
-      
-      if (response.statusCode == 200) {
-        var body = json.decode(response.body);
+      // If no games from live APIs, try the original custom API
+      if (games.isEmpty) {
+        print('Trying original API: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
         
-        if (body is List && body.isNotEmpty) {
-          List body1 = body;
-          setState(() {
-            data = body1;
-            isLoading = false;
-            errorMessage = null;
-          });
-          print('Successfully loaded ${body1.length} games for editing');
-          return body;
-        } else {
-          throw Exception('No games data received from API');
+        var response = await http.get(
+          Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(Duration(seconds: 30));
+        
+        if (response.statusCode == 200) {
+          var body = json.decode(response.body);
+          if (body is List && body.isNotEmpty) {
+            games = body.cast<Map<String, dynamic>>();
+            print('Successfully loaded ${games.length} games from custom API');
+          }
         }
-      } else {
-        throw Exception('API request failed with status: ${response.statusCode}');
       }
+      
+      if (games.isNotEmpty) {
+        setState(() {
+          data = games;
+          isLoading = false;
+          errorMessage = null;
+        });
+        print('Successfully loaded ${games.length} games for editing');
+        return games;
+      } else {
+        throw Exception('No games data available from any source');
+      }
+      
     } catch (e) {
       print('Error fetching games for edit: $e');
       setState(() {
@@ -82,6 +98,11 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
             content: Text('Error loading games: $e'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () => getGame(context),
+            ),
           ),
         );
       }
