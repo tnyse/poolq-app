@@ -155,6 +155,7 @@ class NFLScheduleService {
                 'score': homeTeam['score']?.toString() ?? '0',
                 'score2': awayTeam['score']?.toString() ?? '0',
                 'status': competition['status']['type']['name'] ?? 'scheduled',
+                'time': _formatTime(originalDate),
               });
             }
           }
@@ -193,7 +194,7 @@ class NFLScheduleService {
     
     String weekday = weekdays[dateTime.weekday - 1];
     String month = months[dateTime.month - 1];
-    String day = '${dateTime.day}${_getOrdinalSuffix(dateTime.day)}';
+    String day = '${dateTime.day}${_getOrdinalSuffix(dateTime.day).toUpperCase()}';
     String year = '${dateTime.year}';
     
     return '$weekday $month $day, $year';
@@ -282,7 +283,8 @@ class NFLScheduleService {
         'picture2': 'https://a.espncdn.com/i/teamlogos/nfl/500/sf.png',
         'score': '28',
         'score2': '21',
-        'status': 'completed'
+        'status': 'completed',
+        'time': _formatTime(gameDate1.toIso8601String())
       },
       {
         'date': _formatDateForApp(gameDate2), // Use consistent app format
@@ -294,7 +296,8 @@ class NFLScheduleService {
         'picture2': 'https://a.espncdn.com/i/teamlogos/nfl/500/buf.png',
         'score': '24',
         'score2': '17',
-        'status': 'completed'
+        'status': 'completed',
+        'time': _formatTime(gameDate2.toIso8601String())
       },
       {
         'date': _formatDateForApp(gameDate3), // Use consistent app format  
@@ -306,7 +309,8 @@ class NFLScheduleService {
         'picture2': 'https://a.espncdn.com/i/teamlogos/nfl/500/tb.png',
         'score': '31',
         'score2': '23', 
-        'status': 'completed'
+        'status': 'completed',
+        'time': _formatTime(gameDate3.toIso8601String())
       }
     ];
   }

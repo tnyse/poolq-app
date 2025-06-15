@@ -20,16 +20,24 @@ import 'package:poolqapp/Provider/AuthProviders.dart';  // Fixed import path
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Load environment variables first
+  try {
+    await dotenv.load(fileName: "assets/.env");
+  } catch (e) {
+    debugPrint("Error loading .env file: $e");
+    // Continue without .env file
+  }
+  
   // Initialize Firebase
   await Firebase.initializeApp(
     options: kIsWeb
-        ? const FirebaseOptions(
-            apiKey: "AIzaSyB_8GwxAp1O-4lW0bLSHHD8ORhrDD2rj2U",
-            authDomain: "poolr-b5392.firebaseapp.com",
-            projectId: "poolr-b5392",
-            storageBucket: "poolr-b5392.appspot.com",
-            messagingSenderId: "841410602650",
-            appId: "1:841410602650:web:86f41c34cc3356c0602123",
+        ? FirebaseOptions(
+            apiKey: dotenv.env['FIREBASE_API_KEY'] ?? "AIzaSyB_8GwxAp1O-4lW0bLSHHD8ORhrDD2rj2U",
+            authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? "poolr-b5392.firebaseapp.com",
+            projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? "poolr-b5392",
+            storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? "poolr-b5392.appspot.com",
+            messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? "841410602650",
+            appId: dotenv.env['FIREBASE_APP_ID'] ?? "1:841410602650:web:86f41c34cc3356c0602123",
           )
         : null,
   );
@@ -41,14 +49,6 @@ Future<void> main() async {
   final authProvider = AuthProviders();
   await authProvider.initializePersistence();
 
-  // Load environment variables
-  try {
-    await dotenv.load(fileName: "assets/.env");
-  } catch (e) {
-    debugPrint("Error loading .env file: $e");
-    // Continue without .env file
-  }
-  
   // Initialize Stripe
   try {
     await PaymentService().initializeStripe();
@@ -136,18 +136,11 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Image.asset(
-              //   'assets/images/logo.png',
-              //   width: 150,
-              //   height: 150,
-              //   errorBuilder: (context, error, stackTrace) {
-              //     return Icon(
-              //       Icons.sports_football,
-              //       size: 150,
-              //       color: Colors.white,
-              //     );
-              //   },
-              // ),
+              Icon(
+                Icons.sports_football,
+                size: 150,
+                color: Colors.white,
+              ),
               SizedBox(height: 20),
               Text(
                 'PoolQ',

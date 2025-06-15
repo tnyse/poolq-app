@@ -171,6 +171,27 @@ class _PlayWidgetState extends State<PlayWidget> {
                                 width: 67,
                                 height: 90,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  print('Error loading logo: $error');
+                                  return Container(
+                                    width: 67,
+                                    height: 90,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'PQ',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             Padding(
@@ -335,364 +356,407 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                             MainAxisAlignment
                                                                 .spaceEvenly,
                                                         children: [
-                                                          SvgPicture.network(
-                                                              gameItem[
-                                                                  "picture"],
-                                                              width: 40,
-                                                              height: 40,
-                                                              placeholderBuilder:
-                                                                  (BuildContext
-                                                                          context) =>
-                                                                      Container()),
-                                                          TextButton(
-                                                            onPressed:
-                                                                () async {
-                                                              if (dataProvider
-                                                                  .playerPicks!
-                                                                  .contains(
-                                                                      gameItem[
-                                                                          "abbreviation"])) {
-                                                                await showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (alertDialogContext) {
-                                                                    return AlertDialog(
-                                                                      title: Text(
-                                                                          'already picked!'),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                          onPressed: () =>
-                                                                              Navigator.pop(alertDialogContext),
-                                                                          child:
-                                                                              Text('Ok'),
+                                                          Expanded(
+                                                            flex: 2,
+                                                            child: Column(
+                                                              children: [
+                                                                Image.network(
+                                                                  gameItem["picture2"] ?? '',
+                                                                  width: 40,
+                                                                  height: 40,
+                                                                  fit: BoxFit.contain,
+                                                                  errorBuilder: (context, error, stackTrace) => Container(
+                                                                    width: 40,
+                                                                    height: 40,
+                                                                    decoration: BoxDecoration(
+                                                                      color: Colors.blue.shade100,
+                                                                      shape: BoxShape.circle,
+                                                                    ),
+                                                                    child: Center(
+                                                                      child: Text(
+                                                                        gameItem["abbreviation2"] ?? 'T',
+                                                                        style: TextStyle(
+                                                                          fontSize: 12,
+                                                                          fontWeight: FontWeight.bold,
+                                                                          color: Colors.blue.shade800,
                                                                         ),
-                                                                      ],
-                                                                    );
-                                                                  },
-                                                                );
-                                                                return;
-                                                              } else {
-                                                                ScaffoldMessenger.of(
-                                                                        context)
-                                                                    .showSnackBar(
-                                                                  SnackBar(
-                                                                    content:
-                                                                        Text(
-                                                                      gameItem[
-                                                                          "abbreviation"],
-                                                                      style:
-                                                                          TextStyle(
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontSize:
-                                                                            24,
                                                                       ),
                                                                     ),
-                                                                    duration: Duration(
-                                                                        milliseconds:
-                                                                            500),
-                                                                    backgroundColor:
-                                                                        Color(
-                                                                            0x85114802),
                                                                   ),
-                                                                );
-                                                              }
-                                                              //
-                                                              // FFAppState()
-                                                              //     .update(() {
-                                                              dataProvider
-                                                                  .removeFromPlayerPicks(
-                                                                      gameItem[
-                                                                          "abbreviation2"]);
-                                                              dataProvider
-                                                                  .addToPlayerPicks(
-                                                                      gameItem[
-                                                                          "abbreviation"]);
-                                                              // });
-                                                            },
-                                                            child: Row(
-                                                              children: [
-                                                                Text(
-                                                                  gameItem[
-                                                                      "abbreviation"],
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: Colors
-                                                                          .white),
                                                                 ),
-                                                                dataProvider
-                                                                        .playerPicks!
-                                                                        .contains(gameItem[
-                                                                            "abbreviation"])
-                                                                    ? Icon(
-                                                                        Icons
-                                                                            .check,
+                                                                SizedBox(height: 8),
+                                                                Text(
+                                                                  gameItem["away"] ?? gameItem["abbreviation2"] ?? '',
+                                                                  textAlign: TextAlign.center,
+                                                                  style: TextStyle(
+                                                                    fontSize: 12,
+                                                                    fontWeight: FontWeight.w500,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(height: 4),
+                                                                Container(
+                                                                  width: 90,
+                                                                  child: TextButton(
+                                                                    onPressed: () async {
+                                                                      if (dataProvider
+                                                                          .playerPicks!
+                                                                          .contains(
+                                                                              gameItem[
+                                                                                  "abbreviation2"])) {
+                                                                        await showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (alertDialogContext) {
+                                                                            return AlertDialog(
+                                                                              title: Text(
+                                                                                  'already picked!'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                  onPressed: () =>
+                                                                                      Navigator.pop(alertDialogContext),
+                                                                                  child:
+                                                                                      Text('Ok'),
+                                                                                ),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                        return;
+                                                                      } else {
+                                                                        ScaffoldMessenger.of(
+                                                                                context)
+                                                                            .showSnackBar(
+                                                                          SnackBar(
+                                                                            content:
+                                                                                Text(
+                                                                              gameItem[
+                                                                                  "abbreviation2"],
+                                                                              style:
+                                                                                  TextStyle(
+                                                                                color: Colors
+                                                                                    .white,
+                                                                                fontSize:
+                                                                                    24,
+                                                                              ),
+                                                                            ),
+                                                                            duration: Duration(
+                                                                                milliseconds:
+                                                                                    500),
+                                                                            backgroundColor:
+                                                                                Color(
+                                                                                    0x85114802),
+                                                                          ),
+                                                                        );
+                                                                      }
+                                                                      dataProvider
+                                                                          .removeFromPlayerPicks(
+                                                                              gameItem[
+                                                                                  "abbreviation"]);
+                                                                      dataProvider
+                                                                          .addToPlayerPicks(
+                                                                              gameItem[
+                                                                                  "abbreviation2"]);
+                                                                    },
+                                                                    child: Row(
+                                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                                      mainAxisSize: MainAxisSize.min,
+                                                                      children: [
+                                                                        Text(
+                                                                          gameItem[
+                                                                              "abbreviation2"],
+                                                                          style: TextStyle(
+                                                                              fontWeight:
+                                                                                  FontWeight
+                                                                                      .bold,
+                                                                              color: Colors
+                                                                                  .white),
+                                                                        ),
+                                                                        if (dataProvider
+                                                                                .playerPicks!
+                                                                                .contains(gameItem[
+                                                                                    "abbreviation2"]))
+                                                                          Padding(
+                                                                            padding: EdgeInsets.only(left: 4),
+                                                                            child: Icon(
+                                                                                Icons
+                                                                                    .check,
+                                                                                color: Colors
+                                                                                    .white,
+                                                                                size: 16),
+                                                                          ),
+                                                                      ],
+                                                                    ),
+                                                                    style: ButtonStyle(
+                                                                      padding: MaterialStateProperty.all(
+                                                                          EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
+                                                                      backgroundColor:
+                                                                          MaterialStateProperty
+                                                                              .all(Color(
+                                                                                  0x733474E0)),
+                                                                      foregroundColor:
+                                                                          MaterialStateProperty
+                                                                              .all(Color(
+                                                                                  0xFFFFFFFF)),
+                                                                      textStyle:
+                                                                          MaterialStateProperty
+                                                                              .all(
+                                                                                  TextStyle(
+                                                                        fontFamily:
+                                                                            'Poppins',
                                                                         color: Colors
-                                                                            .white)
-                                                                    : Container()
+                                                                            .white,
+                                                                        fontSize: 12,
+                                                                      )),
+                                                                      elevation:
+                                                                          MaterialStateProperty
+                                                                              .all(2),
+                                                                      shape: MaterialStateProperty
+                                                                          .all(
+                                                                              RoundedRectangleBorder(
+                                                                        side:
+                                                                            BorderSide(
+                                                                          color: Colors
+                                                                              .transparent,
+                                                                          width: 1,
+                                                                        ),
+                                                                        borderRadius:
+                                                                            BorderRadius
+                                                                                .circular(
+                                                                                    20),
+                                                                      )),
+                                                                    ),
+                                                                  ),
+                                                                ),
                                                               ],
                                                             ),
-                                                            style: ButtonStyle(
-                                                              padding: MaterialStateProperty.all(
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          35,
-                                                                          5,
-                                                                          35,
-                                                                          5)),
-                                                              backgroundColor:
-                                                                  MaterialStateProperty
-                                                                      .all(Color(
-                                                                          0x733474E0)),
-                                                              foregroundColor:
-                                                                  MaterialStateProperty
-                                                                      .all(Color(
-                                                                          0x733474E0)),
-                                                              textStyle:
-                                                                  MaterialStateProperty
-                                                                      .all(
-                                                                          TextStyle(
-                                                                fontFamily:
-                                                                    'Poppins',
-                                                                color: Colors
-                                                                    .white,
-                                                              )),
-                                                              elevation:
-                                                                  MaterialStateProperty
-                                                                      .all(2),
-                                                              shape: MaterialStateProperty
-                                                                  .all(
-                                                                      RoundedRectangleBorder(
-                                                                side:
-                                                                    BorderSide(
-                                                                  color: Colors
-                                                                      .transparent,
-                                                                  width: 1,
-                                                                ),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            30),
-                                                              )),
-                                                            ),
                                                           ),
-                                                          Column(
-                                                            children: [
-                                                              Padding(
-                                                                padding:
-                                                                    EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            5,
-                                                                            0,
-                                                                            5,
-                                                                            0),
-                                                                child: Text(
+                                                          Expanded(
+                                                            flex: 1,
+                                                            child: Column(
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                Text(
                                                                   'AT',
-                                                                  // style: FlutterFlowTheme
-                                                                  //     .of(context)
-                                                                  //     .bodyMedium,
+                                                                  textAlign: TextAlign.center,
+                                                                  style: TextStyle(
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 12,
+                                                                  ),
                                                                 ),
-                                                              ),
-                                                              Padding(
-                                                                padding:
-                                                                    EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            5,
-                                                                            0,
-                                                                            5,
-                                                                            0),
-                                                                child: Text(
-                                                                  '${gameItem["time"]}',
+                                                                SizedBox(height: 4),
+                                                                Text(
+                                                                  gameItem["time"] ?? 'TBD',
+                                                                  textAlign: TextAlign.center,
                                                                   style: TextStyle(
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .bold,
                                                                       fontSize:
-                                                                          11),
+                                                                          10),
                                                                 ),
-                                                              ),
-                                                            ],
+                                                              ],
+                                                            ),
                                                           ),
-                                                          TextButton(
-                                                              style:
-                                                                  ButtonStyle(
-                                                                padding: MaterialStateProperty.all(
-                                                                    EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            35,
-                                                                            5,
-                                                                            35,
-                                                                            5)),
-                                                                backgroundColor:
-                                                                    MaterialStateProperty
-                                                                        .all(Color(
-                                                                            0x733474E0)),
-                                                                foregroundColor:
-                                                                    MaterialStateProperty
-                                                                        .all(Color(
-                                                                            0x733474E0)),
-                                                                textStyle:
-                                                                    MaterialStateProperty
-                                                                        .all(
-                                                                            TextStyle(
-                                                                  fontFamily:
-                                                                      'Poppins',
-                                                                  color: Colors
-                                                                      .white,
-                                                                )),
-                                                                elevation:
-                                                                    MaterialStateProperty
-                                                                        .all(2),
-                                                                shape: MaterialStateProperty
-                                                                    .all(
-                                                                        RoundedRectangleBorder(
-                                                                  side:
-                                                                      BorderSide(
-                                                                    color: Colors
-                                                                        .transparent,
-                                                                    width: 1,
-                                                                  ),
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              30),
-                                                                )),
-                                                              ),
-                                                              onPressed:
-                                                                  () async {
-                                                                if (dataProvider
-                                                                    .playerPicks!
-                                                                    .contains(
-                                                                        gameItem[
-                                                                            "abbreviation2"])) {
-                                                                  await showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (alertDialogContext) {
-                                                                      return AlertDialog(
-                                                                        title: Text(
-                                                                            'already picked!'),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                            onPressed: () =>
-                                                                                Navigator.pop(alertDialogContext),
-                                                                            child:
-                                                                                Text('Ok'),
-                                                                          ),
-                                                                        ],
-                                                                      );
-                                                                    },
-                                                                  );
-                                                                  return;
-                                                                } else {
-                                                                  ScaffoldMessenger.of(
-                                                                          context)
-                                                                      .showSnackBar(
-                                                                    SnackBar(
-                                                                      content:
-                                                                          Text(
-                                                                        // getJsonField(
-                                                                        gameItem[
-                                                                            "abbreviation2"],
-                                                                        //   r'''$.home''',
-                                                                        // ).toString(),,
-                                                                        style:
-                                                                            TextStyle(
-                                                                          color:
-                                                                              Colors.white,
-                                                                          fontSize:
-                                                                              24,
+                                                          Expanded(
+                                                            flex: 2,
+                                                            child: Column(
+                                                              children: [
+                                                                Image.network(
+                                                                  gameItem["picture"] ?? '',
+                                                                  width: 40,
+                                                                  height: 40,
+                                                                  fit: BoxFit.contain,
+                                                                  errorBuilder: (context, error, stackTrace) => Container(
+                                                                    width: 40,
+                                                                    height: 40,
+                                                                    decoration: BoxDecoration(
+                                                                      color: Colors.green.shade100,
+                                                                      shape: BoxShape.circle,
+                                                                    ),
+                                                                    child: Center(
+                                                                      child: Text(
+                                                                        gameItem["abbreviation"] ?? 'T',
+                                                                        style: TextStyle(
+                                                                          fontSize: 12,
+                                                                          fontWeight: FontWeight.bold,
+                                                                          color: Colors.green.shade800,
                                                                         ),
                                                                       ),
-                                                                      duration: Duration(
-                                                                          milliseconds:
-                                                                              500),
-                                                                      backgroundColor:
-                                                                          Color(
-                                                                              0x85114802),
                                                                     ),
-                                                                  );
-                                                                  // FFAppState()
-                                                                  //     .update(() {
-                                                                  dataProvider
-                                                                          .picked =
-                                                                      true;
-                                                                  // });
-                                                                }
-
-                                                                // FFAppState()
-                                                                //     .update(() {
-                                                                dataProvider
-                                                                    .removeFromPlayerPicks(
-                                                                        gameItem[
-                                                                            "abbreviation"]);
-                                                                dataProvider
-                                                                    .addToPlayerPicks(
-                                                                        gameItem[
-                                                                            "abbreviation2"]);
-                                                                // });
-                                                              },
-                                                              child: Center(
-                                                                child: Row(
-                                                                  children: [
-                                                                    Text(
-                                                                      gameItem[
-                                                                          "abbreviation2"],
-                                                                      style: TextStyle(
-                                                                          fontWeight: FontWeight
-                                                                              .bold,
-                                                                          color:
-                                                                              Colors.white),
-                                                                    ),
-                                                                    dataProvider
-                                                                            .playerPicks!
-                                                                            .contains(gameItem[
-                                                                                "abbreviation2"])
-                                                                        ? Icon(
-                                                                            Icons
-                                                                                .check,
-                                                                            color:
-                                                                                Colors.white)
-                                                                        : Container()
-                                                                  ],
+                                                                  ),
                                                                 ),
-                                                              )
-                                                              // getJsonField(
-                                                              //   gameItem,
-                                                              //   r'''$.home''',
-                                                              // ).toString(),
-                                                              // options:
-
-                                                              ),
-                                                          SvgPicture.network(
-                                                              gameItem[
-                                                                  "picture2"],
-                                                              width: 40,
-                                                              height: 40,
-                                                              placeholderBuilder:
-                                                                  (BuildContext
-                                                                          context) =>
-                                                                      Container()),
+                                                                SizedBox(height: 8),
+                                                                Text(
+                                                                  gameItem["home"] ?? gameItem["abbreviation"] ?? '',
+                                                                  textAlign: TextAlign.center,
+                                                                  style: TextStyle(
+                                                                    fontSize: 12,
+                                                                    fontWeight: FontWeight.w500,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(height: 4),
+                                                                Container(
+                                                                  width: 90,
+                                                                  child: TextButton(
+                                                                    onPressed: () async {
+                                                                      if (dataProvider
+                                                                          .playerPicks!
+                                                                          .contains(
+                                                                              gameItem[
+                                                                                  "abbreviation"])) {
+                                                                        await showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (alertDialogContext) {
+                                                                            return AlertDialog(
+                                                                              title: Text(
+                                                                                  'already picked!'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                  onPressed: () =>
+                                                                                      Navigator.pop(alertDialogContext),
+                                                                                  child:
+                                                                                      Text('Ok'),
+                                                                                ),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                        return;
+                                                                      } else {
+                                                                        ScaffoldMessenger.of(
+                                                                                context)
+                                                                            .showSnackBar(
+                                                                          SnackBar(
+                                                                            content:
+                                                                                Text(
+                                                                              gameItem[
+                                                                                  "abbreviation"],
+                                                                              style:
+                                                                                  TextStyle(
+                                                                                color: Colors
+                                                                                    .white,
+                                                                                fontSize:
+                                                                                    24,
+                                                                              ),
+                                                                            ),
+                                                                            duration: Duration(
+                                                                                milliseconds:
+                                                                                    500),
+                                                                            backgroundColor:
+                                                                                Color(
+                                                                                    0x85114802),
+                                                                          ),
+                                                                        );
+                                                                      }
+                                                                      dataProvider
+                                                                          .removeFromPlayerPicks(
+                                                                              gameItem[
+                                                                                  "abbreviation2"]);
+                                                                      dataProvider
+                                                                          .addToPlayerPicks(
+                                                                              gameItem[
+                                                                                  "abbreviation"]);
+                                                                    },
+                                                                    child: Row(
+                                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                                      mainAxisSize: MainAxisSize.min,
+                                                                      children: [
+                                                                        Text(
+                                                                          gameItem[
+                                                                              "abbreviation"],
+                                                                          style: TextStyle(
+                                                                              fontWeight:
+                                                                                  FontWeight
+                                                                                      .bold,
+                                                                              color: Colors
+                                                                                  .white),
+                                                                        ),
+                                                                        if (dataProvider
+                                                                                .playerPicks!
+                                                                                .contains(gameItem[
+                                                                                    "abbreviation"]))
+                                                                          Padding(
+                                                                            padding: EdgeInsets.only(left: 4),
+                                                                            child: Icon(
+                                                                                Icons
+                                                                                    .check,
+                                                                                color: Colors
+                                                                                    .white,
+                                                                                size: 16),
+                                                                          ),
+                                                                      ],
+                                                                    ),
+                                                                    style: ButtonStyle(
+                                                                      padding: MaterialStateProperty.all(
+                                                                          EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
+                                                                      backgroundColor:
+                                                                          MaterialStateProperty
+                                                                              .all(Color(
+                                                                                  0x733474E0)),
+                                                                      foregroundColor:
+                                                                          MaterialStateProperty
+                                                                              .all(Color(
+                                                                                  0xFFFFFFFF)),
+                                                                      textStyle:
+                                                                          MaterialStateProperty
+                                                                              .all(
+                                                                                  TextStyle(
+                                                                        fontFamily:
+                                                                            'Poppins',
+                                                                        color: Colors
+                                                                            .white,
+                                                                        fontSize: 12,
+                                                                      )),
+                                                                      elevation:
+                                                                          MaterialStateProperty
+                                                                              .all(2),
+                                                                      shape: MaterialStateProperty
+                                                                          .all(
+                                                                              RoundedRectangleBorder(
+                                                                        side:
+                                                                            BorderSide(
+                                                                          color: Colors
+                                                                              .transparent,
+                                                                          width: 1,
+                                                                        ),
+                                                                        borderRadius:
+                                                                            BorderRadius
+                                                                                .circular(
+                                                                                    20),
+                                                                      )),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
                                                         ],
-                                                      ),
-                                                      // if (FFAppState().picked !=
-                                                      //     null)
-                                                      Text(
-                                                        'MAKE THE PICK!',
-                                                        // style:
-                                                        // FlutterFlowTheme.of(
-                                                        //     context)
-                                                        //     .bodyMedium
-                                                        //     .override(
-                                                        //   fontFamily:
-                                                        //   'Poppins',
-                                                        //   fontSize: 12,
-                                                        // ),
-                                                      ),
+                                                       ),
+                                                       SizedBox(height: 8),
+                                                       Text(
+                                                         () {
+                                                           // Check if any team from this game is picked
+                                                           if (dataProvider.playerPicks!.contains(gameItem["abbreviation"])) {
+                                                             return 'PICKED: ${gameItem["home"] ?? gameItem["abbreviation"]}';
+                                                           } else if (dataProvider.playerPicks!.contains(gameItem["abbreviation2"])) {
+                                                             return 'PICKED: ${gameItem["away"] ?? gameItem["abbreviation2"]}';
+                                                           } else {
+                                                             return 'MAKE THE PICK!';
+                                                           }
+                                                         }(),
+                                                         textAlign: TextAlign.center,
+                                                         style: TextStyle(
+                                                           fontWeight: FontWeight.bold,
+                                                           fontSize: 12,
+                                                           color: (dataProvider.playerPicks!.contains(gameItem["abbreviation"]) || 
+                                                                  dataProvider.playerPicks!.contains(gameItem["abbreviation2"])) 
+                                                                  ? Color(0xFF27512F) 
+                                                                  : Colors.black,
+                                                         ),
+                                                       ),
                                                     ],
                                                   ),
                                                 ),
@@ -843,8 +907,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                   );
                                   // if (_shouldSetState) setState(() {});
                                   // return;
-                                } else if (dataProvider.playerPicks!.length !=
-                                    data!.length) {
+                                } else if (!_validateAllGamesPicked()) {
                                   await showDialog(
                                     context: context,
                                     builder: (alertDialogContext) {
@@ -892,5 +955,52 @@ class _PlayWidgetState extends State<PlayWidget> {
             ],
           ),
         ));
+  }
+
+  bool _validateAllGamesPicked() {
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    // Debug logging
+    print('Validating picks: ${dataProvider.playerPicks}');
+    print('Total picks: ${dataProvider.playerPicks!.length}');
+    print('Expected games: ${data!.length}');
+    
+    if (dataProvider.playerPicks == null || dataProvider.playerPicks!.isEmpty) {
+      print('No picks found');
+      return false;
+    }
+    
+    // Get all valid team names from the actual game data
+    Set<String> allValidTeams = {};
+    for (var game in data!) {
+      // Add both abbreviations and full team names from the game data
+      if (game['abbreviation'] != null) allValidTeams.add(game['abbreviation'].toString().trim());
+      if (game['abbreviation2'] != null) allValidTeams.add(game['abbreviation2'].toString().trim());
+      if (game['home'] != null) allValidTeams.add(game['home'].toString().trim());
+      if (game['away'] != null) allValidTeams.add(game['away'].toString().trim());
+    }
+    
+    print('All valid teams from game data: ${allValidTeams.toList()}');
+    
+    // Remove duplicates and clean up the picks list
+    Set<String> uniquePicks = {};
+    for (String pick in dataProvider.playerPicks!) {
+      String cleanPick = pick.trim();
+      // Only add if this team is actually in the valid teams
+      if (allValidTeams.contains(cleanPick)) {
+        uniquePicks.add(cleanPick);
+      }
+    }
+    
+    print('Valid unique picks: ${uniquePicks.toList()}');
+    print('Unique picks count: ${uniquePicks.length}');
+    print('Games to pick: ${data!.length}');
+    
+    // Check if we have exactly one pick per game
+    bool isValid = uniquePicks.length == data!.length;
+    
+    print('Validation result: $isValid');
+    
+    return isValid;
   }
 }

@@ -468,14 +468,15 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                             MainAxisAlignment
                                                                 .spaceEvenly,
                                                         children: [
-                                                          SvgPicture.network(
+                                                          Image.network(
                                                               gameItem[
                                                                   "picture"],
                                                               width: 40,
                                                               height: 40,
-                                                              placeholderBuilder:
-                                                                  (BuildContext
-                                                                          context) =>
+                                                              errorBuilder:
+                                                                  (context,
+                                                                      error,
+                                                                      stackTrace) =>
                                                                       Container()),
                                                           TextButton(
                                                             onPressed:
@@ -639,20 +640,13 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               style:
                                                                   ButtonStyle(
                                                                 padding: MaterialStateProperty.all(
-                                                                    EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            35,
-                                                                            5,
-                                                                            35,
-                                                                            5)),
+                                                                    EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
                                                                 backgroundColor:
                                                                     MaterialStateProperty
-                                                                        .all(Color(
-                                                                            0x733474E0)),
+                                                                        .all(Colors.transparent),
                                                                 foregroundColor:
                                                                     MaterialStateProperty
-                                                                        .all(Color(
-                                                                            0x733474E0)),
+                                                                        .all(Colors.white),
                                                                 textStyle:
                                                                     MaterialStateProperty
                                                                         .all(
@@ -661,24 +655,12 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                       'Poppins',
                                                                   color: Colors
                                                                       .white,
+                                                                  fontSize: 16,
+                                                                  fontWeight: FontWeight.bold,
                                                                 )),
                                                                 elevation:
                                                                     MaterialStateProperty
-                                                                        .all(2),
-                                                                shape: MaterialStateProperty
-                                                                    .all(
-                                                                        RoundedRectangleBorder(
-                                                                  side:
-                                                                      BorderSide(
-                                                                    color: Colors
-                                                                        .transparent,
-                                                                    width: 1,
-                                                                  ),
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              30),
-                                                                )),
+                                                                        .all(0),
                                                               ),
                                                               onPressed:
                                                                   () async {
@@ -778,10 +760,8 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                       gameItem[
                                                                           "abbreviation2"],
                                                                       style: TextStyle(
-                                                                          fontWeight: FontWeight
-                                                                              .bold,
-                                                                          color:
-                                                                              Colors.white,
+                                                                          fontWeight: FontWeight.bold,
+                                                                          color: Colors.white,
                                                                           fontSize: 16),
                                                                     ),
                                                                     if (dataProvider
@@ -791,10 +771,8 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                       Container(
                                                                         margin: EdgeInsets.only(left: 8),
                                                                         child: Icon(
-                                                                          Icons
-                                                                              .check_circle,
-                                                                          color:
-                                                                              Colors.white,
+                                                                          Icons.check_circle,
+                                                                          color: Colors.white,
                                                                           size: 20,
                                                                         ),
                                                                       )
@@ -803,14 +781,15 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               )
 
                                                               ),
-                                                          SvgPicture.network(
+                                                          Image.network(
                                                               gameItem[
                                                                   "picture2"],
                                                               width: 40,
                                                               height: 40,
-                                                              placeholderBuilder:
-                                                                  (BuildContext
-                                                                          context) =>
+                                                              errorBuilder:
+                                                                  (context,
+                                                                      error,
+                                                                      stackTrace) =>
                                                                       Container()),
                                                         ],
                                                       ),
@@ -977,8 +956,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                     },
                                   );
                                   return;
-                                } else if (dataProvider.playerPicks!.length !=
-                                    data!.length) {
+                                } else if (!_validateAllGamesPicked()) {
                                   await showDialog(
                                     context: context,
                                     builder: (alertDialogContext) {
@@ -1029,5 +1007,52 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
             ],
           ),
         ));
+  }
+
+  bool _validateAllGamesPicked() {
+    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    // Debug logging
+    print('Validating picks: ${dataProvider.playerPicks}');
+    print('Total picks: ${dataProvider.playerPicks!.length}');
+    print('Expected games: ${data!.length}');
+    
+    if (dataProvider.playerPicks == null || dataProvider.playerPicks!.isEmpty) {
+      print('No picks found');
+      return false;
+    }
+    
+    // Get all valid team names from the actual game data
+    Set<String> allValidTeams = {};
+    for (var game in data!) {
+      // Add both abbreviations and full team names from the game data
+      if (game['abbreviation'] != null) allValidTeams.add(game['abbreviation'].toString().trim());
+      if (game['abbreviation2'] != null) allValidTeams.add(game['abbreviation2'].toString().trim());
+      if (game['home'] != null) allValidTeams.add(game['home'].toString().trim());
+      if (game['away'] != null) allValidTeams.add(game['away'].toString().trim());
+    }
+    
+    print('All valid teams from game data: ${allValidTeams.toList()}');
+    
+    // Remove duplicates and clean up the picks list
+    Set<String> uniquePicks = {};
+    for (String pick in dataProvider.playerPicks!) {
+      String cleanPick = pick.trim();
+      // Only add if this team is actually in the valid teams
+      if (allValidTeams.contains(cleanPick)) {
+        uniquePicks.add(cleanPick);
+      }
+    }
+    
+    print('Valid unique picks: ${uniquePicks.toList()}');
+    print('Unique picks count: ${uniquePicks.length}');
+    print('Games to pick: ${data!.length}');
+    
+    // Check if we have exactly one pick per game
+    bool isValid = uniquePicks.length == data!.length;
+    
+    print('Validation result: $isValid');
+    
+    return isValid;
   }
 }

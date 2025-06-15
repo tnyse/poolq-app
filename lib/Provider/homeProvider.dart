@@ -299,9 +299,14 @@ class DataProvider with ChangeNotifier {
 
       String day = dateString[2]
           .replaceAll("TH", "")
+          .replaceAll("th", "")
           .replaceAll("RD", "")
+          .replaceAll("rd", "")
           .replaceAll("ND", "")
-          .replaceAll("ST", "");
+          .replaceAll("nd", "")
+          .replaceAll("ST", "")
+          .replaceAll("st", "")
+          .replaceAll(",", "");
       String month = dateString[1].replaceAll(',', "");
       String formattedDay = int.parse(day).toString().padLeft(2, '0');
       String formattedMonth = int.parse(monthStringToNumber(month).toString())
