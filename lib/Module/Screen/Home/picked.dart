@@ -517,16 +517,9 @@ class _PickedWidgetState extends State<PickedWidget> {
                                                                   children: [
                                                                     Column(
                                                                       children: [
-                                                                        SvgPicture.network(
-                                                                          gameItem["picture"] ?? '',
-                                                                          width: 60,
-                                                                          height: 60,
-                                                                          placeholderBuilder: (BuildContext context) => Container(
-                                                                            width: 60,
-                                                                            height: 60,
-                                                                            color: Colors.grey[200],
-                                                                            child: Icon(Icons.sports_football, color: Colors.grey[400]),
-                                                                          ),
+                                                                        TeamLogo(
+                                                                          abbr: gameItem["abbreviation"] ?? '',
+                                                                          size: 60,
                                                                         ),
                                                                         SizedBox(height: 8),
                                                                         Text(
@@ -562,16 +555,9 @@ class _PickedWidgetState extends State<PickedWidget> {
                                                                     ),
                                                                     Column(
                                                                       children: [
-                                                                        SvgPicture.network(
-                                                                          gameItem["picture2"] ?? '',
-                                                                          width: 60,
-                                                                          height: 60,
-                                                                          placeholderBuilder: (BuildContext context) => Container(
-                                                                            width: 60,
-                                                                            height: 60,
-                                                                            color: Colors.grey[200],
-                                                                            child: Icon(Icons.sports_football, color: Colors.grey[400]),
-                                                                          ),
+                                                                        TeamLogo(
+                                                                          abbr: gameItem["abbreviation2"] ?? '',
+                                                                          size: 60,
                                                                         ),
                                                                         SizedBox(height: 8),
                                                                         Text(

@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:poolqapp/services/nfl_schedule_service.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 class Picks extends StatefulWidget {
@@ -40,7 +41,21 @@ class _PickstState extends State<Picks> {
             isEqualTo: "${dataProvider.game!["mode"]}${widget.selectedValue}")
         .where("uid", isEqualTo: "${widget.userId}")
         .snapshots();
+    // Fetch and update the latest schedule for the selected week
+    _fetchLatestSchedule();
     // _model = createModel(context, () => PlayerPicksModel());
+  }
+
+  Future<void> _fetchLatestSchedule() async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final scheduleService = NFLScheduleService();
+    final weekName = "${dataProvider.game!["mode"]}${widget.selectedValue}";
+    final games = await scheduleService.getScheduleForWeekWithLocalFallback(weekName);
+    if (games.isNotEmpty) {
+      setState(() {
+        dataProvider.data = games;
+      });
+    }
   }
 
   @override
@@ -128,47 +143,47 @@ class _PickstState extends State<Picks> {
               ),
             ),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _pickrecordStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Something went wrong',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          color: textSecondary,
-                        ),
-                      ),
-                    );
+              child: Consumer<DataProvider>(
+                builder: (context, dataProvider, _) {
+                  final scheduleData = dataProvider.data ?? [];
+                  final playerPicks = dataProvider.playerPicks ?? [];
+                  if (scheduleData.isEmpty) {
+                    return Center(child: Text('No schedule data available'));
                   }
-
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(primary),
-                      ),
-                    );
-                  }
-
-                  final data = snapshot.data?.docs;
-                  if (data == null || data.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No picks found',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          color: textSecondary,
-                        ),
-                      ),
-                    );
-                  }
-
                   return ListView.builder(
                     padding: EdgeInsets.all(16),
-                    itemCount: data.length,
+                    itemCount: scheduleData.length,
                     itemBuilder: (context, index) {
-                      final pick = data[index].data() as Map<String, dynamic>;
+                      final game = scheduleData[index];
+                      // Use the local data field names directly to ensure correct team logos
+                      final homeAbbr = game['abbreviation'] ?? '';
+                      final awayAbbr = game['abbreviation2'] ?? '';
+                      final homeName = game['fullname'] ?? game['home'] ?? '';
+                      final awayName = game['fullname2'] ?? game['away'] ?? '';
+                      
+                      // Fallback: If abbreviations are the same or empty, derive from team names
+                      final finalHomeAbbr = (homeAbbr == awayAbbr || homeAbbr.isEmpty) && homeName.isNotEmpty 
+                          ? _deriveAbbreviationFromName(homeName) 
+                          : homeAbbr;
+                      final finalAwayAbbr = (homeAbbr == awayAbbr || awayAbbr.isEmpty) && awayName.isNotEmpty 
+                          ? _deriveAbbreviationFromName(awayName) 
+                          : awayAbbr;
+                      
+                      // Debug: Print the actual game data to see what we're working with
+                      print('Game ${index + 1} Debug:');
+                      print('  homeName: $homeName');
+                      print('  awayName: $awayName');
+                      print('  abbreviation: ${game['abbreviation']}');
+                      print('  abbreviation2: ${game['abbreviation2']}');
+                      print('  homeAbbr: $homeAbbr');
+                      print('  awayAbbr: $awayAbbr');
+                      print('  finalHomeAbbr: $finalHomeAbbr');
+                      print('  finalAwayAbbr: $finalAwayAbbr');
+                      print('  Raw game data keys: ${game.keys.toList()}');
+                      print('  Raw game data: $game');
+                      
+                      final homePicked = playerPicks.contains(finalHomeAbbr);
+                      final awayPicked = playerPicks.contains(finalAwayAbbr);
                       return Card(
                         elevation: 2,
                         margin: EdgeInsets.only(bottom: 16),
@@ -210,7 +225,7 @@ class _PickstState extends State<Picks> {
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
-                                        pick['gameTime'] ?? 'TBD',
+                                        game['gameTime'] ?? 'TBD',
                                         style: GoogleFonts.poppins(
                                           fontSize: 14,
                                           color: primary,
@@ -239,20 +254,18 @@ class _PickstState extends State<Picks> {
                                                   offset: Offset(0, 2),
                                                 ),
                                               ],
+                                              border: homePicked
+                                                  ? Border.all(color: Colors.green, width: 4)
+                                                  : null,
                                             ),
-                                            child: Image.network(
-                                              pick['team1Image'] ?? '',
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.contain,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Icon(Icons.sports_football, size: 80);
-                                              },
+                                            child: TeamLogo(
+                                              abbr: finalHomeAbbr,
+                                              size: 80,
                                             ),
                                           ),
                                           SizedBox(height: 12),
                                           Text(
-                                            pick['team1'] ?? '',
+                                            homeName.isNotEmpty ? homeName : finalHomeAbbr,
                                             style: GoogleFonts.poppins(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
@@ -292,20 +305,18 @@ class _PickstState extends State<Picks> {
                                                   offset: Offset(0, 2),
                                                 ),
                                               ],
+                                              border: awayPicked
+                                                  ? Border.all(color: Colors.green, width: 4)
+                                                  : null,
                                             ),
-                                            child: Image.network(
-                                              pick['team2Image'] ?? '',
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.contain,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Icon(Icons.sports_football, size: 80);
-                                              },
+                                            child: TeamLogo(
+                                              abbr: finalAwayAbbr,
+                                              size: 80,
                                             ),
                                           ),
                                           SizedBox(height: 12),
                                           Text(
-                                            pick['team2'] ?? '',
+                                            awayName.isNotEmpty ? awayName : finalAwayAbbr,
                                             style: GoogleFonts.poppins(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
@@ -334,7 +345,7 @@ class _PickstState extends State<Picks> {
                                       ),
                                       SizedBox(width: 8),
                                       Text(
-                                        'Picked: ${pick['selectedTeam'] ?? 'Not picked'}',
+                                        'Picked: ${playerPicks.contains(finalHomeAbbr) ? finalHomeAbbr : playerPicks.contains(finalAwayAbbr) ? finalAwayAbbr : 'Not picked'}',
                                         style: GoogleFonts.poppins(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
@@ -427,5 +438,43 @@ class _PickstState extends State<Picks> {
         ),
       ),
     );
+  }
+
+  String _deriveAbbreviationFromName(String name) {
+    final teamNameToAbbr = {
+      'Philadelphia Eagles': 'PHI',
+      'Dallas Cowboys': 'DAL',
+      'Los Angeles Chargers': 'LAC',
+      'Kansas City Chiefs': 'KC',
+      'Atlanta Falcons': 'ATL',
+      'Tampa Bay Buccaneers': 'TB',
+      'Cleveland Browns': 'CLE',
+      'Cincinnati Bengals': 'CIN',
+      'Indianapolis Colts': 'IND',
+      'Miami Dolphins': 'MIA',
+      'New England Patriots': 'NE',
+      'Las Vegas Raiders': 'LV',
+      'New Orleans Saints': 'NO',
+      'Arizona Cardinals': 'ARI',
+      'New York Jets': 'NYJ',
+      'Pittsburgh Steelers': 'PIT',
+      'Washington Commanders': 'WAS',
+      'New York Giants': 'NYG',
+      'Jacksonville Jaguars': 'JAX',
+      'Carolina Panthers': 'CAR',
+      'Denver Broncos': 'DEN',
+      'Tennessee Titans': 'TEN',
+      'Seattle Seahawks': 'SEA',
+      'San Francisco 49ers': 'SF',
+      'Detroit Lions': 'DET',
+      'Buffalo Bills': 'BUF',
+      'Baltimore Ravens': 'BAL',
+      'Chicago Bears': 'CHI',
+      'Green Bay Packers': 'GB',
+      'Houston Texans': 'HOU',
+      'Minnesota Vikings': 'MIN',
+      'Los Angeles Rams': 'LAR',
+    };
+    return teamNameToAbbr[name] ?? name.substring(0, 3).toUpperCase();
   }
 }

@@ -46,36 +46,16 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
       
       String weekName = "${dataProvider.game!["mode"]}${widget.selectedValue}";
       
-      // Try the new schedule service with multiple fallback options
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(weekName);
-      
-      // If no games from live APIs, try the original custom API
-      if (games.isEmpty) {
-        print('Trying original API for GamePlayWidget: ${mainUrl}/getnlf/$weekName');
-        
-        var response = await http.get(
-          Uri.parse('${mainUrl}/getnlf/$weekName'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Access-Control-Allow-Origin': '*',
-          },
-        ).timeout(Duration(seconds: 20));
-        
-        if (response.statusCode == 200) {
-          var body = json.decode(response.body);
-          if (body is List && body.isNotEmpty) {
-            setState(() {
-              data = body;
-            });
-            return body;
-          }
-        }
-      } else {
+      // Only use local file for schedule display
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleForWeekWithLocalFallback(weekName);
+      if (games.isNotEmpty) {
         setState(() {
           data = games;
         });
-        print('Successfully loaded ${games.length} games for GamePlayWidget from NFL APIs');
+        print('Successfully loaded ${games.length} games for GamePlayWidget from local file');
         return games;
+      } else {
+        throw Exception('No games data available from local file');
       }
       
     } catch (e) {
@@ -332,15 +312,10 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
                                                             MainAxisAlignment
                                                                 .spaceEvenly,
                                                         children: [
-                                                          SvgPicture.network(
-                                                              gameItem[
-                                                                  "picture"],
-                                                              width: 40,
-                                                              height: 40,
-                                                              placeholderBuilder:
-                                                                  (BuildContext
-                                                                          context) =>
-                                                                      Container()),
+                                                          TeamLogo(
+                                                            abbr: gameItem["abbreviation"] ?? '',
+                                                            size: 40,
+                                                          ),
                                                           TextButton(
                                                             onPressed:
                                                                 () async {},
@@ -508,15 +483,10 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
                                                               // options:
 
                                                               ),
-                                                          SvgPicture.network(
-                                                              gameItem[
-                                                                  "picture2"],
-                                                              width: 40,
-                                                              height: 40,
-                                                              placeholderBuilder:
-                                                                  (BuildContext
-                                                                          context) =>
-                                                                      Container()),
+                                                          TeamLogo(
+                                                            abbr: gameItem["abbreviation2"] ?? '',
+                                                            size: 40,
+                                                          ),
                                                         ],
                                                       ),
                                                       // if (FFAppState().picked !=

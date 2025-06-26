@@ -47,47 +47,18 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     try {
       print('Fetching games for home page from multiple sources...');
       
-      // Try the new schedule service with multiple fallback options
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(
+      // Only use local file for schedule display
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleForWeekWithLocalFallback(
         dataProvider.game!["name"]
       );
-      
-      // If no games from live APIs, try the original custom API
-      if (games.isEmpty) {
-        print('Trying original API: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
-        
-        var response = await http.get(
-          Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Access-Control-Allow-Origin': '*',
-          },
-        ).timeout(Duration(seconds: 20));
-        
-        if (response.statusCode == 200) {
-          var body = json.decode(response.body);
-          if (body is List && body.isNotEmpty) {
-            // Convert to GamesModel format if needed
-            List<GamesModel> gameModel = body.map((data) {
-              return GamesModel.fromJson(data);
-            }).toList();
-            setState(() {
-              data = gameModel;
-              print('Loaded ${data!.length} games from custom API');
-            });
-            return body;
-          }
-        }
-      } else {
-        // Convert Map format to GamesModel format
-        List<GamesModel> gameModel = games.map((gameData) {
-          return GamesModel.fromJson(gameData);
-        }).toList();
+      if (games.isNotEmpty) {
         setState(() {
-          data = gameModel;
-          print('Loaded ${data!.length} games from NFL APIs');
+          data = games.map((g) => GamesModel.fromJson(g)).toList();
         });
+        print('Loaded ${data!.length} games from local file');
         return games;
+      } else {
+        throw Exception('No games data available from local file');
       }
       
     } catch (e) {
@@ -110,23 +81,24 @@ class _HomePageWidgetState extends State<HomePageWidget> {
         print("zz");
         getGame(context);
       }
-      check();
+      // check(); // BYPASSED FOR TESTING - REMEMBER TO RE-ENABLE FOR PRODUCTION
     });
     super.initState();
 
     // _model = createModel(context, () => HomePageModel());
   }
 
-  check() {
-    if (!user!.emailVerified) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ForgetWidget(),
-        ),
-        (r) => false,
-      );
-    }
+  // BYPASSED FOR TESTING - REMEMBER TO RE-ENABLE FOR PRODUCTION
+  void check() {
+    // if (!user!.emailVerified) {
+    //   Navigator.pushAndRemoveUntil(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => ForgetWidget(),
+    //     ),
+    //     (r) => false,
+    //   );
+    // }
   }
 
   @override
@@ -314,7 +286,12 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           padding: const EdgeInsets.all(3.0),
                           child: Center(
                               child: Text(
-                            "ENTRY DEADLINE: ${dataProvider.data != null ? dataProvider.data![0] : ""}",
+                            "ENTRY DEADLINE: "+
+                              (dataProvider.data != null && dataProvider.data!.isNotEmpty
+                                ? (dataProvider.data![0] is String
+                                    ? dataProvider.data![0]
+                                    : (dataProvider.data![0]['date'] ?? ''))
+                                : ''),
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),
@@ -323,8 +300,15 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                         // Text("${dataProvider.formatStringDate(dataProvider.data?[0]!)}")
                         Padding(
                           padding: const EdgeInsets.all(2.0),
-                          child: CountdownTimerDemo(dataProvider
-                              .formatStringDate(dataProvider.data![0])),
+                          child: CountdownTimerDemo(
+                            dataProvider.formatStringDate(
+                              dataProvider.data != null && dataProvider.data!.isNotEmpty
+                                ? (dataProvider.data![0] is String
+                                    ? dataProvider.data![0]
+                                    : (dataProvider.data![0]['date'] ?? ''))
+                                : ''
+                            ),
+                          ),
                         )
                       ],
                     ),

@@ -3,6 +3,7 @@ import 'package:poolqapp/constants.dart';
 import 'package:poolqapp/services/nfl_game_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as math;
+import 'package:poolqapp/Widget/reuse.dart';
 
 class AdminStats extends StatefulWidget {
   const AdminStats({Key? key}) : super(key: key);
@@ -298,55 +299,60 @@ class _AdminStatsState extends State<AdminStats> {
     final sortedTeams = _mockWinRateData.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(kDefaultRadius),
-        boxShadow: const [defaultShadow],
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: sortedTeams.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final team = sortedTeams[index];
-          final percentage = (team.value * 100).toInt();
-          
-          // Find team data
-          final teamData = _gameService.getMockGamesForWeek('REG1').firstWhere(
-            (game) => game['abbreviation'] == team.key || game['abbreviation2'] == team.key,
-            orElse: () => <String, dynamic>{},
-          );
-          
-          final isTeam1 = teamData['abbreviation'] == team.key;
-          final teamName = isTeam1 ? teamData['fullname'] : teamData['fullname2'];
-          final teamImage = isTeam1 ? teamData['picture'] : teamData['picture2'];
-          
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(teamImage ?? ''),
-            ),
-            title: Text(teamName ?? team.key),
-            subtitle: Text('${team.key} - Win rate: $percentage%'),
-            trailing: SizedBox(
-              width: 100,
-              child: LinearProgressIndicator(
-                value: team.value,
-                backgroundColor: Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  HSVColor.fromAHSV(
-                    1.0,
-                    120 * team.value, // Hue: 0 for red, 120 for green
-                    0.8, // Saturation
-                    0.9, // Value
-                  ).toColor(),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _gameService.getGamesForWeek('REG1'),
+      builder: (context, snapshot) {
+        final games = snapshot.data ?? [];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(kDefaultRadius),
+            boxShadow: const [defaultShadow],
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sortedTeams.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final team = sortedTeams[index];
+              final percentage = (team.value * 100).toInt();
+              
+              // Find team data from real schedule
+              final teamData = games.firstWhere(
+                (game) => game['abbreviation'] == team.key || game['abbreviation2'] == team.key,
+                orElse: () => <String, dynamic>{},
+              );
+              final isTeam1 = teamData['abbreviation'] == team.key;
+              final teamName = isTeam1 ? teamData['fullname'] : teamData['fullname2'];
+              // Use local logo only
+              return ListTile(
+                leading: TeamLogo(
+                  abbr: team.key,
+                  size: 40,
                 ),
-              ),
-            ),
-          );
-        },
-      ),
+                title: Text(teamName ?? team.key),
+                subtitle: Text('${team.key} - Win rate: $percentage%'),
+                trailing: SizedBox(
+                  width: 100,
+                  child: LinearProgressIndicator(
+                    value: team.value,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      HSVColor.fromAHSV(
+                        1.0,
+                        120 * team.value, // Hue: 0 for red, 120 for green
+                        0.8, // Saturation
+                        0.9, // Value
+                      ).toColor(),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
   

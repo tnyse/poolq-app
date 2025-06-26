@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   String? _error;
   int _retryCount = 0;
   static const int _maxRetries = 3;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -36,7 +37,7 @@ class _HomePageState extends State<HomePage> {
       viewportFraction: 1,
       initialPage: widget.initial ?? 0
     );
-    _initializeData();
+    _initializeData(user);
   }
 
   @override
@@ -45,56 +46,73 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> _initializeData() async {
-    if (!mounted) return;
+  Future<void> _initializeData(User? user) async {
+    if (!mounted || _isInitialized) return;
 
     try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _error = null;
+        });
+      }
 
       final dataProvider = Provider.of<DataProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProviders>(context, listen: false);
-      debugPrint('HomePage: _initializeData called');
-      // Initialize game data if not already initialized
-      if (dataProvider.game == null) {
-        debugPrint('HomePage: dataProvider.game is null, calling getWeek()');
-        await dataProvider.getWeek();
-        debugPrint('HomePage: after getWeek, dataProvider.game: ' + dataProvider.game.toString());
-        if (dataProvider.game == null) {
-          throw Exception('Failed to initialize game data (game is still null after getWeek)');
-        }
-      }
-      // Set page index
-      dataProvider.pageIndex = widget.initial ?? 0;
-      // Initialize pick record stream
-      if (user != null) {
-        if (dataProvider.game == null || dataProvider.game!["name"] == null) {
-          throw Exception('Game or game name is null for pickrecord query');
-        }
-        _pickrecord = FirebaseFirestore.instance
-            .collection('pickrecord')
-            .where("uid", isEqualTo: user!.uid)
-            .where("week", isEqualTo: dataProvider.game!["name"])
-            .snapshots();
-      } else {
+      debugPrint('HomePage: _initializeData called with user: ${user?.email ?? "null"}');
+      
+      // Check if user is authenticated
+      if (user == null) {
         throw Exception('User not authenticated');
       }
-      // Get user info
-      await authProvider.getUserInfo();
+      
+      // Initialize game data if not already initialized with timeout
+      if (dataProvider.game == null) {
+        debugPrint('HomePage: dataProvider.game is null, calling getWeek()');
+        await dataProvider.getWeek().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            debugPrint('HomePage: getWeek() timed out, using default values');
+            dataProvider.game = {"name": "REG1", "year": "2025", "mode": "REG"};
+            dataProvider.notifyListeners();
+          },
+        );
+      }
+      
+      // Initialize user info with timeout
+      await authProvider.getUserInfo().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('HomePage: getUserInfo() timed out');
+          throw Exception('User info fetch timed out');
+        },
+      );
+      
+      // Initialize pick record stream
+      if (mounted) {
+        _pickrecord = FirebaseFirestore.instance
+            .collection("Pick")
+            .where("week", isEqualTo: dataProvider.game!['name'])
+            .where("user", isEqualTo: user.email)
+            .snapshots();
+      }
+      
       if (mounted) {
         setState(() {
+          _isInitialized = true;
           _isLoading = false;
         });
       }
+      
     } catch (e, stack) {
       debugPrint('Error in _initializeData: $e');
       debugPrint('Stack trace: $stack');
       if (_retryCount < _maxRetries) {
         _retryCount++;
         await Future.delayed(Duration(seconds: 1));
-        return _initializeData();
+        if (mounted) {
+          return _initializeData(user);
+        }
       }
       if (mounted) {
         setState(() {
@@ -143,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                     _isLoading = true;
                     _retryCount = 0;
                   });
-                  _initializeData();
+                  _initializeData(user);
                 },
                 child: const Text('Retry'),
               ),

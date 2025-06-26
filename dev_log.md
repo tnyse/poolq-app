@@ -74,6 +74,10 @@ Set up Firebase configuration and implemented initial test suite.
 - Test suite needs to be expanded with more test cases
 - Consider adding more comprehensive error handling
 
+## [REMINDER] Email Verification Enforcement
+- The email verification redirect in HomePageWidget (landingPage.dart) is currently BYPASSED for local testing.
+- Before deploying to production, RE-ENABLE the check() call and logic to enforce email verification for all users.
+
 ### 2024-03-19 - Reusable Invitation Code System Implementation
 
 #### Task

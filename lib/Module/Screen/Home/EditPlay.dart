@@ -47,42 +47,20 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
 
       print('Fetching games for edit from multiple sources...');
       
-      // Try the new schedule service with multiple fallback options
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(
+      // Only use local file for schedule display
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleForWeekWithLocalFallback(
         dataProvider.game!["name"]
       );
-      
-      // If no games from live APIs, try the original custom API
-      if (games.isEmpty) {
-        print('Trying original API: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
-        
-        var response = await http.get(
-          Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Access-Control-Allow-Origin': '*',
-          },
-        ).timeout(Duration(seconds: 30));
-        
-        if (response.statusCode == 200) {
-          var body = json.decode(response.body);
-          if (body is List && body.isNotEmpty) {
-            games = body.cast<Map<String, dynamic>>();
-            print('Successfully loaded ${games.length} games from custom API');
-          }
-        }
-      }
-      
       if (games.isNotEmpty) {
         setState(() {
           data = games;
           isLoading = false;
           errorMessage = null;
         });
-        print('Successfully loaded ${games.length} games for editing');
+        print('Successfully loaded ${games.length} games for editing from local file');
         return games;
       } else {
-        throw Exception('No games data available from any source');
+        throw Exception('No games data available from local file');
       }
       
     } catch (e) {
@@ -469,16 +447,10 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                             MainAxisAlignment
                                                                 .spaceEvenly,
                                                         children: [
-                                                          Image.network(
-                                                              gameItem[
-                                                                  "picture"],
-                                                              width: 40,
-                                                              height: 40,
-                                                              errorBuilder:
-                                                                  (context,
-                                                                      error,
-                                                                      stackTrace) =>
-                                                                      Container()),
+                                                          TeamLogo(
+                                                            abbr: gameItem["abbreviation"] ?? '',
+                                                            size: 40,
+                                                          ),
                                                           TextButton(
                                                             onPressed:
                                                                 () async {
@@ -782,16 +754,10 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               )
 
                                                               ),
-                                                          Image.network(
-                                                              gameItem[
-                                                                  "picture2"],
-                                                              width: 40,
-                                                              height: 40,
-                                                              errorBuilder:
-                                                                  (context,
-                                                                      error,
-                                                                      stackTrace) =>
-                                                                      Container()),
+                                                          TeamLogo(
+                                                            abbr: gameItem["abbreviation"] ?? '',
+                                                            size: 40,
+                                                          ),
                                                         ],
                                                       ),
                                                       // if (FFAppState().picked !=

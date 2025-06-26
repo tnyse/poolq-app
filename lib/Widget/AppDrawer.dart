@@ -29,11 +29,9 @@ class AppDrawer extends StatelessWidget {
             accountEmail: Text(
               user?.email ?? 'guest@example.com',
             ),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage: user?.photoURL != null
-                  ? NetworkImage(user!.photoURL!)
-                  : const AssetImage('assets/images/icon.png') as ImageProvider,
-            ),
+            currentAccountPicture: user?.photoURL != null
+                ? CircleAvatar(backgroundImage: NetworkImage(user!.photoURL!))
+                : CircleAvatar(child: Icon(Icons.person)),
           ),
           ListTile(
             leading: const Icon(Icons.home),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'nfl_game_service.dart';
 
 class NFLScheduleService {
@@ -56,42 +57,122 @@ class NFLScheduleService {
     return originalUrl;
   }
 
-  /// Fetches current NFL week from ESPN
-  Future<Map<String, dynamic>?> getCurrentWeek() async {
+  /// Loads the full season schedule from a local asset file
+  Future<Map<String, dynamic>?> loadLocalSchedule(int year) async {
     try {
-      final response = await http.get(
-        Uri.parse(_getApiUrl(_espnScoreboardUrl)),
-        headers: _getHeaders(),
-      ).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        return {
-          'week': data['week']?['number'] ?? 1,
-          'season_type': data['season']?['type'] ?? 2, // 2 = regular season
-          'season': data['season']?['year'] ?? 2025,
-          'seasonName': _getSeasonTypeName(data['season']?['type'] ?? 2),
-        };
-      }
-      
-      // If ESPN API fails, return default values
-      debugPrint('ESPN API returned status code: ${response.statusCode}, using default values');
-      return {
-        'week': 1,
-        'season_type': 2,
-        'season': 2025,
-        'seasonName': 'REG',
-      };
+      final jsonString = await rootBundle.loadString('assets/data/nfl_schedule_$year.json');
+      return json.decode(jsonString);
     } catch (e) {
-      debugPrint('Error fetching current week: $e, using default values');
-      return {
-        'week': 1,
-        'season_type': 2,
-        'season': 2025,
-        'seasonName': 'REG',
-      };
+      debugPrint('Error loading local schedule: $e');
+      return null;
     }
+  }
+
+  /// Gets the schedule for a specific week, using local file unless the date is past the last scheduled game
+  Future<List<Map<String, dynamic>>> getScheduleForWeekWithLocalFallback(String weekName, {int? year}) async {
+    year ??= DateTime.now().year;
+    final localSchedule = await loadLocalSchedule(year);
+    if (localSchedule != null) {
+      String weekType = '';
+      if (weekName.startsWith('PRE')) weekType = 'preseason';
+      else if (weekName.startsWith('REG')) weekType = 'regular';
+      else if (weekName.startsWith('POST')) weekType = 'postseason';
+      final weekGames = localSchedule[weekType]?[weekName];
+      if (weekGames != null && weekGames is List && weekGames.isNotEmpty) {
+        debugPrint('Loaded $weekName from local file');
+        // Find the latest game date in the week
+        DateTime? lastGameDate;
+        print('Checking game dates for $weekName...');
+        for (var game in weekGames) {
+          if (game['date'] != null && game['time'] != null) {
+            try {
+              final dateStr = game['date'] as String;
+              final timeStr = game['time'] as String;
+              final dateTime = DateTime.parse(_combineDateTime(dateStr, timeStr));
+              print('  Game: ${game['fullname']} vs ${game['fullname2']} - Date: $dateTime');
+              if (lastGameDate == null || dateTime.isAfter(lastGameDate)) {
+                lastGameDate = dateTime;
+              }
+            } catch (e) {
+              print('  Error parsing date for game: ${game['fullname']} vs ${game['fullname2']} - $e');
+            }
+          }
+        }
+        print('Last game date: $lastGameDate');
+        print('Current time: ${DateTime.now()}');
+        print('Is current time before last game? ${lastGameDate != null && DateTime.now().isBefore(lastGameDate)}');
+        
+        if (lastGameDate != null && DateTime.now().isBefore(lastGameDate)) {
+          // Current time is before the last game: use local data only
+          print('Using local data with normalization');
+          // Normalize field names to match expected format
+          return _normalizeLocalScheduleData(weekGames);
+        } else {
+          // Current time is after the last game: try API for updated results
+          print('Current time is after last game, attempting API fetch for $weekName');
+          debugPrint('Current time is after last game, attempting API fetch for $weekName');
+          final apiGames = await getScheduleForWeekApiFallback(weekName, year: year);
+          if (apiGames.isNotEmpty) {
+            return apiGames;
+          }
+          // If API fails, fallback to local data
+          print('API failed, using local data with normalization');
+          return _normalizeLocalScheduleData(weekGames);
+        }
+      }
+    }
+    debugPrint('No local schedule data found for $weekName');
+    return [];
+  }
+
+  /// Helper to combine date and time strings into ISO8601 for DateTime.parse
+  String _combineDateTime(String dateStr, String timeStr) {
+    // Example: "Thursday September 4TH, 2025" and "8:20 PM" -> "2025-09-04T20:20:00"
+    try {
+      final dateParts = dateStr.split(' ');
+      final month = dateParts[1];
+      final day = dateParts[2].replaceAll(RegExp(r'\D'), '');
+      final year = dateParts[3].replaceAll(',', '');
+      final timeParts = timeStr.split(' ');
+      var hour = int.parse(timeParts[0].split(':')[0]);
+      final minute = int.parse(timeParts[0].split(':')[1]);
+      final isPM = timeParts[1].toUpperCase() == 'PM';
+      if (isPM && hour != 12) hour += 12;
+      if (!isPM && hour == 12) hour = 0;
+      final monthNum = {
+        'January': '01', 'February': '02', 'March': '03', 'April': '04',
+        'May': '05', 'June': '06', 'July': '07', 'August': '08',
+        'September': '09', 'October': '10', 'November': '11', 'December': '12',
+      }[month] ?? '01';
+      return '$year-$monthNum-${day.padLeft(2, '0')}T${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}:00';
+    } catch (_) {
+      return DateTime.now().toIso8601String();
+    }
+  }
+
+  /// API fallback for updated results (enable only if needed)
+  Future<List<Map<String, dynamic>>> getScheduleForWeekApiFallback(String weekName, {int? year}) async {
+    debugPrint('API fallback called for $weekName');
+    // You can re-enable your API logic here if needed, or leave as [] for now
+    return [];
+  }
+
+  // Disable all API/network methods for local-only mode
+  Future<Map<String, dynamic>?> getCurrentWeek() async {
+    debugPrint('API disabled: getCurrentWeek');
+    return null;
+  }
+  Future<List<Map<String, dynamic>>> getScheduleWithFallback(String weekName) async {
+    debugPrint('API disabled: getScheduleWithFallback');
+    return [];
+  }
+  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 2}) async {
+    debugPrint('API disabled: getScheduleForWeek');
+    return [];
+  }
+  Future<List<Map<String, dynamic>>> getScheduleFromNFL(String weekName) async {
+    debugPrint('API disabled: getScheduleFromNFL');
+    return [];
   }
 
   /// Get season type name
@@ -101,92 +182,6 @@ class NFLScheduleService {
       case 2: return 'REG';
       case 3: return 'POST';
       default: return 'REG';
-    }
-  }
-
-  /// Fetches NFL schedule for a specific week with fallback options
-  Future<List<Map<String, dynamic>>> getScheduleWithFallback(String weekName) async {
-    try {
-      // Parse week number from weekName (e.g., "REG1" -> 1)
-      final weekMatch = RegExp(r'\d+').firstMatch(weekName);
-      final week = weekMatch != null ? int.parse(weekMatch.group(0)!) : 1;
-      
-      // Try primary schedule endpoint
-      final games = await getScheduleForWeek(week);
-      if (games.isNotEmpty) {
-        return games;
-      }
-
-      debugPrint('Primary schedule endpoint returned no games, trying fallback...');
-      
-      // Try scoreboard endpoint as fallback
-      final response = await http.get(
-        Uri.parse(_getApiUrl('$_espnScoreboardUrl?week=$week')),
-        headers: _getHeaders(),
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final fallbackGames = _parseESPNResponse(data);
-        if (fallbackGames.isNotEmpty) {
-          return fallbackGames;
-        }
-      }
-
-      // If all external APIs fail, use mock data
-      debugPrint('All NFL data sources failed, using mock data');
-      final mockService = NFLGameService();
-      return mockService.getMockGamesForWeek(weekName);
-    } catch (e) {
-      debugPrint('Error fetching schedule with fallback: $e, using mock data');
-      final mockService = NFLGameService();
-      return mockService.getMockGamesForWeek(weekName);
-    }
-  }
-
-  /// Fetches NFL schedule for a specific week
-  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 2}) async {
-    try {
-      // First try the scoreboard endpoint for live data
-      final response = await http.get(
-        Uri.parse(_getApiUrl('$_espnScoreboardUrl?dates=$season&seasontype=$seasonType&week=$week')),
-        headers: _getHeaders(),
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final games = _parseESPNResponse(data);
-        
-        if (games.isNotEmpty) {
-          debugPrint('Successfully fetched ${games.length} games from ESPN scoreboard');
-          return games;
-        }
-      }
-
-      // If scoreboard fails, try the schedule endpoint
-      final scheduleResponse = await http.get(
-        Uri.parse(_getApiUrl('$_espnScheduleUrl?dates=$season&seasontype=$seasonType&week=$week')),
-        headers: _getHeaders(),
-      ).timeout(const Duration(seconds: 15));
-
-      if (scheduleResponse.statusCode == 200) {
-        final data = json.decode(scheduleResponse.body);
-        final games = _parseESPNScheduleResponse(data);
-        
-        if (games.isNotEmpty) {
-          debugPrint('Successfully fetched ${games.length} games from ESPN schedule');
-          return games;
-        }
-      }
-
-      // If both endpoints fail, use mock data
-      debugPrint('ESPN API returned no games for week $week, using mock data');
-      final mockService = NFLGameService();
-      return mockService.getMockGamesForWeek('REG$week');
-    } catch (e) {
-      debugPrint('Error fetching schedule from ESPN: $e, using mock data');
-      final mockService = NFLGameService();
-      return mockService.getMockGamesForWeek('REG$week');
     }
   }
 
@@ -378,81 +373,23 @@ class NFLScheduleService {
   /// Get standardized team abbreviation
   String _getTeamAbbreviation(String espnAbbr) {
     // Handle special cases where ESPN abbreviations differ
-    switch (espnAbbr.toUpperCase()) {
-      case 'WSH': return 'WAS';
-      case 'JAC': return 'JAX';
-      case 'GBP': return 'GB';
-      case 'KCC': return 'KC';
-      case 'SFO': return 'SF';
-      case 'NEP': return 'NE';
-      case 'NOS': return 'NO';
-      case 'TBB': return 'TB';
-      default: return _teamMapping[espnAbbr.toUpperCase()] ?? espnAbbr.toUpperCase();
-    }
-  }
-
-  /// Alternative method using NFL.com endpoint (unofficial)
-  Future<List<Map<String, dynamic>>> getScheduleFromNFL(String weekName) async {
-    try {
-      // Convert week format (REG1 -> 1)
-      int weekNumber = _parseWeekNumber(weekName);
-      
-      final response = await http.get(
-        Uri.parse('https://www.nfl.com/api/researchExportedJson/mobile/games/2025/REG/$weekNumber'),
-        headers: {
-          'User-Agent': 'PoolQ-App/1.0',
-          'Accept': 'application/json',
-          'Referer': 'https://www.nfl.com/',
-        },
-      ).timeout(Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return _parseGamesFromNFL(data);
-      }
-    } catch (e) {
-      print('Error fetching from NFL.com API: $e');
-    }
-    return [];
-  }
-
-  /// Parse games from NFL.com API response
-  List<Map<String, dynamic>> _parseGamesFromNFL(Map<String, dynamic> data) {
-    List<Map<String, dynamic>> games = [];
+    final originalAbbr = espnAbbr.toUpperCase();
+    String result;
     
-    try {
-      if (data['games'] != null) {
-        for (var game in data['games']) {
-          games.add({
-            'date': _formatGameDate(game['gameTime'] ?? ''),
-            'home': game['homeTeam']?['fullName'] ?? 'TBD',
-            'away': game['awayTeam']?['fullName'] ?? 'TBD',
-            'abbreviation': _getTeamAbbreviation(game['homeTeam']?['abbreviation'] ?? ''),
-            'abbreviation2': _getTeamAbbreviation(game['awayTeam']?['abbreviation'] ?? ''),
-            'picture': 'https://static.www.nfl.com/image/private/f_auto/league/${game['homeTeam']?['logoId'] ?? ''}',
-            'picture2': 'https://static.www.nfl.com/image/private/f_auto/league/${game['awayTeam']?['logoId'] ?? ''}',
-            'score': game['homeTeam']?['score']?.toString() ?? '0',
-            'score2': game['awayTeam']?['score']?.toString() ?? '0',
-            'status': game['status']?.toLowerCase() ?? 'scheduled',
-            'time': _formatTime(game['gameTime'] ?? ''),
-            'venue': game['venue']?['fullName'] ?? '',
-            'broadcast': game['broadcast'] ?? '',
-          });
-        }
-      }
-      
-      return games;
-    } catch (e) {
-      print('Error parsing NFL.com response: $e');
-      return [];
+    switch (originalAbbr) {
+      case 'WSH': result = 'WAS'; break;
+      case 'JAC': result = 'JAX'; break;
+      case 'GBP': result = 'GB'; break;
+      case 'KCC': result = 'KC'; break;
+      case 'SFO': result = 'SF'; break;
+      case 'NEP': result = 'NE'; break;
+      case 'NOS': result = 'NO'; break;
+      case 'TBB': result = 'TB'; break;
+      default: result = _teamMapping[originalAbbr] ?? originalAbbr;
     }
-  }
-
-  /// Convert week name (REG1, REG2, etc.) to number
-  int _parseWeekNumber(String weekName) {
-    final regex = RegExp(r'[A-Za-z]+(\d+)');
-    final match = regex.firstMatch(weekName);
-    return match != null ? int.parse(match.group(1)!) : 1;
+    
+    print('_getTeamAbbreviation: "$espnAbbr" -> "$result"');
+    return result;
   }
 
   /// Create mock data for testing
@@ -512,5 +449,55 @@ class NFLScheduleService {
         'broadcast': 'FOX',
       }
     ];
+  }
+
+  /// Normalize local schedule data to match expected format
+  List<Map<String, dynamic>> _normalizeLocalScheduleData(List<dynamic> weekGames) {
+    List<Map<String, dynamic>> normalizedGames = [];
+    print('Normalizing ${weekGames.length} games from local data...');
+    
+    for (int i = 0; i < weekGames.length; i++) {
+      var game = weekGames[i];
+      print('Game $i - Original data:');
+      print('  fullname: ${game['fullname']}');
+      print('  fullname2: ${game['fullname2']}');
+      print('  abbreviation: ${game['abbreviation']}');
+      print('  abbreviation2: ${game['abbreviation2']}');
+      
+      var normalizedGame = {
+        'date': game['date'],
+        'home': game['fullname'] ?? game['home'] ?? '',
+        'away': game['fullname2'] ?? game['away'] ?? '',
+        'abbreviation': _getTeamAbbreviation(game['abbreviation'] ?? ''),
+        'abbreviation2': _getTeamAbbreviation(game['abbreviation2'] ?? ''),
+        'picture': game['picture'] ?? '',
+        'picture2': game['picture2'] ?? '',
+        'score': game['score'] ?? '0',
+        'score2': game['score2'] ?? '0',
+        'status': game['status'] ?? 'scheduled',
+        'time': game['time'] ?? '',
+        'venue': game['venue'] ?? '',
+        'broadcast': game['broadcast'] ?? '',
+        'favorite': game['favorite'] ?? '',
+        'spread': double.tryParse(game['spread']?.toString() ?? '0') ?? 0.0,
+        'possession': game['possession'] ?? '',
+        'quarter': int.tryParse(game['quarter']?.toString() ?? '0') ?? 0,
+        'clock': game['clock'] ?? '',
+        'down': int.tryParse(game['down']?.toString() ?? '0') ?? 0,
+        'distance': int.tryParse(game['distance']?.toString() ?? '0') ?? 0,
+        'yardLine': int.tryParse(game['yardLine']?.toString() ?? '0') ?? 0,
+      };
+      
+      print('Game $i - Normalized data:');
+      print('  home: ${normalizedGame['home']}');
+      print('  away: ${normalizedGame['away']}');
+      print('  abbreviation: ${normalizedGame['abbreviation']}');
+      print('  abbreviation2: ${normalizedGame['abbreviation2']}');
+      
+      normalizedGames.add(normalizedGame);
+    }
+    
+    print('Normalization complete. Returning ${normalizedGames.length} games.');
+    return normalizedGames;
   }
 } 

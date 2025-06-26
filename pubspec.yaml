@@ -87,12 +87,45 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/images/teams/ARI.png
+    - assets/images/teams/ATL.png
+    - assets/images/teams/BAL.png
+    - assets/images/teams/BUF.png
+    - assets/images/teams/CAR.png
+    - assets/images/teams/CHI.png
+    - assets/images/teams/CIN.png
+    - assets/images/teams/CLE.png
+    - assets/images/teams/DAL.png
+    - assets/images/teams/DEN.png
+    - assets/images/teams/DET.png
+    - assets/images/teams/GB.png
+    - assets/images/teams/HOU.png
+    - assets/images/teams/IND.png
+    - assets/images/teams/JAX.png
+    - assets/images/teams/KC.png
+    - assets/images/teams/LV.png
+    - assets/images/teams/LAC.png
+    - assets/images/teams/LAR.png
+    - assets/images/teams/MIA.png
+    - assets/images/teams/MIN.png
+    - assets/images/teams/NE.png
+    - assets/images/teams/NO.png
+    - assets/images/teams/NYG.png
+    - assets/images/teams/NYJ.png
+    - assets/images/teams/PHI.png
+    - assets/images/teams/PIT.png
+    - assets/images/teams/SF.png
+    - assets/images/teams/SEA.png
+    - assets/images/teams/TB.png
+    - assets/images/teams/TEN.png
+    - assets/images/teams/WAS.png
     - assets/svg/
     - assets/riv/
     - assets/images/winner.png
     - assets/images/user.png
     - assets/images/userAvatar.png
     - assets/.env
+    - assets/data/nfl_schedule_2025.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

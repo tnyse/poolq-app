@@ -6,6 +6,8 @@ import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../Model/invitation_model.dart';
+import '../../../services/nfl_schedule_service.dart';
+import '../../../Widget/reuse.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({Key? key}) : super(key: key);
@@ -29,14 +31,16 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadGameData();
   }
   
-  void _loadGameData() {
+  void _loadGameData() async {
+    final games = await _gameService.getGamesForWeek(_selectedWeek);
+    final winners = await _gameService.getWinnersForWeek(_selectedWeek);
     setState(() {
-      _games = _gameService.getMockGamesForWeek(_selectedWeek);
-      _winners = _gameService.getWinnersForWeek(_selectedWeek);
+      _games = games;
+      _winners = winners;
     });
   }
 
@@ -359,9 +363,9 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                           Expanded(
                             child: Column(
                               children: [
-                                CircleAvatar(
-                                  backgroundImage: NetworkImage(game['picture'] ?? ''),
-                                  radius: 25,
+                                TeamLogo(
+                                  abbr: game['abbreviation'] ?? '',
+                                  size: 50,
                                 ),
                                 const SizedBox(height: 5),
                                 Text(
@@ -427,9 +431,9 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                           Expanded(
                             child: Column(
                               children: [
-                                CircleAvatar(
-                                  backgroundImage: NetworkImage(game['picture2'] ?? ''),
-                                  radius: 25,
+                                TeamLogo(
+                                  abbr: game['abbreviation2'] ?? '',
+                                  size: 50,
                                 ),
                                 const SizedBox(height: 5),
                                 Text(
@@ -550,10 +554,9 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
                         child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: NetworkImage(
-                              isTeam1 ? game['picture'] ?? '' : game['picture2'] ?? '',
-                            ),
+                          leading: TeamLogo(
+                            abbr: isTeam1 ? game['abbreviation'] ?? '' : game['abbreviation2'] ?? '',
+                            size: 40,
                           ),
                           title: Text(
                             isTeam1 ? game['fullname'] ?? '' : game['fullname2'] ?? '',

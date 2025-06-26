@@ -648,26 +648,17 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
     );
   }
 
-  Widget _buildImage(String? imageUrl, {double size = 40}) {
-    if (imageUrl == null || imageUrl.isEmpty) {
+  Widget _buildImage(String? abbr, {double size = 40}) {
+    if (abbr == null || abbr.isEmpty) {
       return Icon(
         Icons.sports_football,
         size: size,
         color: primary,
       );
     }
-    
-    return Image.network(
-      imageUrl,
-      width: size,
-      height: size,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          Icons.sports_football,
-          size: size,
-          color: primary,
-        );
-      },
+    return TeamLogo(
+      abbr: abbr,
+      size: size,
     );
   }
 }

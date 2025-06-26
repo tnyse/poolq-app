@@ -75,8 +75,11 @@ class AuthService {
 
       _logInfo('Invitation validated successfully: ${invitation.code}');
       return invitation;
+    } on FirebaseAuthException catch (e, stackTrace) {
+      _logError('Firebase error validating invitation code', e, stackTrace);
+      return null;
     } catch (e, stackTrace) {
-      _logError('Error validating invitation code', e as Error, stackTrace);
+      _logError('Error validating invitation code', e, stackTrace);
       return null;
     }
   }
@@ -164,9 +167,12 @@ class AuthService {
 
       _logInfo('Registration completed successfully for user: ${userModel.userId}');
       return userModel;
+    } on FirebaseAuthException catch (e, stackTrace) {
+      _logError('Registration failed (FirebaseAuthException)', e, stackTrace);
+      throw Exception(e.message ?? 'Registration failed');
     } catch (e, stackTrace) {
-      _logError('Registration failed', e as Error, stackTrace);
-      rethrow;
+      _logError('Registration failed', e, stackTrace);
+      throw Exception(e.toString());
     }
   }
 

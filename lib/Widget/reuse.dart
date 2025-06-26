@@ -67,3 +67,30 @@ circularCustom(context)async{
         );
       });
 }
+
+class TeamLogo extends StatelessWidget {
+  final String abbr;
+  final double size;
+  const TeamLogo({required this.abbr, this.size = 40, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Clean up abbreviation: trim, remove spaces, uppercase
+    final cleanAbbr = abbr.toUpperCase().replaceAll(' ', '').trim();
+    final assetPath = 'assets/images/teams/$cleanAbbr.png';
+    
+    // Debug: Print what abbreviation we're trying to load
+    print('TeamLogo Debug: abbr="$abbr", cleanAbbr="$cleanAbbr", assetPath="$assetPath"');
+    
+    return Image.asset(
+      assetPath,
+      width: size,
+      height: size,
+      errorBuilder: (context, error, stackTrace) {
+        print('TeamLogo Error: Failed to load $assetPath - $error');
+        return Icon(Icons.sports_football, size: size);
+      },
+      fit: BoxFit.contain,
+    );
+  }
+}

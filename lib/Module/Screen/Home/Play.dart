@@ -40,40 +40,18 @@ class _PlayWidgetState extends State<PlayWidget> {
     try {
       print('Fetching games from multiple sources...');
       
-      // Try the new schedule service with multiple fallback options
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(
+      // Only use local file for schedule display
+      List<Map<String, dynamic>> games = await scheduleService.getScheduleForWeekWithLocalFallback(
         dataProvider.game!["name"]
       );
-      
-      // If no games from live APIs, try the original custom API
-      if (games.isEmpty) {
-        print('Trying original API: ${mainUrl}/getnlf/${dataProvider.game!["name"]}');
-        
-        var response = await http.get(
-          Uri.parse('${mainUrl}/getnlf/${dataProvider.game!["name"]}'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Access-Control-Allow-Origin': '*',
-          },
-        ).timeout(Duration(seconds: 20));
-        
-        if (response.statusCode == 200) {
-          var body = json.decode(response.body);
-          if (body is List && body.isNotEmpty) {
-            games = body.cast<Map<String, dynamic>>();
-            print('Successfully loaded ${games.length} games from custom API');
-          }
-        }
-      }
-      
       if (games.isNotEmpty) {
         setState(() {
           data = games;
         });
-        print("Successfully loaded ${games.length} games");
+        print("Successfully loaded [32m${games.length}[0m games from local file");
         return games;
       } else {
-        throw Exception('No games data available from any source');
+        throw Exception('No games data available from local file');
       }
       
     } catch (e) {
@@ -360,29 +338,9 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                             flex: 2,
                                                             child: Column(
                                                               children: [
-                                                                Image.network(
-                                                                  gameItem["picture2"] ?? '',
-                                                                  width: 40,
-                                                                  height: 40,
-                                                                  fit: BoxFit.contain,
-                                                                  errorBuilder: (context, error, stackTrace) => Container(
-                                                                    width: 40,
-                                                                    height: 40,
-                                                                    decoration: BoxDecoration(
-                                                                      color: Colors.blue.shade100,
-                                                                      shape: BoxShape.circle,
-                                                                    ),
-                                                                    child: Center(
-                                                                      child: Text(
-                                                                        gameItem["abbreviation2"] ?? 'T',
-                                                                        style: TextStyle(
-                                                                          fontSize: 12,
-                                                                          fontWeight: FontWeight.bold,
-                                                                          color: Colors.blue.shade800,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
+                                                                TeamLogo(
+                                                                  abbr: gameItem["abbreviation2"] ?? '',
+                                                                  size: 40,
                                                                 ),
                                                                 SizedBox(height: 8),
                                                                 Text(
@@ -562,29 +520,9 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                             flex: 2,
                                                             child: Column(
                                                               children: [
-                                                                Image.network(
-                                                                  gameItem["picture"] ?? '',
-                                                                  width: 40,
-                                                                  height: 40,
-                                                                  fit: BoxFit.contain,
-                                                                  errorBuilder: (context, error, stackTrace) => Container(
-                                                                    width: 40,
-                                                                    height: 40,
-                                                                    decoration: BoxDecoration(
-                                                                      color: Colors.green.shade100,
-                                                                      shape: BoxShape.circle,
-                                                                    ),
-                                                                    child: Center(
-                                                                      child: Text(
-                                                                        gameItem["abbreviation"] ?? 'T',
-                                                                        style: TextStyle(
-                                                                          fontSize: 12,
-                                                                          fontWeight: FontWeight.bold,
-                                                                          color: Colors.green.shade800,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
+                                                                TeamLogo(
+                                                                  abbr: gameItem["abbreviation"] ?? '',
+                                                                  size: 40,
                                                                 ),
                                                                 SizedBox(height: 8),
                                                                 Text(

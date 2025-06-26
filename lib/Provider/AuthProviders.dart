@@ -126,10 +126,10 @@ class AuthProviders with ChangeNotifier {
 
   getUserInfo() async {
     User? user = FirebaseAuth.instance.currentUser;
-    username = user!.displayName!;
-    image = user.photoURL!;
-    phone = user.phoneNumber!;
-    email = user.email!;
+    username = user?.displayName ?? '';
+    image = user?.photoURL ?? '';
+    phone = user?.phoneNumber ?? '';
+    email = user?.email ?? '';
   }
 
   // Method used by the new screens
