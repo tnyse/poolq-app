@@ -1,0 +1,626 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Original Product Requirements Document (PRD) Description
+
+### 6.3 Data Models
+
+#### 6.3.1 User Model
+```
+{
+  userId: string,
+  userType: string, // "player" or "admin"
+  email: string,
+  phone: string,
+  displayName: string,
+  avatar: string,
+  invitationCode: string,
+  invitedBy: string, // admin userId
+  joinDate: timestamp,
+  isActive: boolean,
+  preferences: {
+    notifications: object,
+    privacy: object
+  },
+  statistics: {
+    totalWinnings: number,
+    winRate: number,
+    poolsPlayed: number
+  }
+}
+```
+
+#### 6.3.2 Pool Model
+```
+{
+  poolId: string,
+  gameType: string,
+  name: string,
+  entryFee: number,
+  maxParticipants: number,
+  participants: array,
+  rules: object,
+  status: string,
+  createdBy: string, // admin userId
+  startDate: timestamp,
+  prizePool: number,
+  paymentConfig: {
+    platform: string, // "venmo", "paypal", "cashapp"
+    accountInfo: string,
+    instructions: string
+  }
+}
+```
+
+#### 6.3.3 Entry Model
+```
+{
+  entryId: string,
+  userId: string,
+  poolId: string,
+  week: number,
+  picks: array,
+  tiebreaker: number,
+  submittedAt: timestamp,
+  status: string, // "pending", "approved", "rejected"
+  paymentReference: string,
+  approvedBy: string, // admin userId
+  approvedAt: timestamp,
+  score: number,
+  rank: number
+}
+```
+
+#### 6.3.4 Invitation Model
+```
+{
+  # PoolQ - Product Requirements Document
+
+## 1. Executive Summary
+
+### 1.1 Project Overview
+PoolQ is a mobile-first NFL prediction and pool gaming application designed to provide an engaging, competitive platform for football fans. The app supports multiple game formats including Pick'em contests, Survivor pools, Playoff brackets, and Super Bowl squares with a transparent pay-to-play prize system.
+
+### 1.2 Vision Statement
+To create an exclusive, invite-only mobile platform for NFL fans to test their football knowledge through friendly competition while building a tight-knit community of engaged users.
+
+### 1.3 Success Metrics
+- **User Acquisition**: 10,000+ registered users within first season
+- **Engagement**: 70%+ weekly active user rate during NFL season
+- **Revenue**: $50,000+ in total entry fees processed in year one
+- **Retention**: 60%+ user retention from regular season to playoffs
+- **App Store Rating**: 4.5+ stars with 100+ reviews
+
+## 2. Product Strategy
+
+### 2.1 Target Market
+**Primary Users:**
+- Invited NFL fans aged 21-45 with disposable income
+- Members of existing social groups, workplaces, or friend networks
+- Users comfortable with peer-to-peer payment platforms (Venmo, PayPal, CashApp)
+
+**Secondary Users:**
+- Fantasy football league members seeking additional engagement
+- Social media communities with trusted administrators
+- Workplace groups organizing friendly competitions
+
+### 2.2 Value Proposition
+- **Exclusive Community**: Invite-only access creates trusted, close-knit gaming groups
+- **Skill-Based Competition**: Focus on football knowledge over pure luck
+- **Multiple Game Formats**: Variety keeps users engaged throughout the season
+- **Transparent Prizes**: Clear fee structure with 85% prize pool distribution
+- **Flexible Payments**: Support for popular P2P payment platforms (Venmo, PayPal, CashApp)
+- **Admin-Controlled**: Trusted administrators manage invites and payment verification
+
+### 2.3 Competitive Positioning
+PoolQ differentiates from existing platforms through:
+- Modern, intuitive mobile interface
+- Real-time updates and push notifications
+- Integrated social features and community building
+- Transparent financial operations with detailed transaction history
+- Multiple simultaneous pool participation
+
+## 3. User Experience Requirements
+
+### 3.1 User Journey Flow
+
+**For Players:**
+```
+Receive Invite → Register → Browse Available Pools → Make Game Selections → 
+Submit Payment via P2P → Wait for Admin Approval → Track Results → Collect Winnings
+```
+
+**For Admins:**
+```
+Create Pool → Set Payment Details → Send Invites → Approve Player Entries → 
+Monitor Pool Progress → Distribute Winnings
+```
+
+### 3.2 Core User Stories
+
+**As a new invited user, I want to:**
+- Register using my invitation code with minimal friction
+- Understand available game types through clear instructions
+- Make my game selections and submit payment easily
+- Track my entry status while waiting for approval
+
+**As an active player, I want to:**
+- View my approved entries and current standings
+- Receive notifications when my entries are approved or rejected
+- Track my performance across multiple pools
+- Receive real-time updates on game results
+
+**As an admin, I want to:**
+- Send invitations to specific users via email or phone
+- Set up payment details (Venmo, PayPal, CashApp) for each pool
+- Review and approve pending player entries with payment verification
+- Monitor all pool activities and manage disputes
+- Distribute winnings efficiently
+
+**As a winner, I want to:**
+- Receive immediate notification of winnings
+- Understand the payout process managed by the admin
+- View detailed results and standings
+- Share achievements within the group
+
+## 4. User Types and Permissions
+
+### 4.1 Player Users
+**Capabilities:**
+- Register with valid invitation code
+- Browse available pools created by admins
+- Make game selections and submit entries
+- Submit payment via designated P2P platforms
+- View entry status (pending, approved, rejected)
+- Track pool results and standings
+- Receive notifications for entry status and results
+
+**Restrictions:**
+- Cannot create pools
+- Cannot invite other users
+- Cannot approve payments
+- Cannot access admin dashboard
+- Cannot modify pool settings
+
+### 4.2 Admin Users
+**Capabilities:**
+- Create and configure pools with custom settings
+- Send invitations to new users via email/SMS
+- Set payment details for each pool (Venmo, PayPal, CashApp accounts)
+- View and manage all pending player entries
+- Approve or reject entries after payment verification
+- Monitor all pool activities and participant status
+- Resolve disputes and handle customer support
+- Distribute winnings and manage payouts
+- Access comprehensive analytics and reporting
+
+**Admin Dashboard Features:**
+- Pending entries queue with payment verification tools
+- User management and invitation system
+- Pool creation and configuration interface
+- Financial reporting and payout management
+- Communication tools for player notifications
+
+## 5. Feature Requirements
+
+### 5.1 Game Types
+
+#### 5.1.1 Weekly NFL Pick'em
+- **Format**: Straight-up winner predictions for all weekly games
+- **Scoring**: 1 point per correct pick
+- **Tiebreaker**: Monday Night Football total score prediction
+- **Entry**: Weekly pools with varying entry fees ($5-$50)
+- **Season-Long**: Cumulative standings with playoff implications
+
+#### 5.1.2 Survivor Pool
+- **Format**: Pick one team to win each week, no repeats
+- **Elimination**: Wrong pick or missed deadline eliminates player
+- **Entry**: Single entry fee for entire season ($20-$100)
+- **Variations**: Multiple lives option for casual players
+- **End Game**: Last player standing wins, or split if all eliminated
+
+#### 5.1.3 Playoff Bracket
+- **Format**: Complete playoff tree prediction
+- **Scoring**: Increasing points by round (1-2-4-8)
+- **Tiebreaker**: Super Bowl total score prediction
+- **Entry**: Single entry before Wild Card weekend ($10-$75)
+- **Deadline**: All picks locked before first playoff game
+
+#### 5.1.4 Super Bowl Squares
+- **Format**: 10x10 grid with random number assignment
+- **Payouts**: Four intervals (Q1, Q2, Q3, Final)
+- **Entry**: $10-$100 per square
+- **Distribution**: Configurable payout percentages
+- **Social**: Group creation for workplace/friend pools
+
+### 5.2 Invitation and Registration System
+
+#### 5.2.1 Invitation Management (Admin Only)
+- **Invitation Creation**: Admins generate unique invitation codes/links
+- **Delivery Methods**: Email and SMS invitation options
+- **Invitation Tracking**: Monitor sent, accepted, and expired invitations
+- **Bulk Invitations**: Send multiple invitations simultaneously
+- **Invitation Expiry**: Configurable expiration dates for security
+
+#### 5.2.2 User Registration
+- **Invitation Validation**: Registration requires valid invitation code
+- **Account Creation**: Email/password with phone number verification
+- **Profile Setup**: Basic profile information and payment preferences
+- **Terms Acceptance**: Mandatory acceptance of terms and conditions
+- **Age Verification**: Confirm 21+ age requirement
+
+### 5.3 Payment and Entry System
+
+#### 5.3.1 Payment Configuration (Admin)
+- **Platform Selection**: Set Venmo, PayPal, or CashApp for each pool
+- **Account Details**: Configure receiving account information
+- **Payment Instructions**: Custom instructions for players
+- **Multiple Accounts**: Support different accounts for different pools
+- **Payment Verification**: Tools for confirming received payments
+
+#### 5.3.2 Player Entry Process
+- **Game Selection**: Make picks for chosen pool/game type
+- **Entry Submission**: Submit selections and generate entry
+- **Payment Prompt**: Display payment instructions with exact amount
+- **Payment Methods**: 
+  - Venmo: Send to specified username with entry reference
+  - PayPal: Send to specified email with entry reference
+  - CashApp: Send to specified username with entry reference
+- **Entry Status**: Track entry as "Pending Payment Verification"
+- **Reference System**: Unique entry IDs for payment matching
+
+#### 5.3.3 Payment Verification Workflow
+- **Pending Queue**: All entries await admin approval
+- **Admin Dashboard**: List of pending entries with payment details
+- **Verification Tools**: 
+  - Entry ID matching system
+  - Payment amount verification
+  - Player contact information for disputes
+- **Approval Actions**: 
+  - Approve entry (moves to active status)
+  - Reject entry (with reason and notification)
+  - Request clarification from player
+- **Notification System**: Automated alerts to players on status changes
+
+### 5.4 User Management
+
+#### 5.4.1 Player Authentication
+- Invitation-code required registration
+- Email/password with phone verification
+- Password recovery with secure reset process
+- Session management with automatic logout
+- Account deactivation and reactivation
+
+#### 5.4.2 User Profiles
+- Customizable profile with avatar and display name
+- Statistics dashboard (win rate, total winnings, streaks)
+- Achievement system with badges and milestones
+- Privacy settings for profile visibility
+- Notification preferences by game type and activity
+
+#### 5.4.3 Player Dashboard
+- Entry status overview (pending, approved, active)
+- Active pools with current standings
+- Upcoming deadlines with countdown timers
+- Payment history and entry references
+- Performance analytics and win/loss records
+
+### 5.5 Pool Management
+
+#### 5.5.1 Pool Discovery (Player View)
+- Browse pools available to invited users only
+- Filter by game type, entry fee, and deadline
+- View pool details including rules and participants
+- Entry requirements and payment instructions
+- Pool status indicators (open, pending, active, completed)
+
+#### 5.5.2 Pool Creation (Admin Only)
+- Game type selection with rule configuration
+- Entry fee setting and payment platform selection
+- Pool naming and description
+- Participant limits and invitation management
+- Deadline setting and automated enforcement
+- Payout structure definition (85% to winners, 15% site fee)
+
+#### 5.5.3 Pool Participation (Player)
+- Make game selections with confirmation interface
+- Submit entry and receive payment instructions
+- Track entry status through approval process
+- View approved participants and their picks (post-deadline)
+- Participate in pool-specific discussions
+- Monitor live standings and results
+
+### 5.6 Admin Dashboard
+
+#### 5.6.1 Pending Entries Management
+- **Queue Display**: List all entries awaiting payment verification
+- **Entry Details**: Player info, pool, amount, payment method, timestamp
+- **Payment Verification**: 
+  - Manual approval with one-click confirm
+  - Batch approval for multiple entries
+  - Rejection with reason and player notification
+- **Search and Filter**: Find entries by player, pool, date, or amount
+- **Payment Matching**: Tools to match payments to entries
+- **Communication**: Direct messaging with players for clarification
+
+#### 5.6.2 User and Invitation Management
+- **Invitation System**: Send invites via email/SMS with tracking
+- **User Overview**: Complete user list with status and activity
+- **Account Management**: Suspend, reactivate, or ban users
+- **Invitation Analytics**: Track invitation acceptance rates
+- **Bulk Operations**: Mass invite or user management actions
+
+#### 5.6.3 Pool Administration
+- **Pool Creation**: Advanced pool setup with custom rules
+- **Pool Monitoring**: Real-time status of all active pools
+- **Entry Management**: View and manage all pool entries
+- **Results Management**: Input results and resolve disputes
+- **Payout Processing**: Calculate and distribute winnings
+
+#### 5.6.4 Financial Management
+- **Payment Platform Setup**: Configure Venmo, PayPal, CashApp accounts
+- **Transaction Tracking**: Monitor all payments and payouts
+- **Revenue Reporting**: Track site fees and total volume
+- **Payout Management**: Distribute winnings to winners
+- **Financial Analytics**: Revenue trends and pool performance
+
+### 5.7 Financial System
+
+#### 5.7.1 Payment Processing
+- **Payment Methods**: Venmo, PayPal, CashApp (admin-configured per pool)
+- **Payment Instructions**: Clear instructions with entry reference numbers
+- **Verification Process**: Manual admin approval of all payments
+- **Security**: Entry reference system to match payments to submissions
+- **Dispute Resolution**: Process for handling payment disputes
+
+#### 5.7.2 Withdrawal System
+- **Admin-Managed**: Winners coordinate payout directly with admin
+- **Payment Methods**: Same P2P platforms used for entry fees
+- **Processing**: Manual processing by admin after pool completion
+- **Winner Verification**: Confirm winner identity before payout
+- **Record Keeping**: Track all payouts for tax and audit purposes
+
+#### 4.4.3 Prize Distribution
+- **Site Fee**: 15% withholding clearly disclosed before entry
+- **Distribution**: Automatic prize calculation and crediting
+- **Transparency**: Full breakdown of entry fees and prize pools
+- **Tax Reporting**: 1099 generation for winnings over $600
+- **Disputes**: Clear process for prize disputes and appeals
+
+### 5.8 Data and Scoring
+
+#### 5.8.1 NFL Data Integration
+- **Source**: ESPN or similar reliable API
+- **Real-time**: Live score updates during games
+- **Schedule**: Current week games with times and matchups
+- **Historical**: Past results for verification and statistics
+- **Reliability**: Backup data sources for redundancy
+
+#### 5.8.2 Automated Scoring
+- **Processing**: Real-time score calculation during games
+- **Verification**: Manual review for disputed results
+- **Notifications**: Push alerts for score changes and final results
+- **Tiebreakers**: Automatic application of defined tiebreaker rules
+- **Appeals**: Process for contesting scoring decisions
+
+## 6. Technical Requirements
+
+### 6.1 Platform Strategy
+- **Primary**: Flutter-based mobile app (iOS and Android)
+- **Secondary**: Progressive Web App for desktop access
+- **Future**: Native apps if user base justifies development cost
+
+### 6.2 Architecture
+
+#### 6.2.1 Frontend (Flutter)
+- **State Management**: Provider pattern for reactive UI updates
+- **Navigation**: Named routes with deep linking support
+- **UI Framework**: Material Design with custom theming
+- **Performance**: Lazy loading, image caching, efficient list rendering
+- **Offline**: Basic offline capability for viewing past results
+
+#### 6.2.2 Backend (Firebase)
+- **Authentication**: Firebase Auth with custom claims
+- **Database**: Firestore for real-time data synchronization
+- **Storage**: Firebase Storage for user avatars and documents
+- **Functions**: Cloud Functions for server-side logic
+- **Analytics**: Firebase Analytics for user behavior tracking
+
+#### 6.2.3 External Services
+- **Payments**: No direct integration - P2P payments handled externally
+- **NFL Data**: ESPN API or Sports Data IO
+- **Push Notifications**: Firebase Cloud Messaging  
+- **Email/SMS**: SendGrid and Twilio for invitations and notifications
+- **Monitoring**: Crashlytics and Performance Monitoring
+
+### 5.3 Data Models
+
+#### 5.3.1 User Model
+```
+{
+  userId: string,
+  email: string,
+  displayName: string,
+  avatar: string,
+  balance: number,
+  joinDate: timestamp,
+  isVerified: boolean,
+  preferences: {
+    notifications: object,
+    privacy: object
+  },
+  statistics: {
+    totalWinnings: number,
+    winRate: number,
+    poolsPlayed: number
+  }
+}
+```
+
+#### 5.3.2 Pool Model
+```
+{
+  poolId: string,
+  gameType: string,
+  name: string,
+  entryFee: number,
+  maxParticipants: number,
+  participants: array,
+  rules: object,
+  status: string,
+  createdBy: string,
+  startDate: timestamp,
+  prizePool: number
+}
+```
+
+#### 5.3.3 Pick Model
+```
+{
+  pickId: string,
+  userId: string,
+  poolId: string,
+  week: number,
+  picks: array,
+  tiebreaker: number,
+  submittedAt: timestamp,
+  score: number,
+  rank: number
+}
+```
+
+### 5.4 Security Requirements
+
+#### 5.4.1 Data Protection
+- End-to-end encryption for sensitive financial data
+- PII encryption at rest in database
+- Secure API communication with certificate pinning
+- Regular security audits and penetration testing
+- GDPR and CCPA compliance for data handling
+
+#### 5.4.2 Financial Security
+- PCI DSS compliance not required as payments are handled externally via PayPal, Venmo, and CashApp links (no direct integration).
+- Multi-factor authentication for large transactions
+- Fraud detection and prevention systems
+- Regular financial reconciliation and auditing
+- Segregated accounts for user funds
+
+#### 5.4.3 Application Security
+- Input validation and sanitization
+- Rate limiting on API endpoints
+- SQL injection and XSS prevention
+- Secure session management
+- Regular dependency updates and security patches
+
+## 6. Business Requirements
+
+### 6.1 Legal and Compliance
+
+#### 6.1.1 Regulatory Compliance
+- **Age Verification**: Strict 21+ age verification with ID upload
+- **Geofencing**: Location-based restrictions for prohibited states
+- **Licensing**: Research and obtain necessary gaming licenses
+- **Terms of Service**: Comprehensive legal terms and conditions
+- **Privacy Policy**: GDPR/CCPA compliant privacy documentation
+
+#### 6.1.2 Financial Regulations
+- **Money Transmission**: Compliance with state money transmission laws
+- **Tax Reporting**: Automated 1099 generation for winners
+- **AML/KYC**: Anti-money laundering and know-your-customer procedures
+- **Audit Trail**: Comprehensive transaction logging for regulatory review
+- **Escrow**: User funds held in segregated escrow accounts
+
+### 6.2 Operational Requirements
+
+#### 6.2.1 Customer Support
+- **In-App Support**: Chat system with FAQ and help articles
+- **Response Time**: 24-hour response during season, 48 hours off-season
+- **Escalation**: Clear escalation path for complex issues
+- **Knowledge Base**: Comprehensive self-service documentation
+- **Social Media**: Twitter/Facebook support monitoring
+
+#### 6.2.2 Admin Panel
+- **User Management**: View profiles, suspend accounts, manage verification
+- **Pool Management**: Create featured pools, resolve disputes, manual scoring
+- **Financial Management**: Transaction monitoring, withdrawal approval, reporting
+- **Content Management**: Update rules, manage notifications, content moderation
+- **Analytics Dashboard**: User metrics, revenue tracking, performance monitoring
+
+### 6.3 Launch Strategy
+
+#### 6.3.1 Soft Launch (Beta Testing)
+- **Duration**: 4-6 weeks before NFL season
+- **Audience**: 100-200 invited beta testers
+- **Features**: Core functionality with limited pool types
+- **Goals**: Bug identification, user feedback, performance testing
+- **Success Criteria**: <1% crash rate, positive user feedback, core flows working
+
+#### 6.3.2 Public Launch
+- **Timing**: 2 weeks before NFL season kickoff
+- **Marketing**: Social media campaigns, influencer partnerships
+- **Promotion**: Free entry contests, referral bonuses
+- **Support**: Enhanced customer support during launch period
+- **Monitoring**: Real-time performance tracking and rapid issue resolution
+
+## 7. Success Metrics and KPIs
+
+### 7.1 User Engagement
+- **Daily Active Users (DAU)**: Target 40% of registered users during season
+- **Session Duration**: Average 8+ minutes per session
+- **Pick Submission Rate**: 85%+ of eligible users submit picks on time
+- **Pool Completion Rate**: 75%+ of users complete pools they enter
+- **Social Engagement**: 30%+ of users participate in chat/comments
+
+### 7.2 Financial Performance
+- **Revenue Growth**: 25% month-over-month during season
+- **Average Revenue Per User**: $150+ per season
+- **Transaction Success Rate**: 99%+ payment processing success
+- **Withdrawal Processing**: 95%+ processed within SLA
+- **Support Ticket Volume**: <5% of active users require support
+
+### 7.3 Technical Performance
+- **App Performance**: 99.5%+ uptime during peak hours
+- **Crash Rate**: <0.1% of app sessions
+- **API Response Time**: <500ms for 95% of requests
+- **App Store Rating**: Maintain 4.5+ stars
+- **Load Time**: App startup in <3 seconds
+
+## 8. Risk Assessment and Mitigation
+
+### 8.1 Legal and Regulatory Risks
+- **Risk**: Changing gambling regulations could limit operations
+- **Mitigation**: Legal monitoring, compliance consulting, market diversification
+
+### 8.2 Technical Risks
+- **Risk**: Data provider outages during critical games
+- **Mitigation**: Multiple data sources, manual backup procedures
+
+### 8.3 Financial Risks
+- **Risk**: Payment processor issues affecting user deposits/withdrawals
+- **Mitigation**: Multiple payment processors, clear communication protocols
+
+### 8.4 Market Risks
+- **Risk**: Competition from established platforms
+- **Mitigation**: Focus on user experience, unique features, community building
+
+## 9. Future Roadmap
+
+### 9.1 Phase 2 Features (Post-Launch)
+- Social features: Friend connections, private leagues
+- Enhanced analytics: Advanced statistics and insights
+- Live betting: In-game prediction opportunities
+- Expanded sports: NBA, MLB seasonal pools
+
+### 9.2 Phase 3 Features (Year 2)
+- Cryptocurrency payment options
+- NFT integration for achievements
+- Live streaming integration
+- Advanced AI-powered recommendations
+
+## 10. Conclusion
+
+PoolQ represents a significant opportunity to capture market share in the growing mobile sports gaming sector. By focusing on user experience, regulatory compliance, and community building, the app can establish itself as the premier destination for NFL prediction contests.
+
+The success of PoolQ depends on flawless execution of the core gaming experience, robust financial systems, and building trust with users through transparency and reliable operations. With proper investment in development, marketing, and legal compliance, PoolQ can achieve its goal of becoming the leading NFL pool gaming platform.

@@ -4,7 +4,7 @@ import 'LeaderbpardWidget.dart';
 import '../../../Widget/reuse.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
+import '../../../constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/nfl_schedule_service.dart';
+import 'package:poolqapp/constants.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 // import 'play_model.dart';

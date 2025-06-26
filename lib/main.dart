@@ -15,47 +15,16 @@ import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminDashboard.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:poolqapp/Provider/AuthProviders.dart';  // Fixed import path
+import 'package:poolqapp/Provider/AuthProviders.dart';
+import 'package:poolqapp/firebase_options.dart';
+import 'package:poolqapp/screens/auth/login_screen.dart';
+import 'package:poolqapp/screens/landing_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables first
-  try {
-    await dotenv.load(fileName: "assets/.env");
-  } catch (e) {
-    debugPrint("Error loading .env file: $e");
-    // Continue without .env file
-  }
-  
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: kIsWeb
-        ? FirebaseOptions(
-            apiKey: dotenv.env['FIREBASE_API_KEY'] ?? "AIzaSyB_8GwxAp1O-4lW0bLSHHD8ORhrDD2rj2U",
-            authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? "poolr-b5392.firebaseapp.com",
-            projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? "poolr-b5392",
-            storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? "poolr-b5392.appspot.com",
-            messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? "841410602650",
-            appId: dotenv.env['FIREBASE_APP_ID'] ?? "1:841410602650:web:86f41c34cc3356c0602123",
-          )
-        : null,
-  );
-  
-  // Initialize GetStorage
-  await GetStorage.init();
-
-  // Initialize auth persistence
-  final authProvider = AuthProviders();
-  await authProvider.initializePersistence();
-
-  // Initialize Stripe
-  try {
-    await PaymentService().initializeStripe();
-  } catch (e) {
-    debugPrint("Error initializing Stripe: $e");
-    // Continue without Stripe
-  }
+  // Initialize all services
+  await initializeServices();
   
   // Run app with providers
   runApp(
@@ -65,24 +34,70 @@ Future<void> main() async {
   );
 }
 
+Future<void> initializeServices() async {
+  try {
+    // Load environment variables first
+    try {
+      await dotenv.load(fileName: "assets/.env");
+    } catch (e) {
+      debugPrint("Warning: Error loading .env file (non-fatal): $e");
+    }
+    
+    // Initialize Firebase
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      debugPrint('Error initializing Firebase: $e');
+      // Handle initialization error appropriately
+    }
+    
+    // Initialize GetStorage
+    try {
+      await GetStorage.init();
+    } catch (e) {
+      debugPrint('Error initializing GetStorage: $e');
+    }
+
+    // Initialize auth persistence
+    try {
+      final authProvider = AuthProviders();
+      await authProvider.initializePersistence();
+    } catch (e) {
+      debugPrint('Error initializing auth persistence: $e');
+    }
+  } catch (e) {
+    debugPrint('Error during service initialization: $e');
+    // Continue with app initialization even if some services fail
+  }
+}
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PoolQ',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProviders()),
+        ChangeNotifierProvider(create: (_) => DataProvider()),
+      ],
+      child: MaterialApp(
+        title: 'PoolQ',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          useMaterial3: true,
+        ),
+        home: const LandingPage(),
+        routes: {
+          '/home': (context) => HomePage(),
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => RegisterScreen(),
+          '/admin': (context) => const AdminLogin(),
+          '/admin-dashboard': (context) => const AdminDashboard(),
+        },
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => SplashScreen(),
-        '/home': (context) => HomePage(),
-        '/login': (context) => RegisterScreen(),
-        '/admin': (context) => AdminLogin(),
-        '/admin-dashboard': (context) => AdminDashboard(),
-      },
     );
   }
 }

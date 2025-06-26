@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:poolqapp/services/firebase/auth_service.dart';
+import 'package:poolqapp/services/auth_service.dart';
 import 'package:poolqapp/services/navigation_service.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
+import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/widgets/auth/auth_button.dart';
 import 'package:poolqapp/widgets/auth/auth_input_field.dart';
 import 'package:poolqapp/screens/auth/register_screen.dart';
@@ -24,12 +25,33 @@ class _LoginScreenState extends State<LoginScreen> {
   
   bool _isLoading = false;
   String _errorMessage = '';
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeGameData() async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    try {
+      await dataProvider.getWeek();
+      if (dataProvider.game == null) {
+        throw Exception('Failed to initialize game data');
+      }
+      await dataProvider.getGame();
+    } catch (e) {
+      debugPrint('Error initializing game data: $e');
+      if (_retryCount < _maxRetries) {
+        _retryCount++;
+        await Future.delayed(Duration(seconds: 1));
+        return _initializeGameData();
+      }
+      throw Exception('Failed to load game data. Please try again.');
+    }
   }
 
   Future<void> _loginUser() async {
@@ -43,21 +65,60 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     
     try {
-      final result = await Provider.of<AuthProviders>(context, listen: false)
-          .loginUser(_emailController.text, _passwordController.text);
+      // Trim whitespace from inputs
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
       
-      // Use the navigation service to navigate to the appropriate screen
-      if (result) {
+      // Validate email format
+      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+        throw Exception('Please enter a valid email address');
+      }
+      
+      // Login user
+      final result = await Provider.of<AuthProviders>(context, listen: false)
+          .loginUser(email, password);
+      
+      if (!result) {
+        throw Exception('Login failed. Please check your credentials.');
+      }
+
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logging in...'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
+      // Initialize game data
+      await _initializeGameData();
+      
+      // Navigate to home screen
+      if (mounted) {
         _navigationService.navigateAndRemoveUntil(context, HomePage());
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
+      
+      // Show error in snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -89,8 +150,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   hintText: 'Email',
                   icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
                     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
@@ -107,9 +170,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: 'Password',
                   icon: Icons.lock,
                   isPassword: true,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _loginUser(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
@@ -136,6 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _errorMessage,
                       style: const TextStyle(
                         color: Colors.red,
+                        fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -158,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         _navigationService.navigateToReplacement(
                           context,
-                          const RegisterScreen(),
+                          RegisterScreen(),
                         );
                       },
                       child: const Text('Sign Up'),

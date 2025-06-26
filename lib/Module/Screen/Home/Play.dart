@@ -4,7 +4,7 @@ import 'LeaderbpardWidget.dart';
 import '../../../Widget/reuse.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
+import 'package:poolqapp/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';

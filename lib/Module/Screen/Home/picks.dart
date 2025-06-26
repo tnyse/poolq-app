@@ -1,20 +1,15 @@
 import 'LeaderbpardWidget.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
+import '../../../constants.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:poolqapp/Widget/reuse.dart';
-import '../../../Provider/AuthProviders.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
+import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
-
-// Color constants
-const Color primary = Color(0xFF1A237E);
-const Color textPrimary = Color(0xFF212121);
-const Color textSecondary = Color(0xFF757575);
 
 class Picks extends StatefulWidget {
   const Picks({this.userId, this.selectedValue});

@@ -6,6 +6,9 @@ class AuthInputField extends StatefulWidget {
   final IconData icon;
   final bool isPassword;
   final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final Function(String)? onFieldSubmitted;
 
   const AuthInputField({
     Key? key,
@@ -14,6 +17,9 @@ class AuthInputField extends StatefulWidget {
     required this.icon,
     this.isPassword = false,
     this.validator,
+    this.keyboardType,
+    this.textInputAction,
+    this.onFieldSubmitted,
   }) : super(key: key);
 
   @override
@@ -29,6 +35,9 @@ class _AuthInputFieldState extends State<AuthInputField> {
       controller: widget.controller,
       obscureText: widget.isPassword ? _obscureText : false,
       validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
       decoration: InputDecoration(
         hintText: widget.hintText,
         prefixIcon: Icon(widget.icon),

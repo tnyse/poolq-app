@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'PlayerPickWidget.dart';
 import 'LeaderbpardWidget.dart';
-import '../../../Widget/reuse.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart';
-import '../../../Provider/homeProvider.dart';
-import '../../../Provider/AuthProviders.dart';
-import 'package:grouped_list/grouped_list.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:poolqapp/Widget/reuse.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:poolqapp/Provider/homeProvider.dart';
+import 'package:poolqapp/Provider/AuthProviders.dart';
 import '../../../services/nfl_schedule_service.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:grouped_list/grouped_list.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 // import 'play_model.dart';
@@ -39,84 +39,6 @@ class _PickedWidgetState extends State<PickedWidget> {
   int tiebreaker = 0;
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
-  Future getGame(context) async {
-    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
-    final scheduleService = NFLScheduleService();
-    
-    try {
-      print('Fetching games for PickedWidget from multiple sources...');
-      
-      String weekName = "${dataProvider.game!["mode"]}${widget.selectedValue}";
-      
-      // Try the new schedule service with multiple fallback options
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(weekName);
-      
-      // If no games from live APIs, try the original custom API
-      if (games.isEmpty) {
-        print('Trying original API for PickedWidget: ${mainUrl}/getnlf/$weekName');
-        
-        var response = await http.get(
-          Uri.parse('${mainUrl}/getnlf/$weekName'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Access-Control-Allow-Origin': '*',
-          },
-        ).timeout(Duration(seconds: 20));
-        
-        if (response.statusCode == 200) {
-          var body = json.decode(response.body);
-          if (body is List && body.isNotEmpty) {
-            setState(() {
-              data = body;
-              tiebreaker = int.parse(data![(data!.length - 1)]["score"]) +
-                  int.parse(data![(data!.length - 1)]["score2"]);
-            });
-            return body;
-          }
-        }
-      } else {
-        setState(() {
-          data = games;
-          if (games.isNotEmpty) {
-            // Calculate tiebreaker from the last game
-            var lastGame = games.last;
-            tiebreaker = int.parse(lastGame["score"] ?? "0") +
-                int.parse(lastGame["score2"] ?? "0");
-          }
-        });
-        print('Successfully loaded ${games.length} games for PickedWidget from NFL APIs');
-        return games;
-      }
-      
-    } catch (e) {
-      print('Error fetching games for PickedWidget: $e');
-    }
-    
-    return [];
-  }
-
-  Future getGameWinner(context) async {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    AuthProviders authProvider =
-        Provider.of<AuthProviders>(context, listen: false);
-    var response = await http.get(
-        Uri.parse(
-            '${mainUrl}/get_winners/${dataProvider.game!["mode"]}${widget.selectedValue}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Access-Control-Allow-Origin': '*',
-        }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    List body1 = body["winners"];
-    setState(() {
-      winners = body1;
-      // tiebreaker = int.parse(data![(data!.length-1)]["score"])+int.parse(data![(data!.length-1)]["score2"]);
-    });
-    return body;
-  }
 
   Stream<QuerySnapshot>? _pickrecord;
   Stream<QuerySnapshot>? _pickrecordStream;
@@ -146,8 +68,6 @@ class _PickedWidgetState extends State<PickedWidget> {
             isEqualTo: "${dataProvider.game!["mode"]}${widget.selectedValue}")
         .where("uid", isEqualTo: "${widget.userId}")
         .snapshots();
-    getGame(context);
-    getGameWinner(context);
     // _model = createModel(context, () => PlayModel());
 
     // _model.tieBreakerController ??= TextEditingController();

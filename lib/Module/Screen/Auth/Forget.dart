@@ -1,5 +1,5 @@
+import '../../../constants.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
 import 'package:provider/provider.dart';
 import 'package:poolqapp/Widget/reuse.dart';
 import 'package:google_fonts/google_fonts.dart';

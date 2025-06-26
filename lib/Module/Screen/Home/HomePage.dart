@@ -13,92 +13,204 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 // import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class HomePage extends StatefulWidget {
-  final initial;
-  HomePage({this.initial});
+  final int? initial;
+  const HomePage({Key? key, this.initial}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  PageController? controller;
+  late PageController _controller;
   User? user = FirebaseAuth.instance.currentUser;
   Stream<QuerySnapshot>? _pickrecord;
+  bool _isLoading = true;
+  String? _error;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    var authProvider = Provider.of<AuthProviders>(context, listen: false);
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    controller = PageController(
-        viewportFraction: 1,
-        initialPage: widget.initial == null ? 0 : widget.initial);
-    dataProvider.pageIndex = widget.initial == null ? 0 : widget.initial;
-    _pickrecord = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("uid", isEqualTo: user!.uid)
-        .where("week", isEqualTo: dataProvider.game!["name"])
-        .snapshots();
-    authProvider.getUserInfo();
+    _controller = PageController(
+      viewportFraction: 1,
+      initialPage: widget.initial ?? 0
+    );
+    _initializeData();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeData() async {
+    if (!mounted) return;
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProviders>(context, listen: false);
+      debugPrint('HomePage: _initializeData called');
+      // Initialize game data if not already initialized
+      if (dataProvider.game == null) {
+        debugPrint('HomePage: dataProvider.game is null, calling getWeek()');
+        await dataProvider.getWeek();
+        debugPrint('HomePage: after getWeek, dataProvider.game: ' + dataProvider.game.toString());
+        if (dataProvider.game == null) {
+          throw Exception('Failed to initialize game data (game is still null after getWeek)');
+        }
+      }
+      // Set page index
+      dataProvider.pageIndex = widget.initial ?? 0;
+      // Initialize pick record stream
+      if (user != null) {
+        if (dataProvider.game == null || dataProvider.game!["name"] == null) {
+          throw Exception('Game or game name is null for pickrecord query');
+        }
+        _pickrecord = FirebaseFirestore.instance
+            .collection('pickrecord')
+            .where("uid", isEqualTo: user!.uid)
+            .where("week", isEqualTo: dataProvider.game!["name"])
+            .snapshots();
+      } else {
+        throw Exception('User not authenticated');
+      }
+      // Get user info
+      await authProvider.getUserInfo();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e, stack) {
+      debugPrint('Error in _initializeData: $e');
+      debugPrint('Stack trace: $stack');
+      if (_retryCount < _maxRetries) {
+        _retryCount++;
+        await Future.delayed(Duration(seconds: 1));
+        return _initializeData();
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Error initializing data: ${e.toString()}';
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: true);
+    final dataProvider = Provider.of<DataProvider>(context, listen: true);
+
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
+              ),
+              SizedBox(height: 16),
+              Text('Loading...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _error = null;
+                    _isLoading = true;
+                    _retryCount = 0;
+                  });
+                  _initializeData();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: StreamBuilder<QuerySnapshot>(
-          stream: _pickrecord,
-          builder:
-              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Something went wrong'));
-            }
+        stream: _pickrecord,
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong'));
+          }
 
-            if (snapshot.connectionState == ConnectionState.waiting ||
-                snapshot.data == null) {
-              return Center(
-                  child: Column(
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              snapshot.data == null) {
+            return Center(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.fromSwatch()
-                            .copyWith(secondary: Color(0xFF063a73)),
-                      ),
-                      child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
-                        strokeWidth: 2,
-                        backgroundColor: Colors.white,
-                        //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
-                      )),
-                  SizedBox(
-                    height: 10,
+                    data: Theme.of(context).copyWith(
+                      colorScheme: ColorScheme.fromSwatch()
+                          .copyWith(secondary: const Color(0xFF063a73)),
+                    ),
+                    child: const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
+                      strokeWidth: 2,
+                      backgroundColor: Colors.white,
+                    ),
                   ),
-                  Text('Loading',
-                      style: TextStyle(
-                          color: Color(0xFF333333),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Loading',
+                    style: TextStyle(
+                      color: Color(0xFF333333),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600
+                    ),
+                  ),
                 ],
-              ));
-            }
-
-            return PageView(
-              controller: controller,
-              children: [
-                HomePageWidget(
-                    controller: controller,
-                    isEmpty: snapshot.data!.docs.isEmpty),
-                LeaderboardWidget(),
-                UserProfile()
-              ],
+              ),
             );
-          }),
+          }
+
+          return PageView(
+            controller: _controller,
+            onPageChanged: (index) {
+              if (mounted) {
+                dataProvider.setValue(index);
+              }
+            },
+            children: [
+              HomePageWidget(
+                controller: _controller,
+                isEmpty: snapshot.data!.docs.isEmpty
+              ),
+              const LeaderboardWidget(),
+              const UserProfile()
+            ],
+          );
+        }
+      ),
       bottomNavigationBar: buildMyNavBar(context, dataProvider),
     );
   }
@@ -106,12 +218,8 @@ class _HomePageState extends State<HomePage> {
   Container buildMyNavBar(BuildContext context, DataProvider dataProvider) {
     return Container(
       height: 60,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Color(0xFF063A73),
-        borderRadius: const BorderRadius.only(
-            // topLeft: Radius.circular(20),
-            // topRight: Radius.circular(20),
-            ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -119,64 +227,53 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             enableFeedback: false,
             onPressed: () {
-              setState(() {
-                dataProvider.setValue(0);
-                // print(pageIndex);
-              });
-              controller!.jumpToPage(0);
+              if (mounted) {
+                setState(() {
+                  dataProvider.setValue(0);
+                });
+                _controller.jumpToPage(0);
+              }
             },
-            icon: dataProvider.pageIndex != 0
-                ? Icon(
-                    PhosphorIcons.house,
-                    color: Colors.white,
-                    size: 40,
-                  )
-                : Icon(
-                    PhosphorIcons.house,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-          ),
-          InkWell(
-            // enableFeedback: false,
-            onTap: () {
-              setState(() {
-                dataProvider.setValue(1);
-              });
-              controller!.jumpToPage(1);
-            },
-            child: dataProvider.pageIndex == 1
-                ? Image.asset(
-                    "assets/images/lb-full.png",
-                    width: 45,
-                    height: 45,
-                  )
-                : Image.asset(
-                    "assets/images/lb-outline.png",
-                    width: 45,
-                    height: 45,
-                    // color: Colors.white,
-                  ),
+            icon: Icon(
+              dataProvider.pageIndex == 0
+                  ? PhosphorIcons.house_fill
+                  : PhosphorIcons.house,
+              color: Colors.white,
+            ),
           ),
           IconButton(
             enableFeedback: false,
             onPressed: () {
-              setState(() {
-                dataProvider.setValue(2);
-              });
-              controller!.jumpToPage(2);
+              if (mounted) {
+                setState(() {
+                  dataProvider.setValue(1);
+                });
+                _controller.jumpToPage(1);
+              }
             },
-            icon: dataProvider.pageIndex == 2
-                ? Icon(
-                    PhosphorIcons.user,
-                    color: Colors.white,
-                    size: 40,
-                  )
-                : Icon(
-                    PhosphorIcons.user,
-                    color: Colors.white70,
-                    size: 40,
-                  ),
+            icon: Icon(
+              dataProvider.pageIndex == 1
+                  ? PhosphorIcons.trophy_fill
+                  : PhosphorIcons.trophy,
+              color: Colors.white,
+            ),
+          ),
+          IconButton(
+            enableFeedback: false,
+            onPressed: () {
+              if (mounted) {
+                setState(() {
+                  dataProvider.setValue(2);
+                });
+                _controller.jumpToPage(2);
+              }
+            },
+            icon: Icon(
+              dataProvider.pageIndex == 2
+                  ? PhosphorIcons.user_fill
+                  : PhosphorIcons.user,
+              color: Colors.white,
+            ),
           ),
         ],
       ),

@@ -4,6 +4,8 @@ import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/services/nfl_game_service.dart';
 import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../Model/invitation_model.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({Key? key}) : super(key: key);
@@ -18,6 +20,11 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   List<Map<String, dynamic>> _games = [];
   List<String> _winners = [];
   String _selectedWeek = "REG1";
+  final _formKey = GlobalKey<FormState>();
+  final _codeController = TextEditingController();
+  final _maxUsesController = TextEditingController();
+  bool _isReusable = true;
+  bool _isLoading = false;
   
   @override
   void initState() {
@@ -36,7 +43,240 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   @override
   void dispose() {
     _tabController.dispose();
+    _codeController.dispose();
+    _maxUsesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _createInvitationCode() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final code = _codeController.text.trim();
+      
+      // Check if code already exists
+      final existingCode = await FirebaseFirestore.instance
+          .collection('invites')
+          .where('code', isEqualTo: code)
+          .get();
+
+      if (existingCode.docs.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This code already exists')),
+          );
+        }
+        return;
+      }
+
+      // Create new invitation code
+      await FirebaseFirestore.instance.collection('invites').add({
+        'code': code,
+        'createdBy': 'admin@poolq.app', // You might want to get this from current user
+        'createdAt': FieldValue.serverTimestamp(),
+        'isReusable': _isReusable,
+        'maxUses': _maxUsesController.text.isEmpty ? null : int.parse(_maxUsesController.text),
+        'usedCount': 0,
+        'usedBy': [],
+        'usedAt': [],
+        'status': 'active',
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invitation code created successfully')),
+        );
+        _codeController.clear();
+        _maxUsesController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating invitation code: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleCodeStatus(String docId, bool makeActive) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('invites')
+          .doc(docId)
+          .update({'status': makeActive ? 'active' : 'expired'});
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Code ${makeActive ? 'activated' : 'deactivated'} successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating code status: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildInvitationCodesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Create Invitation Code',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _codeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Invitation Code',
+                        hintText: 'Enter a unique code',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter an invitation code';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: const Text('Reusable Code'),
+                      subtitle: const Text('Allow multiple users to use this code'),
+                      value: _isReusable,
+                      onChanged: (bool? value) {
+                        if (value != null) {
+                          setState(() {
+                            _isReusable = value;
+                          });
+                        }
+                      },
+                    ),
+                    if (_isReusable) ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _maxUsesController,
+                        decoration: const InputDecoration(
+                          labelText: 'Max Uses (Optional)',
+                          hintText: 'Leave empty for unlimited uses',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            final number = int.tryParse(value);
+                            if (number == null || number < 1) {
+                              return 'Please enter a valid number greater than 0';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _createInvitationCode,
+                        child: _isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text('Create Code'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Existing Invitation Codes',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('invites')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              
+              if (docs.isEmpty) {
+                return const Center(
+                  child: Text('No invitation codes found'),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  final isActive = data['status'] == 'active';
+                  final usedCount = data['usedCount'] ?? 0;
+                  final maxUses = data['maxUses'];
+                  final isReusable = data['isReusable'] ?? false;
+
+                  return Card(
+                    child: ListTile(
+                      title: Text(data['code'] ?? ''),
+                      subtitle: Text(
+                        'Status: ${data['status']}\n'
+                        'Used: $usedCount${maxUses != null ? ' / $maxUses' : ''}\n'
+                        'Reusable: ${isReusable ? 'Yes' : 'No'}',
+                      ),
+                      trailing: Switch(
+                        value: isActive,
+                        onChanged: (bool value) => _toggleCodeStatus(doc.id, value),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -50,6 +290,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
             Tab(text: 'Game Scores', icon: Icon(Icons.sports_football)),
             Tab(text: 'Winners', icon: Icon(Icons.emoji_events)),
             Tab(text: 'Statistics', icon: Icon(Icons.analytics)),
+            Tab(text: 'Invitation Codes', icon: Icon(Icons.code)),
           ],
         ),
       ),
@@ -60,6 +301,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           _buildGameScoresTab(),
           _buildWinnersTab(),
           AdminStats(),
+          _buildInvitationCodesTab(),
         ],
       ),
     );

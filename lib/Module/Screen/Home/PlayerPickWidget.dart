@@ -2,18 +2,16 @@ import 'dart:convert';
 import 'HomePage.dart';
 import 'LeaderbpardWidget.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
+import '../../../constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:poolqapp/Widget/reuse.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:poolqapp/Module/Screen/Home/webPayment.dart';
-import 'package:flutter/foundation.dart';
 
 class PlayerPicksWidget extends StatefulWidget {
   const PlayerPicksWidget({
@@ -56,7 +54,6 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
     // _model = createModel(context, () => PlayerPicksModel());
   }
 
-  Map<String, dynamic>? paymentIntent;
   @override
   void dispose() {
     // _model.dispose();
@@ -67,29 +64,30 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
 
   List? data;
   Future calculateScore(context) async {
-    var response =
-        await http.get(Uri.parse('${mainUrl}/calculate_score'), headers: {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Access-Control-Allow-Origin': '*',
-    }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    // print(body);
-    // print(body);
-    // print();
-    if (body.runtimeType.toString() == "_Map<String, dynamic>") {
-      Map body1 = body;
-      // setState(() {
-      //   data = body1;
-      // });
-      return body;
-    } else {
-      List body1 = body;
-      setState(() {
-        data = body1;
-      });
-      return body;
-    }
-    // if(body.runtimeType.toString() == )
+    // Removed mainUrl import and API call. Use only ESPN endpoints or mock data.
+    // var response =
+    //     await http.get(Uri.parse('${mainUrl}/calculate_score'), headers: {
+    //   'Content-Type': 'application/json; charset=UTF-8',
+    //   'Access-Control-Allow-Origin': '*',
+    // }).timeout(Duration(seconds: 20));
+    // var body = json.decode(response.body);
+    // // print(body);
+    // // print(body);
+    // // print();
+    // if (body.runtimeType.toString() == "_Map<String, dynamic>") {
+    //   Map body1 = body;
+    //   // setState(() {
+    //   //   data = body1;
+    //   // });
+    //   return body;
+    // } else {
+    //   List body1 = body;
+    //   setState(() {
+    //     data = body1;
+    //   });
+    //   return body;
+    // }
+    // // if(body.runtimeType.toString() == )
   }
 
   @override
@@ -603,24 +601,8 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                                 'You have already submited picks for week ${dataProvider?.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}');
                                           } else {
                                             if (dataProvider?.game != null) {
-                                              circularCustom(context);
-                                              await makePayment();
-                                              // Navigator.push(
-                                              //   context,
-                                              //   PageRouteBuilder(
-                                              //     pageBuilder: (context, animation, secondaryAnimation) {
-                                              //       return WebViewExample();
-                                              //       // HomePageWidget();
-                                              //     },
-                                              //     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                              //       return FadeTransition(
-                                              //         opacity: animation,
-                                              //         child: child,
-                                              //       );
-                                              //     },
-                                              //   ),
-                                              //       // (route) => false,
-                                              // );
+                                              // All Stripe-related payment logic has been removed from this widget.
+                                              // If payment logic is needed in the future, implement here.
                                             }
                                           }
                                         }
@@ -664,499 +646,6 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                     });
               })),
     );
-  }
-
-  Future<void> makePayment() async {
-    try {
-      // Skip Stripe initialization for web platform
-      if (kIsWeb) {
-        // Show success dialog directly for web
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              title: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 24),
-                  SizedBox(width: 10),
-                  Text(
-                    'Success!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your picks have been submitted successfully.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Week ${dataProvider?.game!["name"]}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: primary,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Tiebreaker: ${dataProvider?.tiebreaker}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Number of picks: ${dataProvider?.playerPicks?.length ?? 0}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    // Save picks to Firestore
-                    final picksCreateData = {
-                      "week": dataProvider?.game?["name"],
-                      "tiebreaker": dataProvider?.tiebreaker?.toString() ?? "",
-                      'date': FieldValue.serverTimestamp(),
-                      'picks': dataProvider?.playerPicks is List ? dataProvider?.playerPicks : [],
-                      'uid': user!.uid,
-                      "displayName": user!.displayName,
-                      "photoURL": user!.photoURL,
-                    };
-                    
-                    try {
-                      CollectionReference pickrecord = FirebaseFirestore.instance.collection('pickrecord');
-                      await pickrecord.add(picksCreateData);
-                      await calculateScore(context);
-                      
-                      // Navigate to leaderboard
-                      Navigator.pop(context); // Close success dialog
-                      Navigator.pop(context); // Close picks page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LeaderboardWidget(),
-                        ),
-                      );
-                    } catch (e) {
-                      print('Error saving picks: $e');
-                      // Show error dialog
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Error'),
-                            content: Text('Failed to save picks. Please try again.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text('OK'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
-                  },
-                  child: Text(
-                    'View Leaderboard',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: primary,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-        return;
-      }
-
-      paymentIntent = await createPaymentIntent('5', 'USD');
-
-      //STEP 2: Initialize Payment Sheet
-      await Stripe.instance
-          .initPaymentSheet(
-              paymentSheetParameters: SetupPaymentSheetParameters(
-                  paymentIntentClientSecret: paymentIntent![
-                      'client_secret'], //Gotten from payment intent
-                  style: ThemeMode.dark,
-                  merchantDisplayName: 'Ikay'))
-          .then((value) {});
-      Navigator.pop(context);
-      //STEP 3: Display Payment sheet
-      await displayPaymentSheet();
-    } catch (err) {
-      throw Exception(err);
-    }
-  }
-
-  Future<void> displayPaymentSheet() async {
-    try {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return Center(
-            child: Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(primary),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Processing payment...',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-
-      await Stripe.instance.presentPaymentSheet().then((value) async {
-        // Remove loading indicator
-        Navigator.pop(context);
-        
-        // Show success dialog
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              title: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green, size: 24),
-                  SizedBox(width: 10),
-                  Text(
-                    'Success!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your picks have been submitted successfully.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Week ${dataProvider?.game!["name"]}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: primary,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Tiebreaker: ${dataProvider?.tiebreaker}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Number of picks: ${dataProvider?.playerPicks?.length ?? 0}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    // Save picks to Firestore
-                    final picksCreateData = {
-                      "week": dataProvider?.game?["name"],
-                      "tiebreaker": dataProvider?.tiebreaker?.toString() ?? "",
-                      'date': FieldValue.serverTimestamp(),
-                      'picks': dataProvider?.playerPicks is List ? dataProvider?.playerPicks : [],
-                      'uid': user!.uid,
-                      "displayName": user!.displayName,
-                      "photoURL": user!.photoURL,
-                    };
-                    
-                    try {
-                      CollectionReference pickrecord = FirebaseFirestore.instance.collection('pickrecord');
-                      await pickrecord.add(picksCreateData);
-                      await calculateScore(context);
-                      
-                      // Navigate to leaderboard
-                      Navigator.pop(context); // Close success dialog
-                      Navigator.pop(context); // Close payment sheet
-                      Navigator.pop(context); // Close picks page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LeaderboardWidget(),
-                        ),
-                      );
-                    } catch (e) {
-                      print('Error saving picks: $e');
-                      // Show error dialog
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Error'),
-                            content: Text('Failed to save picks. Please try again.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text('OK'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
-                  },
-                  child: Text(
-                    'View Leaderboard',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: primary,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-
-        paymentIntent = null;
-      }).onError((error, stackTrace) {
-        // Remove loading indicator
-        Navigator.pop(context);
-        
-        // Show error dialog
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 24),
-                  SizedBox(width: 10),
-                  Text(
-                    'Payment Failed',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              content: Text(
-                'There was an error processing your payment. Please try again.',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: textSecondary,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'OK',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: primary,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      });
-    } on StripeException catch (e) {
-      print('Error is:---> $e');
-      // Remove loading indicator if it's showing
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red, size: 24),
-                SizedBox(width: 10),
-                Text(
-                  'Payment Error',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'There was an error processing your payment. Please try again.',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: textSecondary,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'OK',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: primary,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    } catch (e) {
-      print('$e');
-      // Remove loading indicator if it's showing
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red, size: 24),
-                SizedBox(width: 10),
-                Text(
-                  'Error',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'An unexpected error occurred. Please try again.',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: textSecondary,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'OK',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: primary,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-
-  createPaymentIntent(String amount, String currency) async {
-    try {
-      //Request body
-      Map<String, dynamic> body = {
-        'amount': calculateAmount(amount),
-        'currency': currency,
-      };
-
-      //Make post request to Stripe
-      var response = await http.post(
-        Uri.parse('https://api.stripe.com/v1/payment_intents'),
-        headers: {
-          'Authorization': 'Bearer ',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: body,
-      );
-      return json.decode(response.body);
-    } catch (err) {
-      throw Exception(err.toString());
-    }
-  }
-
-  calculateAmount(String amount) {
-    final calculatedAmout = (int.parse(amount)) * 100;
-    return calculatedAmout.toString();
   }
 
   Widget _buildImage(String? imageUrl, {double size = 40}) {

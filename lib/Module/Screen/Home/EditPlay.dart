@@ -4,7 +4,7 @@ import 'LeaderbpardWidget.dart';
 import '../../../Widget/reuse.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
-import '../../../Constants/value.dart';
+import '../../../constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +16,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
 import '../../../services/nfl_schedule_service.dart';
+import 'package:poolqapp/constants.dart';
 
 class EditPlayWidget extends StatefulWidget {
   const EditPlayWidget({Key? key}) : super(key: key);

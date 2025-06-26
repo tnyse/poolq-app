@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'nfl_game_service.dart';
 
 class NFLScheduleService {
   static final NFLScheduleService _instance = NFLScheduleService._internal();
@@ -13,6 +14,9 @@ class NFLScheduleService {
 
   // ESPN API endpoints
   static const String _espnBaseUrl = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
+  static const String _espnScoreboardUrl = '$_espnBaseUrl/scoreboard';
+  static const String _espnTeamsUrl = '$_espnBaseUrl/teams';
+  static const String _espnScheduleUrl = '$_espnBaseUrl/schedule';
   
   // Team abbreviation mapping to match your app's format
   static const Map<String, String> _teamMapping = {
@@ -26,16 +30,39 @@ class NFLScheduleService {
     'SEA': 'SEA', 'TB': 'TB', 'TEN': 'TEN', 'WAS': 'WAS'
   };
 
+  // Get platform-appropriate headers and URL
+  Map<String, String> _getHeaders() {
+    if (kIsWeb) {
+      return {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Origin': 'https://poolq.app',
+      };
+    }
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'PoolQ-App/1.0',
+    };
+  }
+
+  // Helper method to get appropriate URL based on platform
+  String _getApiUrl(String originalUrl) {
+    if (kIsWeb) {
+      // Use a CORS proxy for web platform
+      const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+      return '$corsProxy$originalUrl';
+    }
+    return originalUrl;
+  }
+
   /// Fetches current NFL week from ESPN
   Future<Map<String, dynamic>?> getCurrentWeek() async {
     try {
       final response = await http.get(
-        Uri.parse('$_espnBaseUrl/scoreboard'),
-        headers: {
-          'User-Agent': 'PoolQ-App/1.0',
-          'Accept': 'application/json',
-        },
-      ).timeout(Duration(seconds: 10));
+        Uri.parse(_getApiUrl(_espnScoreboardUrl)),
+        headers: _getHeaders(),
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -44,125 +71,242 @@ class NFLScheduleService {
           'week': data['week']?['number'] ?? 1,
           'season_type': data['season']?['type'] ?? 2, // 2 = regular season
           'season': data['season']?['year'] ?? 2025,
+          'seasonName': _getSeasonTypeName(data['season']?['type'] ?? 2),
         };
       }
+      
+      // If ESPN API fails, return default values
+      debugPrint('ESPN API returned status code: ${response.statusCode}, using default values');
+      return {
+        'week': 1,
+        'season_type': 2,
+        'season': 2025,
+        'seasonName': 'REG',
+      };
     } catch (e) {
-      print('Error fetching current week: $e');
+      debugPrint('Error fetching current week: $e, using default values');
+      return {
+        'week': 1,
+        'season_type': 2,
+        'season': 2025,
+        'seasonName': 'REG',
+      };
     }
-    return null;
+  }
+
+  /// Get season type name
+  String _getSeasonTypeName(int type) {
+    switch (type) {
+      case 1: return 'PRE';
+      case 2: return 'REG';
+      case 3: return 'POST';
+      default: return 'REG';
+    }
+  }
+
+  /// Fetches NFL schedule for a specific week with fallback options
+  Future<List<Map<String, dynamic>>> getScheduleWithFallback(String weekName) async {
+    try {
+      // Parse week number from weekName (e.g., "REG1" -> 1)
+      final weekMatch = RegExp(r'\d+').firstMatch(weekName);
+      final week = weekMatch != null ? int.parse(weekMatch.group(0)!) : 1;
+      
+      // Try primary schedule endpoint
+      final games = await getScheduleForWeek(week);
+      if (games.isNotEmpty) {
+        return games;
+      }
+
+      debugPrint('Primary schedule endpoint returned no games, trying fallback...');
+      
+      // Try scoreboard endpoint as fallback
+      final response = await http.get(
+        Uri.parse(_getApiUrl('$_espnScoreboardUrl?week=$week')),
+        headers: _getHeaders(),
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final fallbackGames = _parseESPNResponse(data);
+        if (fallbackGames.isNotEmpty) {
+          return fallbackGames;
+        }
+      }
+
+      // If all external APIs fail, use mock data
+      debugPrint('All NFL data sources failed, using mock data');
+      final mockService = NFLGameService();
+      return mockService.getMockGamesForWeek(weekName);
+    } catch (e) {
+      debugPrint('Error fetching schedule with fallback: $e, using mock data');
+      final mockService = NFLGameService();
+      return mockService.getMockGamesForWeek(weekName);
+    }
   }
 
   /// Fetches NFL schedule for a specific week
   Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 2}) async {
     try {
+      // First try the scoreboard endpoint for live data
       final response = await http.get(
-        Uri.parse('$_espnBaseUrl/scoreboard?dates=${season}&seasontype=$seasonType&week=$week'),
-        headers: {
-          'User-Agent': 'PoolQ-App/1.0',
-          'Accept': 'application/json',
-        },
-      ).timeout(Duration(seconds: 15));
+        Uri.parse(_getApiUrl('$_espnScoreboardUrl?dates=$season&seasontype=$seasonType&week=$week')),
+        headers: _getHeaders(),
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return _parseESPNResponse(data);
-      } else {
-        print('ESPN API returned status: ${response.statusCode}');
-        return [];
+        final games = _parseESPNResponse(data);
+        
+        if (games.isNotEmpty) {
+          debugPrint('Successfully fetched ${games.length} games from ESPN scoreboard');
+          return games;
+        }
       }
-    } catch (e) {
-      print('Error fetching schedule from ESPN: $e');
-      return [];
-    }
-  }
 
-  /// Alternative method using NFL.com endpoint (unofficial)
-  Future<List<Map<String, dynamic>>> getScheduleFromNFL(String weekName) async {
-    try {
-      // Convert week format (REG1 -> 1)
-      int weekNumber = _parseWeekNumber(weekName);
-      
-      final response = await http.get(
-        Uri.parse('https://www.nfl.com/api/researchExportedJson/mobile/games/2025/REG/$weekNumber'),
-        headers: {
-          'User-Agent': 'PoolQ-App/1.0',
-          'Accept': 'application/json',
-          'Referer': 'https://www.nfl.com/',
-        },
-      ).timeout(Duration(seconds: 15));
+      // If scoreboard fails, try the schedule endpoint
+      final scheduleResponse = await http.get(
+        Uri.parse(_getApiUrl('$_espnScheduleUrl?dates=$season&seasontype=$seasonType&week=$week')),
+        headers: _getHeaders(),
+      ).timeout(const Duration(seconds: 15));
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return _parseGamesFromNFL(data);
+      if (scheduleResponse.statusCode == 200) {
+        final data = json.decode(scheduleResponse.body);
+        final games = _parseESPNScheduleResponse(data);
+        
+        if (games.isNotEmpty) {
+          debugPrint('Successfully fetched ${games.length} games from ESPN schedule');
+          return games;
+        }
       }
+
+      // If both endpoints fail, use mock data
+      debugPrint('ESPN API returned no games for week $week, using mock data');
+      final mockService = NFLGameService();
+      return mockService.getMockGamesForWeek('REG$week');
     } catch (e) {
-      print('Error fetching from NFL.com API: $e');
+      debugPrint('Error fetching schedule from ESPN: $e, using mock data');
+      final mockService = NFLGameService();
+      return mockService.getMockGamesForWeek('REG$week');
     }
-    return [];
   }
 
-  /// Fetches schedule with fallback mechanism
-  Future<List<Map<String, dynamic>>> getScheduleWithFallback(String weekName) async {
-    int weekNumber = _parseWeekNumber(weekName);
+  /// Parse schedule-specific ESPN response
+  List<Map<String, dynamic>> _parseESPNScheduleResponse(Map<String, dynamic> data) {
+    List<Map<String, dynamic>> games = [];
     
-    // Try ESPN first
-    List<Map<String, dynamic>> games = await getScheduleForWeek(weekNumber);
-    
-    if (games.isNotEmpty) {
-      print('Successfully fetched ${games.length} games from ESPN API');
-      return games;
-    }
-
-    // Try NFL.com as fallback
-    games = await getScheduleFromNFL(weekName);
-    
-    if (games.isNotEmpty) {
-      print('Successfully fetched ${games.length} games from NFL.com API');
-      return games;
-    }
-
-    // Use mock data as last resort
-    print('Using mock data for week $weekName');
-    return _createMockData();
-  }
-
-  /// Parse games from ESPN API response
-  List<Map<String, dynamic>> _parseESPNResponse(Map<String, dynamic> data) {
     try {
-      List<Map<String, dynamic>> games = [];
-      
       if (data['events'] != null) {
         for (var event in data['events']) {
           var competition = event['competitions']?[0];
           if (competition != null) {
             var competitors = competition['competitors'];
             if (competitors != null && competitors.length >= 2) {
-              // Parse the ISO date and format it consistently
               String originalDate = event['date'] ?? '';
               String formattedDate = _formatGameDate(originalDate);
               
               var homeTeam = competitors.firstWhere((c) => c['homeAway'] == 'home', orElse: () => competitors[0]);
               var awayTeam = competitors.firstWhere((c) => c['homeAway'] == 'away', orElse: () => competitors[1]);
               
+              var odds = competition['odds']?[0];
+              String favorite = '';
+              double spread = 0.0;
+              
+              if (odds != null) {
+                favorite = odds['favorite'] ?? '';
+                spread = double.tryParse(odds['spread']?.toString() ?? '0') ?? 0.0;
+              }
+              
               games.add({
-                'date': formattedDate, // Use consistently formatted date
+                'date': formattedDate,
                 'home': homeTeam['team']['displayName'] ?? 'TBD',
                 'away': awayTeam['team']['displayName'] ?? 'TBD',
-                'abbreviation': _getTeamAbbreviation(homeTeam['team']['displayName'] ?? ''),
-                'abbreviation2': _getTeamAbbreviation(awayTeam['team']['displayName'] ?? ''),
+                'abbreviation': _getTeamAbbreviation(homeTeam['team']['abbreviation'] ?? ''),
+                'abbreviation2': _getTeamAbbreviation(awayTeam['team']['abbreviation'] ?? ''),
                 'picture': homeTeam['team']['logo'] ?? '',
                 'picture2': awayTeam['team']['logo'] ?? '',
                 'score': homeTeam['score']?.toString() ?? '0',
                 'score2': awayTeam['score']?.toString() ?? '0',
                 'status': competition['status']['type']['name'] ?? 'scheduled',
                 'time': _formatTime(originalDate),
+                'venue': competition['venue']?['fullName'] ?? '',
+                'broadcast': competition['broadcasts']?[0]?['names']?.join(', ') ?? '',
+                'favorite': favorite,
+                'spread': spread,
               });
             }
           }
         }
       }
       
-      print('Successfully parsed ${games.length} games from ESPN API');
+      return games;
+    } catch (e) {
+      print('Error parsing ESPN schedule response: $e');
+      return [];
+    }
+  }
+
+  /// Parse games from ESPN API response
+  List<Map<String, dynamic>> _parseESPNResponse(Map<String, dynamic> data) {
+    List<Map<String, dynamic>> games = [];
+    
+    try {
+      if (data['events'] != null) {
+        for (var event in data['events']) {
+          var competition = event['competitions']?[0];
+          if (competition != null) {
+            var competitors = competition['competitors'];
+            if (competitors != null && competitors.length >= 2) {
+              String originalDate = event['date'] ?? '';
+              String formattedDate = _formatGameDate(originalDate);
+              
+              var homeTeam = competitors.firstWhere((c) => c['homeAway'] == 'home', orElse: () => competitors[0]);
+              var awayTeam = competitors.firstWhere((c) => c['homeAway'] == 'away', orElse: () => competitors[1]);
+              
+              var odds = competition['odds']?[0];
+              String favorite = '';
+              double spread = 0.0;
+              
+              if (odds != null) {
+                favorite = odds['favorite'] ?? '';
+                spread = double.tryParse(odds['spread']?.toString() ?? '0') ?? 0.0;
+              }
+              
+              var situation = competition['situation'];
+              String gameStatus = competition['status']['type']['name'] ?? 'scheduled';
+              String possession = '';
+              
+              if (situation != null && gameStatus.toLowerCase() == 'in') {
+                possession = situation['possession'] ?? '';
+              }
+              
+              games.add({
+                'date': formattedDate,
+                'home': homeTeam['team']['displayName'] ?? 'TBD',
+                'away': awayTeam['team']['displayName'] ?? 'TBD',
+                'abbreviation': _getTeamAbbreviation(homeTeam['team']['abbreviation'] ?? ''),
+                'abbreviation2': _getTeamAbbreviation(awayTeam['team']['abbreviation'] ?? ''),
+                'picture': homeTeam['team']['logo'] ?? '',
+                'picture2': awayTeam['team']['logo'] ?? '',
+                'score': homeTeam['score']?.toString() ?? '0',
+                'score2': awayTeam['score']?.toString() ?? '0',
+                'status': gameStatus,
+                'time': _formatTime(originalDate),
+                'venue': competition['venue']?['fullName'] ?? '',
+                'broadcast': competition['broadcasts']?[0]?['names']?.join(', ') ?? '',
+                'favorite': favorite,
+                'spread': spread,
+                'possession': possession,
+                'quarter': situation?['period'] ?? 0,
+                'clock': situation?['clock'] ?? '',
+                'down': situation?['down'] ?? 0,
+                'distance': situation?['distance'] ?? 0,
+                'yardLine': situation?['yardLine'] ?? 0,
+              });
+            }
+          }
+        }
+      }
+      
       return games;
     } catch (e) {
       print('Error parsing ESPN response: $e');
@@ -200,62 +344,12 @@ class NFLScheduleService {
     return '$weekday $month $day, $year';
   }
 
-  /// Parse games from NFL.com API response
-  List<Map<String, dynamic>> _parseGamesFromNFL(Map<String, dynamic> data) {
-    List<Map<String, dynamic>> games = [];
-    
-    // NFL.com API structure may vary, implement based on actual response
-    // This is a placeholder implementation
-    
-    return games;
-  }
-
-  /// Convert week name (REG1, REG2, etc.) to number
-  int _parseWeekNumber(String weekName) {
-    final regex = RegExp(r'REG(\d+)');
-    final match = regex.firstMatch(weekName.toUpperCase());
-    return match != null ? int.parse(match.group(1)!) : 1;
-  }
-
-  /// Get standardized team abbreviation
-  String _getTeamAbbreviation(String espnAbbr) {
-    // Handle special cases where ESPN abbreviations differ
-    switch (espnAbbr) {
-      case 'WSH': return 'WAS';
-      default: return _teamMapping[espnAbbr] ?? espnAbbr;
+  /// Get ordinal suffix for a number (1st, 2nd, 3rd, etc)
+  String _getOrdinalSuffix(int number) {
+    if (number >= 11 && number <= 13) {
+      return 'th';
     }
-  }
-
-  /// Format date for display
-  String _formatDate(String isoDate) {
-    try {
-      final date = DateTime.parse(isoDate);
-      final weekday = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][date.weekday - 1];
-      final month = ['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'][date.month - 1];
-      return '$weekday ${month} ${date.day}${_getOrdinalSuffix(date.day)}, ${date.year}';
-    } catch (e) {
-      return 'TBD';
-    }
-  }
-
-  /// Format time for display
-  String _formatTime(String isoDate) {
-    try {
-      final date = DateTime.parse(isoDate).toLocal();
-      final hour = date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
-      final minute = date.minute.toString().padLeft(2, '0');
-      final period = date.hour >= 12 ? 'PM' : 'AM';
-      return '$hour:$minute $period';
-    } catch (e) {
-      return 'TBD';
-    }
-  }
-
-  /// Get ordinal suffix for day (1st, 2nd, 3rd, etc.)
-  String _getOrdinalSuffix(int day) {
-    if (day >= 11 && day <= 13) return 'th';
-    switch (day % 10) {
+    switch (number % 10) {
       case 1: return 'st';
       case 2: return 'nd';
       case 3: return 'rd';
@@ -263,6 +357,105 @@ class NFLScheduleService {
     }
   }
 
+  /// Format time from ISO date string
+  String _formatTime(String isoDate) {
+    try {
+      if (isoDate.isEmpty) return '';
+      
+      DateTime dateTime = DateTime.parse(isoDate).toLocal();
+      String period = dateTime.hour >= 12 ? 'PM' : 'AM';
+      int hour = dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour;
+      hour = hour == 0 ? 12 : hour;
+      String minute = dateTime.minute.toString().padLeft(2, '0');
+      
+      return '$hour:$minute $period';
+    } catch (e) {
+      print('Error formatting time $isoDate: $e');
+      return '';
+    }
+  }
+
+  /// Get standardized team abbreviation
+  String _getTeamAbbreviation(String espnAbbr) {
+    // Handle special cases where ESPN abbreviations differ
+    switch (espnAbbr.toUpperCase()) {
+      case 'WSH': return 'WAS';
+      case 'JAC': return 'JAX';
+      case 'GBP': return 'GB';
+      case 'KCC': return 'KC';
+      case 'SFO': return 'SF';
+      case 'NEP': return 'NE';
+      case 'NOS': return 'NO';
+      case 'TBB': return 'TB';
+      default: return _teamMapping[espnAbbr.toUpperCase()] ?? espnAbbr.toUpperCase();
+    }
+  }
+
+  /// Alternative method using NFL.com endpoint (unofficial)
+  Future<List<Map<String, dynamic>>> getScheduleFromNFL(String weekName) async {
+    try {
+      // Convert week format (REG1 -> 1)
+      int weekNumber = _parseWeekNumber(weekName);
+      
+      final response = await http.get(
+        Uri.parse('https://www.nfl.com/api/researchExportedJson/mobile/games/2025/REG/$weekNumber'),
+        headers: {
+          'User-Agent': 'PoolQ-App/1.0',
+          'Accept': 'application/json',
+          'Referer': 'https://www.nfl.com/',
+        },
+      ).timeout(Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return _parseGamesFromNFL(data);
+      }
+    } catch (e) {
+      print('Error fetching from NFL.com API: $e');
+    }
+    return [];
+  }
+
+  /// Parse games from NFL.com API response
+  List<Map<String, dynamic>> _parseGamesFromNFL(Map<String, dynamic> data) {
+    List<Map<String, dynamic>> games = [];
+    
+    try {
+      if (data['games'] != null) {
+        for (var game in data['games']) {
+          games.add({
+            'date': _formatGameDate(game['gameTime'] ?? ''),
+            'home': game['homeTeam']?['fullName'] ?? 'TBD',
+            'away': game['awayTeam']?['fullName'] ?? 'TBD',
+            'abbreviation': _getTeamAbbreviation(game['homeTeam']?['abbreviation'] ?? ''),
+            'abbreviation2': _getTeamAbbreviation(game['awayTeam']?['abbreviation'] ?? ''),
+            'picture': 'https://static.www.nfl.com/image/private/f_auto/league/${game['homeTeam']?['logoId'] ?? ''}',
+            'picture2': 'https://static.www.nfl.com/image/private/f_auto/league/${game['awayTeam']?['logoId'] ?? ''}',
+            'score': game['homeTeam']?['score']?.toString() ?? '0',
+            'score2': game['awayTeam']?['score']?.toString() ?? '0',
+            'status': game['status']?.toLowerCase() ?? 'scheduled',
+            'time': _formatTime(game['gameTime'] ?? ''),
+            'venue': game['venue']?['fullName'] ?? '',
+            'broadcast': game['broadcast'] ?? '',
+          });
+        }
+      }
+      
+      return games;
+    } catch (e) {
+      print('Error parsing NFL.com response: $e');
+      return [];
+    }
+  }
+
+  /// Convert week name (REG1, REG2, etc.) to number
+  int _parseWeekNumber(String weekName) {
+    final regex = RegExp(r'[A-Za-z]+(\d+)');
+    final match = regex.firstMatch(weekName);
+    return match != null ? int.parse(match.group(1)!) : 1;
+  }
+
+  /// Create mock data for testing
   List<Map<String, dynamic>> _createMockData() {
     print('Creating mock NFL schedule data...');
     
@@ -274,7 +467,7 @@ class NFLScheduleService {
     
     return [
       {
-        'date': _formatDateForApp(gameDate1), // Use consistent app format
+        'date': _formatDateForApp(gameDate1),
         'home': 'Kansas City Chiefs',
         'away': 'San Francisco 49ers', 
         'abbreviation': 'KC',
@@ -284,10 +477,12 @@ class NFLScheduleService {
         'score': '28',
         'score2': '21',
         'status': 'completed',
-        'time': _formatTime(gameDate1.toIso8601String())
+        'time': _formatTime(gameDate1.toIso8601String()),
+        'venue': 'Arrowhead Stadium',
+        'broadcast': 'NBC',
       },
       {
-        'date': _formatDateForApp(gameDate2), // Use consistent app format
+        'date': _formatDateForApp(gameDate2),
         'home': 'Baltimore Ravens',
         'away': 'Buffalo Bills',
         'abbreviation': 'BAL', 
@@ -297,10 +492,12 @@ class NFLScheduleService {
         'score': '24',
         'score2': '17',
         'status': 'completed',
-        'time': _formatTime(gameDate2.toIso8601String())
+        'time': _formatTime(gameDate2.toIso8601String()),
+        'venue': 'M&T Bank Stadium',
+        'broadcast': 'CBS',
       },
       {
-        'date': _formatDateForApp(gameDate3), // Use consistent app format  
+        'date': _formatDateForApp(gameDate3),
         'home': 'Detroit Lions',
         'away': 'Tampa Bay Buccaneers',
         'abbreviation': 'DET',
@@ -310,7 +507,9 @@ class NFLScheduleService {
         'score': '31',
         'score2': '23', 
         'status': 'completed',
-        'time': _formatTime(gameDate3.toIso8601String())
+        'time': _formatTime(gameDate3.toIso8601String()),
+        'venue': 'Ford Field',
+        'broadcast': 'FOX',
       }
     ];
   }

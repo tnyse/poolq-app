@@ -1,65 +1,146 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:poolqapp/services/firebase/auth_service.dart';
-import 'package:poolqapp/services/navigation_service.dart';
+import 'package:poolqapp/services/auth_service.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
-import 'package:poolqapp/widgets/auth/auth_button.dart';
-import 'package:poolqapp/widgets/auth/auth_input_field.dart';
-import 'package:poolqapp/screens/auth/login_screen.dart';
-import 'package:poolqapp/Module/Screen/Home/HomePage.dart';
+import 'package:poolqapp/screens/auth/phone_verification_screen.dart';
+import 'package:poolqapp/services/phone_verification_service.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
-
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  _RegisterScreenState createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final AuthService _authService = AuthService();
-  final NavigationService _navigationService = NavigationService();
+  final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
+  
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _displayNameController = TextEditingController();
+  final _invitationCodeController = TextEditingController();
   
   bool _isLoading = false;
-  String _errorMessage = '';
+  String? _errorMessage;
+  bool _isInvitationValid = false;
+  final _phoneVerificationService = PhoneVerificationService();
+  bool _isPhoneVerified = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _displayNameController.dispose();
+    _invitationCodeController.dispose();
     super.dispose();
   }
 
-  Future<void> _registerUser() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    
-    // Check if passwords match
-    if (_passwordController.text != _confirmPasswordController.text) {
+  Future<void> _validateInvitationCode() async {
+    if (_invitationCodeController.text.isEmpty) {
       setState(() {
-        _errorMessage = 'Passwords do not match';
+        _isInvitationValid = false;
+        _errorMessage = 'Please enter an invitation code';
       });
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
+      _errorMessage = null;
     });
-    
+
     try {
-      final result = await Provider.of<AuthProviders>(context, listen: false)
-          .registerUser(_emailController.text, _passwordController.text);
-      
-      // Use the navigation service to navigate to the appropriate screen
-      if (result) {
-        _navigationService.navigateAndRemoveUntil(context, HomePage());
+      final invitation = await _authService.validateInvitationCode(
+        _invitationCodeController.text,
+      );
+
+      setState(() {
+        _isInvitationValid = invitation != null;
+        _errorMessage = invitation == null
+            ? 'Invalid or expired invitation code'
+            : null;
+      });
+    } catch (e) {
+      setState(() {
+        _isInvitationValid = false;
+        _errorMessage = 'Error validating invitation code';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _verifyPhoneNumber() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final formattedPhone = _phoneVerificationService.formatPhoneNumber(
+      _phoneController.text,
+    );
+
+    if (!_phoneVerificationService.isValidPhoneNumber(formattedPhone)) {
+      setState(() {
+        _errorMessage = 'Please enter a valid phone number';
+      });
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhoneVerificationScreen(
+          phoneNumber: formattedPhone,
+          onVerificationComplete: (verifiedPhone) {
+            setState(() {
+              _isPhoneVerified = true;
+              _phoneController.text = verifiedPhone;
+            });
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (!_isInvitationValid) {
+      setState(() {
+        _errorMessage = 'Please enter a valid invitation code';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final user = await _authService.registerWithInvitation(
+        email: _emailController.text,
+        password: _passwordController.text,
+        phone: _phoneController.text.isNotEmpty ? _phoneController.text : '',
+        displayName: _displayNameController.text,
+        invitationCode: _invitationCodeController.text,
+      );
+
+      if (user != null) {
+        // Update auth provider
+        final authProvider = Provider.of<AuthProviders>(context, listen: false);
+        await authProvider.getUserInfo();
+        
+        // Navigate to home screen
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       setState(() {
@@ -75,118 +156,130 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // App logo or title
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+      appBar: AppBar(
+        title: Text('Register'),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _invitationCodeController,
+                decoration: InputDecoration(
+                  labelText: 'Invitation Code',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.check_circle,
+                        color: _isInvitationValid ? Colors.green : Colors.grey),
+                    onPressed: _validateInvitationCode,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
-                
-                // Email input
-                AuthInputField(
-                  controller: _emailController,
-                  hintText: 'Email',
-                  icon: Icons.email,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an invitation code';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _confirmPasswordController,
+                decoration: InputDecoration(labelText: 'Confirm Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number (optional)',
+                  suffixIcon: _phoneController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            _isPhoneVerified ? Icons.check_circle : Icons.phone,
+                            color: _isPhoneVerified ? Colors.green : Colors.grey,
+                          ),
+                          onPressed: _verifyPhoneNumber,
+                        )
+                      : null,
                 ),
-                const SizedBox(height: 16),
-                
-                // Password input
-                AuthInputField(
-                  controller: _passwordController,
-                  hintText: 'Password',
-                  icon: Icons.lock,
-                  isPassword: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // Confirm password input
-                AuthInputField(
-                  controller: _confirmPasswordController,
-                  hintText: 'Confirm Password',
-                  icon: Icons.lock,
-                  isPassword: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                
-                // Error message
-                if (_errorMessage.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      _errorMessage,
-                      style: const TextStyle(
-                        color: Colors.red,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                keyboardType: TextInputType.phone,
+                enabled: !_isPhoneVerified,
+                validator: (value) {
+                  // Phone is optional, so only validate if not empty
+                  if (value != null && value.isNotEmpty && !_isPhoneVerified) {
+                    return 'Please verify your phone number or leave it blank';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _displayNameController,
+                decoration: InputDecoration(labelText: 'Display Name'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your display name';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 24),
+              if (_errorMessage != null)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red),
                   ),
-                
-                // Register button
-                AuthButton(
-                  text: 'Register',
-                  isLoading: _isLoading,
-                  onPressed: _registerUser,
                 ),
-                const SizedBox(height: 16),
-                
-                // Sign in link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already have an account?'),
-                    TextButton(
-                      onPressed: () {
-                        _navigationService.navigateToReplacement(
-                          context,
-                          const LoginScreen(),
-                        );
-                      },
-                      child: const Text('Sign In'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ElevatedButton(
+                onPressed: _isLoading || !_isInvitationValid ? null : _register,
+                child: _isLoading
+                    ? CircularProgressIndicator()
+                    : Text('Register'),
+              ),
+            ],
           ),
         ),
       ),

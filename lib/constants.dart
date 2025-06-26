@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 
+// API URLs
+const String mainUrl = 'https://api.poolq.app';
+
 // Primary color for the app
 const Color primary = Color(0xFF26A6B5);
 
 // Secondary colors
 const Color secondary = Color(0xFF1D2B36);
 const Color accent = Color(0xFFFFB31F);
+
+// Additional colors from Constants/value.dart
+const Color boxColor = Color(0xFFF1F4F8);
+const Color secondaryBackground = Color(0xFFFFFFFF);
 
 // Neutral colors
 const Color background = Color(0xFFF5F5F5);
@@ -57,7 +64,4 @@ const TextStyle captionStyle = TextStyle(
 // Animation durations
 const Duration kFastAnimationDuration = Duration(milliseconds: 200);
 const Duration kDefaultAnimationDuration = Duration(milliseconds: 300);
-const Duration kSlowAnimationDuration = Duration(milliseconds: 500);
-
-// Api endpoints - using mock data for now
-const String kBaseApiUrl = 'https://api.poolq.app'; 
+const Duration kSlowAnimationDuration = Duration(milliseconds: 500); 

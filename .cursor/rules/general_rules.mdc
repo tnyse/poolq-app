@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+description: General coding principles and best practices for the project.
+globs: 
+alwaysApply: true
+---
+# General Coding Principles
+
+-   Think minimalistic; always prefer simple solutions.
+-   Avoid code duplication when possible; check other areas of the codebase that might have similar code and functionality.
+-   Careful to only make changes that are requested or are confident they're well understood and related to the change being requested.
+-   Do not introduce new patterns when fixing issues or bugs without exhausting all options for existing implementation; if done, be sure to remove the old implementation to prevent duplicate logic.
+-   Keep code clean and organized.
+-   Use comments to explain complex logic or non-obvious code sections.
+-   Use error logs often to troubleshoot functionality.
+-   Avoid writing one-off scripts in files if possible, especially if the script is likely to only be run once; place them in a dedicated 'scripts' folder instead.
+-   Never overwrite any .env file without confirmation.
+-   Break things up into multiple, single-purpose functions.
+-   Prioritize modularity and the Single Responsibility Principle.
+-   The names of variables and functions should accurately describe their purpose and behavior.
+-   Rate limit API points.
+-   Enable CAPTCHA.
+-   Use Git commits to keep checkpoints.
+
+## Frontend Specific Rules (Flutter/Dart)
+-   Use Material Design.
+-   Create reusable widgets for specific UI elements or functionalities.
+-   Categorize and structure Flutter project folders logically (e.g., features, services, models, providers).
+-   A Dart file should not contain more than 300 lines.
+-   Use named routes for navigation instead of direct route-based navigation.
+
+## packages and frameworks
+-   Document when a new package is introduced and why.  Explain the context of its usage. 

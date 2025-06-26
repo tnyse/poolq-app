@@ -11,9 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// String mainUrl = "https://api.poolq.app";
-String mainUrl = kIsWeb ? "https://api.poolq.app" : "http://10.0.2.2:3000";
+import '../Model/user_model.dart';
 
 class AuthProviders with ChangeNotifier {
   String image = "";
@@ -24,6 +22,12 @@ class AuthProviders with ChangeNotifier {
   // String mode = box.read("mode")==null||box.read("mode")=="null"?"REG":box.read("mode");
   FirebaseAuth auth = FirebaseAuth.instance;
   bool _isInitialized = false;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  UserModel? _user;
+  
+  // Getter for the current user
+  UserModel? get user => _user;
 
   // Initialize persistence
   Future<void> initializePersistence() async {
@@ -150,19 +154,75 @@ class AuthProviders with ChangeNotifier {
   // Method used by the new screens
   Future<bool> loginUser(String email, String password) async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+      // Validate inputs
+      if (email.trim().isEmpty) {
+        throw 'Please enter your email.';
+      }
+      if (password.isEmpty) {
+        throw 'Please enter your password.';
+      }
+      
+      // Attempt login
+      final userCredential = await auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      
+      if (userCredential.user == null) {
+        throw 'Login failed. Please try again.';
+      }
+
+      // Get user profile
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        throw 'User profile not found.';
+      }
+
+      // Parse user data
+      _user = UserModel.fromFirestore(userDoc);
+      
+      if (!_user!.isActive) {
+        throw 'Account is inactive. Please contact support.';
+      }
+
+      // Save credentials for persistence
+      await _saveCredentials(email.trim(), password);
+      
+      notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        throw 'No user found for that email.';
-      } else if (e.code == 'wrong-password') {
-        throw 'Wrong password provided for that user.';
-      } else {
-        throw e.message ?? 'An error occurred during login';
+      debugPrint('Firebase Auth Error: ${e.code} - ${e.message}');
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'No account found with this email.';
+          break;
+        case 'wrong-password':
+          message = 'Incorrect password.';
+          break;
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+        case 'invalid-email':
+          message = 'Invalid email address.';
+          break;
+        case 'too-many-requests':
+          message = 'Too many failed attempts. Please try again later.';
+          break;
+        default:
+          message = e.message ?? 'An error occurred during login.';
       }
+      throw message;
     } catch (e) {
-      throw e.toString();
+      debugPrint('Login Error: $e');
+      if (e is String) {
+        throw e;
+      }
+      throw 'An unexpected error occurred. Please try again.';
     }
   }
 
@@ -249,13 +309,18 @@ class AuthProviders with ChangeNotifier {
     }
   }
 
-  // Modified sign out method
-  Future<void> signOut() async {
+  // Sign out method
+  Future<void> signOut(BuildContext context) async {
     try {
+      debugPrint('Attempting sign out...');
       await auth.signOut();
       await _clearCredentials();
+      _user = null;
+      notifyListeners();
+      debugPrint('Sign out successful');
     } catch (e) {
-      print('Error signing out: $e');
+      debugPrint('Sign out error: $e');
+      throw 'Failed to sign out. Please try again.';
     }
   }
 }
