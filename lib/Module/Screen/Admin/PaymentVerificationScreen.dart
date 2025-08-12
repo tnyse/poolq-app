@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:poolqapp/services/demo_seed_service.dart';
 import '../../../services/payment_service.dart';
 import '../../../constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -146,6 +147,23 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _loadPendingPayments,
+          ),
+          IconButton(
+            tooltip: 'Seed demo picks (PRE1)',
+            icon: Icon(Icons.auto_fix_high),
+            onPressed: () async {
+              final service = DemoSeedService();
+              final count = await service.seedPicksForEmails(
+                emails: const ['demo@poolq.app', 'testuser@poolq.app'],
+                weekName: 'PRE1',
+                baseTiebreaker: 50,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Seeded picks for $count users')),
+                );
+              }
+            },
           ),
         ],
       ),

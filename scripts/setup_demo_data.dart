@@ -21,6 +21,19 @@ Future<void> main() async {
     // 2. Create demo user accounts
     await createDemoUsers(auth, firestore);
     
+    // 3. Seed picks for multiple players for a target week
+    await seedWeekPicks(firestore,
+      weekName: 'PRE1',
+      usersByEmail: [
+        'demo@poolq.app',
+        'testuser@poolq.app',
+      ],
+      tiebreakers: {
+        'demo@poolq.app': 45,
+        'testuser@poolq.app': 52,
+      },
+    );
+    
     print('✅ Demo data setup completed successfully!');
     printInstructions();
     
@@ -192,6 +205,72 @@ Future<void> createDemoUsers(FirebaseAuth auth, FirebaseFirestore firestore) asy
     await auth.signOut();
   } catch (e) {
     // Ignore sign out errors
+  }
+}
+
+Future<void> seedWeekPicks(
+  FirebaseFirestore firestore, {
+  required String weekName,
+  required List<String> usersByEmail,
+  required Map<String, int> tiebreakers,
+}) async {
+  print('🏈 Seeding picks for $weekName ...');
+  
+  // Simple deterministic picks generator: alternate team choices per game index
+  // Fetch schedule from local DB that app uses indirectly (store minimal mapping by email)
+  final scheduleDoc = await firestore.collection('app_meta').doc('demo_schedule_map').get();
+  List<List<String>> defaultPicks = [];
+  if (scheduleDoc.exists) {
+    // Not used currently; reserved for future
+  }
+  
+  // For simplicity, create 10 dummy games and alternate abbreviations
+  final gamesCount = 10;
+  List<String> makePicks(bool pickHome) {
+    return List<String>.generate(gamesCount, (i) => pickHome ? 'HOME_$i' : 'AWAY_$i');
+  }
+
+  // Resolve userIds by email
+  Map<String, String> emailToUid = {};
+  final usersSnap = await firestore.collection('users').where('email', whereIn: usersByEmail).get();
+  for (final d in usersSnap.docs) {
+    emailToUid[d['email']] = d.id;
+  }
+
+  for (int i = 0; i < usersByEmail.length; i++) {
+    final email = usersByEmail[i];
+    final uid = emailToUid[email];
+    if (uid == null) {
+      print('  ⚠️ user not found for $email, skipping');
+      continue;
+    }
+    final picks = makePicks(i % 2 == 0);
+    final tb = tiebreakers[email] ?? 50;
+    final pickData = {
+      'uid': uid,
+      'displayName': email.split('@').first,
+      'photoURL': '',
+      'week': weekName,
+      'picks': picks,
+      'tiebreaker': tb,
+      'submittedAt': FieldValue.serverTimestamp(),
+      'paymentStatus': 'verified',
+      'entryFee': 10.0,
+      'isActive': true,
+      'score': null,
+      'rank': null,
+      'tiebreakerDiff': null,
+    };
+    // Upsert: remove old records for this week
+    final existing = await firestore.collection('pickrecord')
+      .where('uid', isEqualTo: uid)
+      .where('week', isEqualTo: weekName)
+      .get();
+    for (final e in existing.docs) {
+      await e.reference.delete();
+    }
+    await firestore.collection('pickrecord').add(pickData);
+    print('  ✓ Seeded picks for $email');
   }
 }
 
