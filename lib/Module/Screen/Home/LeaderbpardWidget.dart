@@ -600,58 +600,16 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 return index == 0
                                     ? InkWell(
                                         onTap: () {
-                                          if (data![index]["uid"] ==
-                                              (user?.uid ?? 'demo_user')) {
-                                            DateTime currentDate =
-                                                DateTime.now();
-                                            DateTime targetDate =
-                                                dataProvider.formatStringDate(
-                                                    data2![0]["date"]);
-
-                                            if (currentDate
-                                                    .isAfter(targetDate) ||
-                                                currentDate.isAtSameMomentAs(
-                                                    targetDate)) {
-                                              print(
-                                                  'Current date is greater than or equal to the target date.');
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        PickedWidget(
-                                                            userId: data![index]
-                                                                ["uid"],
-                                                            selectedValue:
-                                                                selectedValue)
-                                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                    ),
-                                              );
-                                            } else {
-                                              print(
-                                                  'Current date is before the target date.');
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        EditPlayWidget()
-                                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                    ),
-                                              );
-                                            }
-                                          } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PickedWidget(
-                                                          userId: data![index]
-                                                              ["uid"],
-                                                          selectedValue:
-                                                              selectedValue)
-                                                  // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                  ),
-                                            );
-                                          }
+                                      // Always show the submitted picks summary first
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PickedWidget(
+                                            userId: data![index]["uid"],
+                                            selectedValue: selectedValue,
+                                          ),
+                                        ),
+                                      );
                                         },
                                         child: Column(
                                           children: [
@@ -877,14 +835,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                                builder: (context) =>
-                                                    PickedWidget(
-                                                        userId: data![index]
-                                                            ["uid"],
-                                                        selectedValue:
-                                                            selectedValue)
-                                                // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                ),
+                                              builder: (context) => PickedWidget(
+                                                userId: data![index]["uid"],
+                                                selectedValue: selectedValue,
+                                              ),
+                                            ),
                                           );
                                         },
                                         child: Column(

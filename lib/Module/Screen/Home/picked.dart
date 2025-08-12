@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants.dart';
+import 'EditPlay.dart';
+import '../../../services/nfl_schedule_service.dart';
 // import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:poolqapp/Widget/reuse.dart';
@@ -249,19 +251,39 @@ class _PickedWidgetState extends State<PickedWidget> {
                         List new_data = [];
                         QueryDocumentSnapshot? new_data2;
 
-                        runFunction() {
+                        runFunction() async {
                           if (snapshot2.data != null && snapshot2.data!.docs.isNotEmpty) {
                             for (var document in snapshot2.data!.docs) {
                               if (document.data() != null) {
-                                Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-                                new_data = data["picks"] ?? [];
+                                final Map<String, dynamic> pickDoc = document.data() as Map<String, dynamic>;
+                                // Normalize existing pickrecord structure to match the UI list
+                                final List<String> picks = List<String>.from(pickDoc['picks'] ?? []);
+                                final int tb = (pickDoc['tiebreaker'] ?? 0) is int
+                                    ? (pickDoc['tiebreaker'] ?? 0)
+                                    : int.tryParse('${pickDoc['tiebreaker']}') ?? 0;
+                                tiebreaker = tb;
                                 new_data2 = document;
-                                // Capture tiebreaker for footer display
-                                if (data.containsKey('tiebreaker')) {
-                                  tiebreaker = (data['tiebreaker'] ?? 0) is int
-                                      ? (data['tiebreaker'] ?? 0)
-                                      : int.tryParse('${data['tiebreaker']}') ?? 0;
+
+                                // Merge picks with actual schedule to display home/away and selection
+                                final dataProvider = Provider.of<DataProvider>(context, listen: false);
+                                final String weekName = "${dataProvider.game!["mode"]}${widget.selectedValue}";
+                                // Use LocalScheduleService via provider services
+                                final scheduleService = NFLScheduleService();
+                                final schedule = await scheduleService.getScheduleForWeekWithLocalFallback(weekName);
+                                List<Map<String, dynamic>> merged = [];
+                                for (int i = 0; i < schedule.length; i++) {
+                                  final g = schedule[i];
+                                  final sel = i < picks.length ? picks[i] : '';
+                                  merged.add({
+                                    'date': g['date'],
+                                    'home': g['home'] ?? g['fullname'] ?? '',
+                                    'away': g['away'] ?? g['fullname2'] ?? '',
+                                    'abbreviation': g['abbreviation'] ?? '',
+                                    'abbreviation2': g['abbreviation2'] ?? '',
+                                    'selected': sel,
+                                  });
                                 }
+                                new_data = merged;
                               }
                             }
                           }
@@ -599,7 +621,7 @@ class _PickedWidgetState extends State<PickedWidget> {
                                                                       color: Color(0xFF27512F).withOpacity(0.2),
                                                                     ),
                                                                   ),
-                                                                  child: Row(
+                                                                    child: Row(
                                                                     mainAxisAlignment: MainAxisAlignment.center,
                                                                     children: [
                                                                       Icon(
@@ -619,6 +641,26 @@ class _PickedWidgetState extends State<PickedWidget> {
                                                                     ],
                                                                   ),
                                                                 ),
+                                                                  if (widget.userId == (user?.uid ?? 'demo_user'))
+                                                                    Padding(
+                                                                      padding: const EdgeInsets.only(top: 12.0),
+                                                                      child: TextButton.icon(
+                                                                        onPressed: () {
+                                                                          // Allow editing if deadline not passed
+                                                                          final now = DateTime.now();
+                                                                          final gameDate = dataProvider.formatStringDate(gameItem['date']);
+                                                                          if (now.isBefore(gameDate)) {
+                                                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const EditPlayWidget()));
+                                                                          } else {
+                                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                                              const SnackBar(content: Text('Deadline passed. Edits disabled.')),
+                                                                            );
+                                                                          }
+                                                                        },
+                                                                        icon: const Icon(Icons.edit),
+                                                                        label: const Text('Edit Picks'),
+                                                                      ),
+                                                                    ),
                                                               ],
                                                             ),
                                                           ),
