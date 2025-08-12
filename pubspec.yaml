@@ -61,6 +61,7 @@ dependencies:
   # admob_flutter: ^3.0.0
   firebase_auth: ^5.1.4
   fl_chart: ^1.0.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:

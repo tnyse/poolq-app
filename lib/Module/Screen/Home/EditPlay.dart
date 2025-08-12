@@ -45,7 +45,149 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
         errorMessage = null;
       });
 
-      print('Fetching games for edit from multiple sources...');
+      print('EditPlay: Starting getGame()');
+      
+      // Check if game data is available
+      if (dataProvider.game == null) {
+        print('EditPlay: Game data is null, using default values');
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Game data not available';
+        });
+        return;
+      }
+      
+      print('EditPlay: Game name: ${dataProvider.game!["name"]}');
+      
+      // Always load real schedule data (even in demo mode)
+      if (false) { // Disabled mock data - always use real schedule
+        print('EditPlay: Demo mode detected, using mock data');
+        
+        // Check if this is preseason or regular season
+        final isPreseason = dataProvider.game!["name"].startsWith('PRE');
+        print('EditPlay: Week type: ${dataProvider.game!["name"]} (Preseason: $isPreseason)');
+        
+        final mockGames = isPreseason ? [
+          // Preseason Week 1 Games
+          {
+            'date': 'Thursday August 7TH, 2025',
+            'fullname': 'New England Patriots',
+            'fullname2': 'Detroit Lions',
+            'abbreviation': 'NE',
+            'abbreviation2': 'DET',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '7:30 PM',
+            'venue': 'Gillette Stadium',
+            'broadcast': 'NFL Network',
+            'favorite': '',
+            'spread': 0.0,
+          },
+          {
+            'date': 'Friday August 8TH, 2025',
+            'fullname': 'Buffalo Bills',
+            'fullname2': 'Indianapolis Colts',
+            'abbreviation': 'BUF',
+            'abbreviation2': 'IND',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '7:00 PM',
+            'venue': 'Highmark Stadium',
+            'broadcast': 'NFL Network',
+            'favorite': '',
+            'spread': 0.0,
+          },
+          {
+            'date': 'Saturday August 9TH, 2025',
+            'fullname': 'Dallas Cowboys',
+            'fullname2': 'Los Angeles Rams',
+            'abbreviation': 'DAL',
+            'abbreviation2': 'LAR',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '8:00 PM',
+            'venue': 'AT&T Stadium',
+            'broadcast': 'NFL Network',
+            'favorite': '',
+            'spread': 0.0,
+          },
+          {
+            'date': 'Sunday August 10TH, 2025',
+            'fullname': 'Kansas City Chiefs',
+            'fullname2': 'Cincinnati Bengals',
+            'abbreviation': 'KC',
+            'abbreviation2': 'CIN',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '4:25 PM',
+            'venue': 'Arrowhead Stadium',
+            'broadcast': 'CBS',
+            'favorite': '',
+            'spread': 0.0,
+          },
+        ] : [
+          // Regular Season Week 1 Games (fallback)
+          {
+            'date': 'Thursday September 4TH, 2025',
+            'fullname': 'Kansas City Chiefs',
+            'fullname2': 'Baltimore Ravens',
+            'abbreviation': 'KC',
+            'abbreviation2': 'BAL',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '8:20 PM',
+            'venue': 'Arrowhead Stadium',
+            'broadcast': 'NBC',
+            'favorite': '',
+            'spread': 0.0,
+          },
+          {
+            'date': 'Sunday September 7TH, 2025',
+            'fullname': 'Dallas Cowboys',
+            'fullname2': 'Philadelphia Eagles',
+            'abbreviation': 'DAL',
+            'abbreviation2': 'PHI',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '4:25 PM',
+            'venue': 'AT&T Stadium',
+            'broadcast': 'FOX',
+            'favorite': '',
+            'spread': 0.0,
+          },
+          {
+            'date': 'Monday September 8TH, 2025',
+            'fullname': 'Green Bay Packers',
+            'fullname2': 'Chicago Bears',
+            'abbreviation': 'GB',
+            'abbreviation2': 'CHI',
+            'score': '0',
+            'score2': '0',
+            'status': 'scheduled',
+            'time': '8:15 PM',
+            'venue': 'Lambeau Field',
+            'broadcast': 'ESPN',
+            'favorite': '',
+            'spread': 0.0,
+          },
+        ];
+        
+        setState(() {
+          data = mockGames;
+          isLoading = false;
+          errorMessage = null;
+        });
+        print('EditPlay: Successfully loaded ${mockGames.length} mock games for demo');
+        return mockGames;
+      }
+      
+      print('EditPlay: Loading real schedule from local file for ${dataProvider.game!["name"]}');
       
       // Only use local file for schedule display
       List<Map<String, dynamic>> games = await scheduleService.getScheduleForWeekWithLocalFallback(
@@ -93,29 +235,37 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
   @override
   void initState() {
     super.initState();
-    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
     
-    // Reset player picks to current selections
-    dataProvider.setPlayerPicks([]);
+    // Schedule state changes for after the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
+      
+      // Reset player picks to current selections
+      dataProvider.setPlayerPicks([]);
 
-    // Load existing picks data
-    _pickrecord = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("uid", isEqualTo: user!.uid)
-        .where("week", isEqualTo: dataProvider.game!["name"])
-        .get();
-
-    _pickrecord!.then((value) {
-      if (value.docs.isNotEmpty) {
-        List<String> existingPicks = [...value.docs[0].get("picks")];
-        dataProvider.setPlayerPicks(existingPicks);
-        dataProvider.setTieBreaker(int.parse(value.docs[0].get("tiebreaker")));
-        tieBreakerController.text = dataProvider.tiebreaker.toString();
-        id = value.docs[0].id;
-        print('Loaded existing picks: $existingPicks');
+      // Load existing picks data (skip for demo mode)
+      if (user != null && dataProvider.game != null) {
+        _pickrecord = FirebaseFirestore.instance
+            .collection('pickrecord')
+            .where("uid", isEqualTo: user!.uid)
+            .where("week", isEqualTo: dataProvider.game!["name"])
+            .get();
       }
-    }).catchError((error) {
-      print('Error loading existing picks: $error');
+
+      if (_pickrecord != null) {
+        _pickrecord!.then((value) {
+          if (value.docs.isNotEmpty) {
+            List<String> existingPicks = [...value.docs[0].get("picks")];
+            dataProvider.setPlayerPicks(existingPicks);
+            dataProvider.setTieBreaker(int.parse(value.docs[0].get("tiebreaker")));
+            tieBreakerController.text = dataProvider.tiebreaker.toString();
+            id = value.docs[0].id;
+            print('Loaded existing picks: $existingPicks');
+          }
+        }).catchError((error) {
+          print('Error loading existing picks: $error');
+        });
+      }
     });
 
     print("Initializing EditPlay widget");
@@ -133,7 +283,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
   Widget build(BuildContext context) {
     // context.watch<FFAppState>();
     DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: true);
+        Provider.of<DataProvider>(context, listen: false);
 
     return Scaffold(
         // bottomNavigationBar: Container(
@@ -191,21 +341,36 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                             Padding(
                               padding:
                                   EdgeInsetsDirectional.fromSTEB(20, 20, 0, 0),
-                              child: Text(
-                                'Welcome \nto week '.toUpperCase(),
-                                textAlign: TextAlign.end,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 20,
-                                  height: 0.9,
-                                ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Welcome \nto week '.toUpperCase(),
+                                    textAlign: TextAlign.end,
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 20,
+                                      height: 0.9,
+                                    ),
+                                  ),
+                                  if (dataProvider.game != null && dataProvider.game!["name"].startsWith('PRE'))
+                                    Text(
+                                      'PRESEASON'.toUpperCase(),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 14,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                             Padding(
                               padding:
                                   EdgeInsetsDirectional.fromSTEB(5, 20, 15, 0),
                               child: Text(
-                                '${dataProvider.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}',
+                                '${dataProvider.game != null ? dataProvider.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "") : "1"}',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
@@ -448,7 +613,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                 .spaceEvenly,
                                                         children: [
                                                           TeamLogo(
-                                                            abbr: gameItem["abbreviation"] ?? '',
+                                                            abbr: _getTeamAbbreviationWithFallback(gameItem, true),
                                                             size: 40,
                                                           ),
                                                           TextButton(
@@ -457,27 +622,22 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               print('Team 1 button pressed: ${gameItem["abbreviation"]}');
                                                               print('Current picks: ${dataProvider.playerPicks}');
                                                               
-                                                              if (dataProvider
-                                                                  .playerPicks!
-                                                                  .contains(
-                                                                      gameItem[
-                                                                          "abbreviation"])) {
+                                                              // Check if either team from this game is already picked
+                                                              bool hasTeam1 = dataProvider.playerPicks!.contains(gameItem["abbreviation"]);
+                                                              bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
+                                                              
+                                                              if (hasTeam1) {
+                                                                // User is trying to pick the same team again
                                                                 await showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (alertDialogContext) {
+                                                                  context: context,
+                                                                  builder: (alertDialogContext) {
                                                                     return AlertDialog(
-                                                                      title: Text(
-                                                                          'Already picked!'),
-                                                                      content: Text(
-                                                                          'You have already picked ${gameItem["abbreviation"]} for this game.'),
+                                                                      title: Text('Already picked!'),
+                                                                      content: Text('You have already picked ${gameItem["abbreviation"]} for this game.'),
                                                                       actions: [
                                                                         TextButton(
-                                                                          onPressed: () =>
-                                                                              Navigator.pop(alertDialogContext),
-                                                                          child:
-                                                                              Text('OK'),
+                                                                          onPressed: () => Navigator.pop(alertDialogContext),
+                                                                          child: Text('OK'),
                                                                         ),
                                                                       ],
                                                                     );
@@ -519,6 +679,9 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                       gameItem[
                                                                           "abbreviation"]);
                                                               print('Updated picks: ${dataProvider.playerPicks}');
+                                                              
+                                                              // Force rebuild to update visual state
+                                                              setState(() {});
                                                             },
                                                             child: Container(
                                                               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -640,27 +803,22 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                 print('Team 2 button pressed: ${gameItem["abbreviation2"]}');
                                                                 print('Current picks: ${dataProvider.playerPicks}');
                                                                 
-                                                                if (dataProvider
-                                                                    .playerPicks!
-                                                                    .contains(
-                                                                        gameItem[
-                                                                            "abbreviation2"])) {
+                                                                // Check if either team from this game is already picked
+                                                                bool hasTeam1 = dataProvider.playerPicks!.contains(gameItem["abbreviation"]);
+                                                                bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
+                                                                
+                                                                if (hasTeam2) {
+                                                                  // User is trying to pick the same team again
                                                                   await showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (alertDialogContext) {
+                                                                    context: context,
+                                                                    builder: (alertDialogContext) {
                                                                       return AlertDialog(
-                                                                        title: Text(
-                                                                            'Already picked!'),
-                                                                        content: Text(
-                                                                            'You have already picked ${gameItem["abbreviation2"]} for this game.'),
+                                                                        title: Text('Already picked!'),
+                                                                        content: Text('You have already picked ${gameItem["abbreviation2"]} for this game.'),
                                                                         actions: [
                                                                           TextButton(
-                                                                            onPressed: () =>
-                                                                                Navigator.pop(alertDialogContext),
-                                                                            child:
-                                                                                Text('OK'),
+                                                                            onPressed: () => Navigator.pop(alertDialogContext),
+                                                                            child: Text('OK'),
                                                                           ),
                                                                         ],
                                                                       );
@@ -705,6 +863,9 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                         gameItem[
                                                                             "abbreviation2"]);
                                                                 print('Updated picks: ${dataProvider.playerPicks}');
+                                                                
+                                                                // Force rebuild to update visual state
+                                                                setState(() {});
                                                               },
                                                               child: Container(
                                                                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -755,7 +916,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
 
                                                               ),
                                                           TeamLogo(
-                                                            abbr: gameItem["abbreviation"] ?? '',
+                                                            abbr: _getTeamAbbreviationWithFallback(gameItem, false),
                                                             size: 40,
                                                           ),
                                                         ],
@@ -763,16 +924,13 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                       // if (FFAppState().picked !=
                                                       //     null)
                                                       Text(
-                                                        'MAKE THE PICK!',
-                                                        // style:
-                                                        // FlutterFlowTheme.of(
-                                                        //     context)
-                                                        //     .bodyMedium
-                                                        //     .override(
-                                                        //   fontFamily:
-                                                        //   'Poppins',
-                                                        //   fontSize: 12,
-                                                        // ),
+                                                        _getPickText(gameItem, dataProvider),
+                                                        style: TextStyle(
+                                                          fontFamily: 'Poppins',
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: _getPickTextColor(gameItem, dataProvider),
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
@@ -1021,5 +1179,86 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
     print('Validation result: $isValid');
     
     return isValid;
+  }
+
+  String _deriveAbbreviationFromName(String name) {
+    final teamNameToAbbr = {
+      'Philadelphia Eagles': 'PHI',
+      'Dallas Cowboys': 'DAL',
+      'Los Angeles Chargers': 'LAC',
+      'Kansas City Chiefs': 'KC',
+      'Atlanta Falcons': 'ATL',
+      'Tampa Bay Buccaneers': 'TB',
+      'Cleveland Browns': 'CLE',
+      'Cincinnati Bengals': 'CIN',
+      'Indianapolis Colts': 'IND',
+      'Miami Dolphins': 'MIA',
+      'New England Patriots': 'NE',
+      'Las Vegas Raiders': 'LV',
+      'New Orleans Saints': 'NO',
+      'Arizona Cardinals': 'ARI',
+      'New York Jets': 'NYJ',
+      'Pittsburgh Steelers': 'PIT',
+      'Washington Commanders': 'WAS',
+      'New York Giants': 'NYG',
+      'Buffalo Bills': 'BUF',
+      'Baltimore Ravens': 'BAL',
+      'Carolina Panthers': 'CAR',
+      'Chicago Bears': 'CHI',
+      'Denver Broncos': 'DEN',
+      'Detroit Lions': 'DET',
+      'Green Bay Packers': 'GB',
+      'Houston Texans': 'HOU',
+      'Jacksonville Jaguars': 'JAX',
+      'Los Angeles Rams': 'LAR',
+      'Minnesota Vikings': 'MIN',
+      'San Francisco 49ers': 'SF',
+      'Seattle Seahawks': 'SEA',
+      'Tennessee Titans': 'TEN',
+    };
+    return teamNameToAbbr[name] ?? name.substring(0, 3).toUpperCase();
+  }
+
+  String _getPickText(Map<String, dynamic> gameItem, DataProvider dataProvider) {
+    bool hasTeam1 = dataProvider.playerPicks!.contains(gameItem["abbreviation"]);
+    bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
+    
+    if (hasTeam1) {
+      return 'PICKED: ${gameItem["abbreviation"]}';
+    } else if (hasTeam2) {
+      return 'PICKED: ${gameItem["abbreviation2"]}';
+    } else {
+      return 'MAKE THE PICK!';
+    }
+  }
+
+  Color _getPickTextColor(Map<String, dynamic> gameItem, DataProvider dataProvider) {
+    bool hasTeam1 = dataProvider.playerPicks!.contains(gameItem["abbreviation"]);
+    bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
+    
+    if (hasTeam1 || hasTeam2) {
+      return Colors.green;
+    } else {
+      return Colors.white;
+    }
+  }
+
+  String _getTeamAbbreviationWithFallback(Map<String, dynamic> gameItem, bool isHome) {
+    final homeAbbr = gameItem["abbreviation"] ?? '';
+    final awayAbbr = gameItem["abbreviation2"] ?? '';
+    final homeName = gameItem["fullname"] ?? gameItem["home"] ?? '';
+    final awayName = gameItem["fullname2"] ?? gameItem["away"] ?? '';
+    
+    if (isHome) {
+      // Fallback: If abbreviations are the same or empty, derive from team name
+      return (homeAbbr == awayAbbr || homeAbbr.isEmpty) && homeName.isNotEmpty 
+          ? _deriveAbbreviationFromName(homeName)
+          : homeAbbr;
+    } else {
+      // Fallback: If abbreviations are the same or empty, derive from team name
+      return (homeAbbr == awayAbbr || awayAbbr.isEmpty) && awayName.isNotEmpty 
+          ? _deriveAbbreviationFromName(awayName)
+          : awayAbbr;
+    }
   }
 }

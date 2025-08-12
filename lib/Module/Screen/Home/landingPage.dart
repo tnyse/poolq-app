@@ -15,7 +15,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/Module/Screen/Home/LeaderbpardWidget.dart';
-import '../../../services/nfl_schedule_service.dart';
+import '../../../services/local_schedule_service.dart';
 import 'PlayerPickWidget.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -42,31 +42,46 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
   Future getGame(context) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
-    final scheduleService = NFLScheduleService();
     
     try {
-      print('Fetching games for home page from multiple sources...');
+      print('Demo mode - using mock games data');
       
-      // Only use local file for schedule display
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleForWeekWithLocalFallback(
-        dataProvider.game!["name"]
-      );
-      if (games.isNotEmpty) {
-        setState(() {
-          data = games.map((g) => GamesModel.fromJson(g)).toList();
-        });
-        print('Loaded ${data!.length} games from local file');
-        return games;
-      } else {
-        throw Exception('No games data available from local file');
-      }
+      // For demo mode, use simple mock data immediately
+      setState(() {
+        data = [
+          GamesModel(
+            date: "Thursday September 4TH, 2025",
+            fullname: "Philadelphia Eagles",
+            fullname2: "Dallas Cowboys",
+            abbreviation: "PHI",
+            abbreviation2: "DAL",
+            picture: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/phi.png",
+            picture2: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/dal.png",
+            score: "0",
+            score2: "0",
+          ),
+          GamesModel(
+            date: "Sunday September 7TH, 2025",
+            fullname: "Atlanta Falcons",
+            fullname2: "Tampa Bay Buccaneers",
+            abbreviation: "ATL",
+            abbreviation2: "TB",
+            picture: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/atl.png",
+            picture2: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/tb.png",
+            score: "0",
+            score2: "0",
+          ),
+        ];
+      });
+      print('Loaded ${data!.length} mock games for demo');
+      return data;
       
     } catch (e) {
-      print('Error fetching games for home page: $e');
-      // Provide fallback mock data
+      print('Error setting up demo games: $e');
       setState(() {
         data = [];
       });
+      return [];
     }
   }
 

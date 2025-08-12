@@ -43,14 +43,14 @@ Future<void> initializeServices() async {
       debugPrint("Warning: Error loading .env file (non-fatal): $e");
     }
     
-    // Initialize Firebase
+    // Initialize Firebase with timeout
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      );
+      ).timeout(Duration(seconds: 5));
     } catch (e) {
       debugPrint('Error initializing Firebase: $e');
-      // Handle initialization error appropriately
+      // Continue without Firebase for demo mode
     }
     
     // Initialize GetStorage
@@ -60,12 +60,13 @@ Future<void> initializeServices() async {
       debugPrint('Error initializing GetStorage: $e');
     }
 
-    // Initialize auth persistence
+    // Initialize auth persistence with timeout
     try {
       final authProvider = AuthProviders();
-      await authProvider.initializePersistence();
+      await authProvider.initializePersistence().timeout(Duration(seconds: 3));
     } catch (e) {
       debugPrint('Error initializing auth persistence: $e');
+      // Continue without auth persistence for demo mode
     }
   } catch (e) {
     debugPrint('Error during service initialization: $e');

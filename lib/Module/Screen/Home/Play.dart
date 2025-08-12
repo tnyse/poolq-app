@@ -75,11 +75,17 @@ class _PlayWidgetState extends State<PlayWidget> {
     super.initState();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
-    _pickrecord = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("uid", isEqualTo: user!.uid)
-        .where("week", isEqualTo: dataProvider.game!["name"])
-        .snapshots();
+    // Check if we're in demo mode
+    if (user == null || user?.email == 'demo@poolq.com') {
+      print('Play: Demo mode detected, using empty stream');
+      _pickrecord = Stream.empty();
+    } else {
+      _pickrecord = FirebaseFirestore.instance
+          .collection('pickrecord')
+          .where("uid", isEqualTo: user!.uid)
+          .where("week", isEqualTo: dataProvider.game!["name"])
+          .snapshots();
+    }
     getGame(context);
     // _model = createModel(context, () => PlayModel());
 

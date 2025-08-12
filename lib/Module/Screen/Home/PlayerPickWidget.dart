@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'HomePage.dart';
 import 'LeaderbpardWidget.dart';
+import 'ManualPaymentScreen.dart';
 import 'package:flutter/material.dart';
 import '../../../constants.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +14,8 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
+import 'package:poolqapp/services/payment_service.dart';
+import 'package:path_provider/path_provider.dart';
 
 class PlayerPicksWidget extends StatefulWidget {
   const PlayerPicksWidget({
@@ -41,16 +45,31 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
   void initState() {
     super.initState();
     dataProvider = Provider.of<DataProvider>(context, listen: false);
-    _pickrecord = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("uid", isEqualTo: user!.uid)
-        .where("week", isEqualTo: dataProvider?.game!["name"])
-        .snapshots();
+    
+    // Check if we're in demo mode
+    if (user == null || user?.email == 'demo@poolq.com') {
+      print('PlayerPicksWidget: Demo mode detected, skipping Firebase streams');
+      // For demo mode, don't set up Firebase streams
+      _pickrecord = Stream.empty();
+      paymentMethod = Stream.empty();
+    } else {
+      // Only set up Firebase streams for real users
+      if (user != null && dataProvider?.game != null) {
+        _pickrecord = FirebaseFirestore.instance
+            .collection('pickrecord')
+            .where("uid", isEqualTo: user!.uid)
+            .where("week", isEqualTo: dataProvider!.game!["name"])
+            .snapshots();
 
-    paymentMethod = FirebaseFirestore.instance
-        .collection('paymentMethod')
-        .doc(user!.uid)
-        .snapshots();
+        paymentMethod = FirebaseFirestore.instance
+            .collection('paymentMethod')
+            .doc(user!.uid)
+            .snapshots();
+      } else {
+        _pickrecord = Stream.empty();
+        paymentMethod = Stream.empty();
+      }
+    }
     // _model = createModel(context, () => PlayerPicksModel());
   }
 
@@ -113,6 +132,12 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
               stream: _pickrecord,
               builder: (BuildContext context,
                   AsyncSnapshot<QuerySnapshot> snapshot) {
+                // Check if we're in demo mode
+                if (user == null || user?.email == 'demo@poolq.com') {
+                  print('PlayerPicksWidget: Demo mode detected, showing demo content');
+                  return _buildDemoContent();
+                }
+                
                 if (snapshot.hasError) {
                   return Center(child: Text('Something went wrong'));
                 }
@@ -188,58 +213,59 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                         ));
                       }
 
-                      return Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Stack(
-                            children: [
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          0, 20, 0, 0),
-                                      child: Image.asset(
-                                        'assets/images/poolq12.png',
-                                        width: 67,
-                                        height: 90,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          20, 20, 0, 0),
-                                      child: Text(
-                                        'Leaderboard week ',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 18,
+                      return SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Stack(
+                              children: [
+                                Padding(
+                                  padding:
+                                      EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            0, 20, 0, 0),
+                                        child: Image.asset(
+                                          'assets/images/poolq12.png',
+                                          width: 67,
+                                          height: 90,
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          5, 20, 0, 0),
-                                      child: Text(
-                                        '1',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 30,
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            20, 20, 0, 0),
+                                        child: Text(
+                                          'Your Picks - Week ',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 18,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      Padding(
+                                        padding: EdgeInsetsDirectional.fromSTEB(
+                                            5, 20, 0, 0),
+                                        child: Text(
+                                          '1',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 30,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
                           Column(
                             mainAxisSize: MainAxisSize.max,
                             children: [
@@ -252,7 +278,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Hello, ${user!.displayName}',
+                                      'Hello, ${user?.displayName ?? 'Demo User'}',
                                       style: TextStyle(
                                         fontFamily: 'Lexend Deca',
                                         color: Color(0xFF090F13),
@@ -333,11 +359,11 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                       padding: EdgeInsetsDirectional.fromSTEB(
                                           2, 0, 0, 0),
                                       child: Text(
-                                        'Picks',
+                                        'Review Your Picks',
                                         style: TextStyle(
                                           fontFamily: 'Lexend Deca',
                                           color: Color(0xFF4B39EF),
-                                          fontSize: 32,
+                                          fontSize: 24,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -358,56 +384,50 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                               ),
                             ],
                           ),
-                          Container(
-                            width: MediaQuery.of(context).size.width,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFEEEEEE),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Wrap(
-                                    children: (dataProvider?.playerPicks ?? []).asMap().entries.map((e) => Container(
-                                      decoration: BoxDecoration(),
-                                      child: Text(
-                                        e.value,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 18,
-                                        ),
+                            Container(
+                              width: MediaQuery.of(context).size.width,
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFEEEEEE),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Picks list
+                                  ...((dataProvider?.playerPicks ?? []).asMap().entries.map((e) {
+                                    final abbr = e.value;
+                                    // Try to find the full team name from the schedule data
+                                    String teamName = '';
+                                    if (dataProvider?.data != null) {
+                                      for (var game in dataProvider!.data!) {
+                                        if (game['abbreviation'] == abbr) {
+                                          teamName = game['home'] ?? '';
+                                          break;
+                                        } else if (game['abbreviation2'] == abbr) {
+                                          teamName = game['away'] ?? '';
+                                          break;
+                                        }
+                                      }
+                                    }
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          TeamLogo(abbr: abbr, size: 32),
+                                          SizedBox(width: 12),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(abbr, style: TextStyle(fontFamily: 'Poppins', fontSize: 18)),
+                                              if (teamName.isNotEmpty)
+                                                Text(teamName, style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Colors.grey[700])),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                    )).toList()),
-                                // Builder(
-                                //   builder: (context) {
-                                //     final pickList =
-                                //     dataProvider.playerPicks!.map((e) => e).toList();
-                                //     return ListView.builder(
-                                //       padding: EdgeInsets.zero,
-                                //       shrinkWrap: true,
-                                //       scrollDirection: Axis.vertical,
-                                //       itemCount: pickList.length,
-                                //       itemBuilder: (context, pickListIndex) {
-                                //         final pickListItem = pickList[pickListIndex];
-                                //         return Container(
-                                //           decoration: BoxDecoration(
-                                //             // color: FlutterFlowTheme.of(context)
-                                //             //     .secondaryBackground,
-                                //           ),
-                                //           child: Text(
-                                //             pickListItem,
-                                //             textAlign: TextAlign.center,
-                                //             style:TextStyle(
-                                //               fontFamily: 'Poppins',
-                                //               fontSize: 18,
-                                //             ),
-                                //           ),
-                                //         );
-                                //       },
-                                //     );
-                                //   },
-                                // ),
+                                    );
+                                  }).toList()),
                                 Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       0, 20, 0, 0),
@@ -437,173 +457,26 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                     height: 40,
                                     child: TextButton(
                                       onPressed: () async {
-                                        if (snapshot2.data!.data().toString() ==
-                                            "null") {
-                                          // customSnackbar(context, 'Setup payment method in your profile.');
-                                          showModalBottomSheet(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(10),
-                                                  topRight:
-                                                      Radius.circular(10)),
-                                            ),
-                                            backgroundColor: Colors.white,
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return Padding(
-                                                padding: EdgeInsets.only(
-                                                    bottom:
-                                                        MediaQuery.of(context)
-                                                            .viewInsets
-                                                            .bottom),
-                                                child: Container(
-                                                  width: MediaQuery.of(context)
-                                                      .size
-                                                      .width,
-                                                  height: 220,
-                                                  child: Column(
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8.0),
-                                                        child: Align(
-                                                          alignment: Alignment
-                                                              .topCenter,
-                                                          child: Container(
-                                                            width: 60,
-                                                            height: 5,
-                                                            decoration: BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5),
-                                                                color: Colors
-                                                                    .black12),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .fromSTEB(10,
-                                                                    30, 10, 16),
-                                                        child: Container(
-                                                          width:
-                                                              double.infinity,
-                                                          child: Center(
-                                                              child: Text(
-                                                            "Setup payment method in your profile.",
-                                                            style: TextStyle(
-                                                                fontSize: 18,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                          )),
-                                                        ),
-                                                      ),
-                                                      Align(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 10.0,
-                                                                  bottom: 0,
-                                                                  right: 0),
-                                                          child: ElevatedButton(
-                                                            style: ButtonStyle(
-                                                                elevation:
-                                                                    MaterialStateProperty
-                                                                        .all(0),
-                                                                backgroundColor:
-                                                                    MaterialStateProperty
-                                                                        .all(Color(
-                                                                            0xFF063a73)),
-                                                                shape: MaterialStateProperty.all<
-                                                                        RoundedRectangleBorder>(
-                                                                    RoundedRectangleBorder(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              50.0),
-                                                                ))),
-                                                            child: Container(
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  0.7,
-                                                              height: 45,
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              50)),
-                                                              child: Text(
-                                                                'Continue',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        14,
-                                                                    color: Colors
-                                                                        .white),
-                                                              ),
-                                                            ),
-                                                            onPressed:
-                                                                () async {
-                                                              Navigator.pop(
-                                                                  context);
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        HomePage(
-                                                                            initial:
-                                                                                2),
-                                                                  ));
-                                                            },
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          );
+                                        print('Submit button pressed. Edit mode: ${widget.edit}');
+                                        print('Snapshot docs count: ${snapshot.data!.docs.length}');
+                                        
+                                        if (widget.edit == true) {
+                                          // Handle edit mode
+                                          print('Going to edit mode');
+                                          if (dataProvider != null) {
+                                            await _saveExistingPicksEdit(context, dataProvider);
+                                          }
+                                        } else if (!snapshot.data!.docs.isEmpty) {
+                                          print('User already has picks for this week');
+                                          customSnackbar(context,
+                                              'You have already submitted picks for week ${dataProvider?.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}');
                                         } else {
-                                          if (widget.edit == true) {
-                                            circularCustom(context);
-                                            final picksCreateData = {
-                                              "week": dataProvider?.game?['name'],
-                                              "tiebreaker": dataProvider?.tiebreaker?.toString() ?? "",
-                                              'date': FieldValue.serverTimestamp(),
-                                              'picks': dataProvider?.playerPicks is List ? dataProvider?.playerPicks : [],
-                                              'uid': user!.uid,
-                                              "displayName": user!.displayName,
-                                              "photoURL": user!.photoURL,
-                                            };
-                                            CollectionReference pickrecord = FirebaseFirestore.instance.collection('pickrecord');
-                                            await pickrecord.doc(widget.id).update(picksCreateData);
-                                            await calculateScore(context);
-                                            Navigator.pop(context);
-                                            Navigator.pop(context);
-                                            Navigator.pop(context);
-                                          } else if (!snapshot
-                                              .data!.docs.isEmpty) {
-                                            customSnackbar(context,
-                                                'You have already submited picks for week ${dataProvider?.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}');
+                                          // Save picks and proceed to payment
+                                          print('Going to save picks and proceed to payment');
+                                          if (dataProvider != null) {
+                                            await _savePicksAndProceedToPayment(context, dataProvider);
                                           } else {
-                                            if (dataProvider?.game != null) {
-                                              // All Stripe-related payment logic has been removed from this widget.
-                                              // If payment logic is needed in the future, implement here.
-                                            }
+                                            print('DataProvider is null!');
                                           }
                                         }
                                       },
@@ -641,7 +514,8 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                               ],
                             ),
                           ),
-                        ],
+                          ],
+                        ),
                       );
                     });
               })),
@@ -660,5 +534,390 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       abbr: abbr,
       size: size,
     );
+  }
+
+  Future<void> _savePicksAndProceedToPayment(BuildContext context, DataProvider? dataProvider) async {
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: primary),
+                SizedBox(height: 16),
+                Text('Saving your picks...', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Import payment service
+      final PaymentService paymentService = PaymentService();
+      
+      // Check if dataProvider is null
+      if (dataProvider == null) {
+        throw Exception('Data provider is null');
+      }
+
+      // Save picks with pending payment status
+      final pickRecordId = await paymentService.savePicksAndCreatePaymentEntry(
+        picks: dataProvider.playerPicks ?? [],
+        tiebreaker: dataProvider.tiebreaker?.toString() ?? "",
+        weekName: dataProvider.game?['name'] ?? "",
+      );
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Navigate to manual payment screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ManualPaymentScreen(
+            pickRecordId: pickRecordId,
+            weekName: dataProvider.game?['name'] ?? "",
+            entryFee: PaymentService.ENTRY_FEE,
+          ),
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog if open
+      Navigator.pop(context);
+      
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving picks: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildDemoContent() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 3,
+                  color: Color(0x33000000),
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Hello, Demo User',
+                    style: TextStyle(
+                      fontFamily: 'Lexend Deca',
+                      color: Color(0xFF090F13),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Content
+          Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Review Your Picks',
+                  style: TextStyle(
+                    fontFamily: 'Lexend Deca',
+                    color: Color(0xFF4B39EF),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 20),
+                
+                // Show picks summary
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 2,
+                        color: Color(0x33000000),
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your Picks for Week PRE1:',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF090F13),
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      ...(dataProvider?.playerPicks ?? []).map((pick) => Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.green, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              pick,
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
+                      SizedBox(height: 12),
+                      Text(
+                        'Tiebreaker: ${dataProvider?.tiebreaker ?? 0}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF4B39EF),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(height: 20),
+                
+                // Demo mode notice
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 24),
+                      SizedBox(height: 8),
+                      Text(
+                        'Demo Mode',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'This is a demo account. Your picks will be saved to a local file.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(height: 20),
+                
+                // Submit button
+                Container(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _submitDemoPicks(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Submit Picks',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitDemoPicks(BuildContext context) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: primary),
+                SizedBox(height: 16),
+                Text('Saving your picks...', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Create demo picks data
+      final demoPicksData = {
+        "week": dataProvider?.game?['name'] ?? "PRE1",
+        "tiebreaker": dataProvider?.tiebreaker?.toString() ?? "0",
+        'date': DateTime.now().toIso8601String(),
+        'picks': dataProvider?.playerPicks ?? [],
+        'uid': 'demo_user',
+        "displayName": 'Demo User',
+        "photoURL": '',
+        "paymentStatus": "verified",
+        "demo": true,
+      };
+
+      // Platform-specific handling for saving picks
+      if (kIsWeb) {
+        // For web, use localStorage or just show success message
+        print('Demo picks data (web): $demoPicksData');
+        print('Note: On web platform, picks are stored in memory only');
+      } else {
+        // For mobile platforms, save to local file
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/demo_picks.json');
+        
+        // Read existing data or create new list
+        List<Map<String, dynamic>> existingPicks = [];
+        if (await file.exists()) {
+          final content = await file.readAsString();
+          existingPicks = List<Map<String, dynamic>>.from(jsonDecode(content));
+        }
+        
+        // Add new picks
+        existingPicks.add(demoPicksData);
+        
+        // Write back to file
+        await file.writeAsString(jsonEncode(existingPicks));
+        
+        print('Demo picks saved to: ${file.path}');
+        print('Picks data: $demoPicksData');
+      }
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Picks submitted successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Navigate to leaderboard
+      await Future.delayed(Duration(seconds: 1));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LeaderboardWidget(),
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog if open
+      Navigator.pop(context);
+      
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error submitting picks: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveExistingPicksEdit(BuildContext context, DataProvider? dataProvider) async {
+    try {
+      // Check if dataProvider is null
+      if (dataProvider == null) {
+        throw Exception('Data provider is null');
+      }
+
+      circularCustom(context);
+      final picksCreateData = {
+        "week": dataProvider.game?['name'],
+        "tiebreaker": dataProvider.tiebreaker?.toString() ?? "",
+        'date': FieldValue.serverTimestamp(),
+        'picks': dataProvider.playerPicks is List ? dataProvider.playerPicks : [],
+        'uid': user?.uid ?? 'demo_user',
+        "displayName": user?.displayName ?? 'Demo User',
+        "photoURL": user?.photoURL ?? '',
+        "paymentStatus": "verified", // Keep existing verification status for edits
+      };
+      CollectionReference pickrecord = FirebaseFirestore.instance.collection('pickrecord');
+      
+      if (widget.id != null && widget.id!.isNotEmpty) {
+        // Use set with merge to create or update the document
+        await pickrecord.doc(widget.id).set(picksCreateData, SetOptions(merge: true));
+      } else {
+        // No ID provided, create new document
+        await pickrecord.add(picksCreateData);
+      }
+      
+      await calculateScore(context);
+      Navigator.pop(context);
+      Navigator.pop(context);
+      Navigator.pop(context);
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating picks: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

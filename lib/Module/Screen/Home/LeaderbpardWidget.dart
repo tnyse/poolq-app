@@ -10,15 +10,15 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
-import 'package:poolqapp/Provider/AuthProviders.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:poolqapp/Module/Screen/Home/picks.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
+// import 'package:poolqapp/Provider/AuthProviders.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:poolqapp/Module/Screen/Home/picks.dart';
+// import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
 import 'Play.dart';
 import '../../../services/nfl_schedule_service.dart';
-import 'package:poolqapp/Widget/reuse.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:poolqapp/Widget/reuse.dart';
+// import 'package:google_fonts/google_fonts.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 class LeaderboardWidget extends StatefulWidget {
@@ -33,8 +33,8 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   User? user = FirebaseAuth.instance.currentUser;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final _unfocusNode = FocusNode();
-  final Stream<QuerySnapshot> _leaderboard_recordStream =
-      FirebaseFirestore.instance.collection('leaderboard_record').snapshots();
+  // final Stream<QuerySnapshot> _leaderboard_recordStream =
+  //     FirebaseFirestore.instance.collection('leaderboard_record').snapshots();
 
   List? data;
   List? data2;
@@ -45,6 +45,55 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   Future getGame(context, selectedValue) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
     final scheduleService = NFLScheduleService();
+    
+    // Check if we're in demo mode
+    print('LeaderboardWidget: Checking demo mode for games - user = ${user?.email ?? "null"}');
+    if (user == null || user?.email == 'demo@poolq.com') {
+      print('LeaderboardWidget: Demo mode detected, using mock game data');
+      
+      // Use mock games data for demo - actual preseason Week 1 games
+      List<Map<String, dynamic>> mockGames = [
+        {
+          "id": "demo-game-1",
+          "date": "2025-08-08T17:00:00Z",
+          "homeTeam": "Detroit Lions",
+          "awayTeam": "Atlanta Falcons",
+          "homeAbbr": "DET",
+          "awayAbbr": "ATL",
+          "homeScore": null,
+          "awayScore": null,
+          "status": "scheduled",
+        },
+        {
+          "id": "demo-game-2", 
+          "date": "2025-08-08T17:00:00Z",
+          "homeTeam": "Cleveland Browns",
+          "awayTeam": "Carolina Panthers",
+          "homeAbbr": "CLE",
+          "awayAbbr": "CAR",
+          "homeScore": null,
+          "awayScore": null,
+          "status": "scheduled",
+        },
+        {
+          "id": "demo-game-3",
+          "date": "2025-08-08T17:30:00Z", 
+          "homeTeam": "Washington Commanders",
+          "awayTeam": "New England Patriots",
+          "homeAbbr": "WAS",
+          "awayAbbr": "NE",
+          "homeScore": null,
+          "awayScore": null,
+          "status": "scheduled",
+        },
+      ];
+      
+      setState(() {
+        data2 = mockGames;
+      });
+      print('Successfully loaded ${mockGames.length} mock games for leaderboard');
+      return mockGames;
+    }
     
     try {
       print('Fetching games for leaderboard from multiple sources...');
@@ -94,6 +143,65 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   Future getLeaderBoard(context, selectedValue) async {
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
+    
+    // Check if we're in demo mode
+    print('LeaderboardWidget: Checking demo mode - user = ${user?.email ?? "null"}');
+    if (user == null || user?.email == 'demo@poolq.com') {
+      print('LeaderboardWidget: Demo mode detected, using mock leaderboard data');
+      
+      // Create mock leaderboard data
+      List<Map<String, dynamic>> mockLeaderboard = [
+        {
+          "uid": "demo_user",
+          "displayName": "Demo User",
+          "photoURL": "",
+          "score": 0,
+          "picks": ["DET", "CLE", "WAS"],
+          "tiebreaker": 55,
+          "rank": 1,
+          "week": "PRE1",
+        },
+        {
+          "uid": "john_doe",
+          "displayName": "John Doe", 
+          "photoURL": "",
+          "score": 0,
+          "picks": ["ATL", "CAR", "NE"],
+          "tiebreaker": 45,
+          "rank": 2,
+          "week": "PRE1",
+        },
+        {
+          "uid": "jane_smith",
+          "displayName": "Jane Smith",
+          "photoURL": "",
+          "score": 0,
+          "picks": ["DET", "CLE", "WAS"],
+          "tiebreaker": 72,
+          "rank": 3,
+          "week": "PRE1",
+        },
+      ];
+      
+      setState(() {
+        data = mockLeaderboard;
+        normal_data = [...mockLeaderboard];
+        this.played = true;
+        particularData = data!.singleWhere(
+            (element) => element['uid'] == (user?.uid ?? 'demo_user'),
+            orElse: () => "null");
+        if (particularData == "null") {
+          print("demo user not found in leaderboard");
+        } else {
+          data!.remove(particularData);
+          data = [particularData, ...?data];
+        }
+      });
+      
+      print('Successfully loaded ${mockLeaderboard.length} mock leaderboard entries');
+      return mockLeaderboard;
+    }
+    
     var response = await http.get(
         Uri.parse(
             '${mainUrl}/getleaderboard/${dataProvider.game!["mode"]}${selectedValue}'),
@@ -113,7 +221,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
         normal_data = [...body1];
         this.played = played;
         particularData = data!.singleWhere(
-            (element) => element['uid'] == user!.uid,
+            (element) => element['uid'] == (user?.uid ?? 'demo_user'),
             orElse: () => "null");
         if (particularData == "null") {
           print("done");
@@ -125,9 +233,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
         // print(data);
       });
     } else {
+      // No data returned from API – avoid indefinite loading by setting safe defaults
       setState(() {
-        data = body;
-        normal_data = body;
+        data = body; // empty list
+        normal_data = body; // empty list
+        // Mark that we attempted to load and there are no plays yet
+        played = false;
+        // Ensure UI moves past the loading gate
+        particularData = "null";
       });
     }
 
@@ -141,12 +254,26 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     super.initState();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
-    selectedValue = dataProvider.game!["name"]
-        .toString()
-        .replaceAll("REG", "")
-        .replaceAll("PRE", "");
-    getLeaderBoard(context, selectedValue);
-    getGame(context, selectedValue);
+    
+    print('LeaderboardWidget: initState called');
+    print('LeaderboardWidget: user = ${user?.email ?? "null"}');
+    print('LeaderboardWidget: dataProvider.game = ${dataProvider.game}');
+    
+    // Check if dataProvider.game is null
+    if (dataProvider.game != null) {
+      selectedValue = dataProvider.game!["name"]
+          .toString()
+          .replaceAll("REG", "")
+          .replaceAll("PRE", "");
+      print('LeaderboardWidget: selectedValue = $selectedValue');
+      getLeaderBoard(context, selectedValue);
+      getGame(context, selectedValue);
+    } else {
+      print('LeaderboardWidget: dataProvider.game is null, using default PRE1');
+      selectedValue = "1"; // Default for PRE1
+      getLeaderBoard(context, selectedValue);
+      getGame(context, selectedValue);
+    }
     // _model = createModel(context, () => LeaderboardModel());
   }
 
@@ -181,8 +308,8 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     // context.watch<FFAppState>();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: true);
-    AuthProviders authProvider =
-        Provider.of<AuthProviders>(context, listen: true);
+    // AuthProviders authProvider =
+    //     Provider.of<AuthProviders>(context, listen: true);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).requestFocus(_unfocusNode),
@@ -247,7 +374,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                   width:
                                       MediaQuery.of(context).size.width * 0.5,
                                   child: Text(
-                                    'Hello, ${user!.displayName}!'
+                                    'Hello, ${user?.displayName ?? 'Demo User'}!'
                                         .toUpperCase(),
                                     style: TextStyle(
                                       fontFamily: 'Lexend Deca',
@@ -461,7 +588,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                     ? InkWell(
                                         onTap: () {
                                           if (data![index]["uid"] ==
-                                              user!.uid) {
+                                              (user?.uid ?? 'demo_user')) {
                                             DateTime currentDate =
                                                 DateTime.now();
                                             DateTime targetDate =
@@ -605,7 +732,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                               .w500,
                                                                     ),
                                                                   ),
-                                                                  if (data![index]["uid"] == user!.uid && 
+                                                                  if (data![index]["uid"] == (user?.uid ?? 'demo_user') && 
                                                                       DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
                                                                     Container(
                                                                       margin: EdgeInsets.only(left: 8),
@@ -835,7 +962,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                               .w500,
                                                                     ),
                                                                   ),
-                                                                  if (data![index]["uid"] == user!.uid && 
+                                                                  if (data![index]["uid"] == (user?.uid ?? 'demo_user') && 
                                                                       DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
                                                                     Container(
                                                                       margin: EdgeInsets.only(left: 8),
@@ -1015,7 +1142,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                     ? InkWell(
                                         onTap: () {
                                           if (data![index]["uid"] ==
-                                              user!.uid) {
+                                              (user?.uid ?? 'demo_user')) {
                                             DateTime currentDate =
                                                 DateTime.now();
                                             DateTime targetDate =
@@ -1167,7 +1294,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                               .w500,
                                                                     ),
                                                                   ),
-                                                                  if (data![index]["uid"] == user!.uid && 
+                                                                  if (data![index]["uid"] == (user?.uid ?? 'demo_user') && 
                                                                       DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
                                                                     Container(
                                                                       margin: EdgeInsets.only(left: 8),
@@ -1295,12 +1422,12 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                         ),
                                       )
                                     : index == 1
-                                        ? normal_data![0]["uid"] == user!.uid
+                                        ? normal_data![0]["uid"] == (user?.uid ?? 'demo_user')
                                             ? null
                                             : InkWell(
                                                 onTap: () {
                                                   if (normal_data![0]["uid"] ==
-                                                      user!.uid) {
+                                                      (user?.uid ?? 'demo_user')) {
                                                     Navigator.push(
                                                       context,
                                                       MaterialPageRoute(

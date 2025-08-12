@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'nfl_game_service.dart';
+import 'schedule_cache_service.dart';
+import 'local_schedule_service.dart';
 
 class NFLScheduleService {
   static final NFLScheduleService _instance = NFLScheduleService._internal();
@@ -68,70 +70,63 @@ class NFLScheduleService {
     }
   }
 
-  /// Gets the schedule for a specific week, using local file unless the date is past the last scheduled game
-  Future<List<Map<String, dynamic>>> getScheduleForWeekWithLocalFallback(String weekName, {int? year}) async {
-    year ??= DateTime.now().year;
-    final localSchedule = await loadLocalSchedule(year);
-    if (localSchedule != null) {
-      String weekType = '';
-      if (weekName.startsWith('PRE')) weekType = 'preseason';
-      else if (weekName.startsWith('REG')) weekType = 'regular';
-      else if (weekName.startsWith('POST')) weekType = 'postseason';
-      final weekGames = localSchedule[weekType]?[weekName];
-      if (weekGames != null && weekGames is List && weekGames.isNotEmpty) {
-        debugPrint('Loaded $weekName from local file');
-        // Find the latest game date in the week
-        DateTime? lastGameDate;
-        print('Checking game dates for $weekName...');
-        for (var game in weekGames) {
-          if (game['date'] != null && game['time'] != null) {
-            try {
-              final dateStr = game['date'] as String;
-              final timeStr = game['time'] as String;
-              final dateTime = DateTime.parse(_combineDateTime(dateStr, timeStr));
-              print('  Game: ${game['fullname']} vs ${game['fullname2']} - Date: $dateTime');
-              if (lastGameDate == null || dateTime.isAfter(lastGameDate)) {
-                lastGameDate = dateTime;
-              }
-            } catch (e) {
-              print('  Error parsing date for game: ${game['fullname']} vs ${game['fullname2']} - $e');
-            }
-          }
-        }
-        print('Last game date: $lastGameDate');
-        print('Current time: ${DateTime.now()}');
-        print('Is current time before last game? ${lastGameDate != null && DateTime.now().isBefore(lastGameDate)}');
-        
-        if (lastGameDate != null && DateTime.now().isBefore(lastGameDate)) {
-          // Current time is before the last game: use local data only
-          print('Using local data with normalization');
-          // Normalize field names to match expected format
-          return _normalizeLocalScheduleData(weekGames);
-        } else {
-          // Current time is after the last game: try API for updated results
-          print('Current time is after last game, attempting API fetch for $weekName');
-          debugPrint('Current time is after last game, attempting API fetch for $weekName');
-          final apiGames = await getScheduleForWeekApiFallback(weekName, year: year);
-          if (apiGames.isNotEmpty) {
-            return apiGames;
-          }
-          // If API fails, fallback to local data
-          print('API failed, using local data with normalization');
-          return _normalizeLocalScheduleData(weekGames);
+  /// Load schedule data from local file for a specific week
+  Future<List<dynamic>> _loadScheduleFromLocalFile(String weekName) async {
+    try {
+      final currentYear = DateTime.now().year;
+      final localSchedule = await loadLocalSchedule(currentYear);
+      if (localSchedule != null) {
+        String weekType = '';
+        if (weekName.startsWith('PRE')) weekType = 'preseason';
+        else if (weekName.startsWith('REG')) weekType = 'regular';
+        else if (weekName.startsWith('POST')) weekType = 'postseason';
+        final weekGames = localSchedule[weekType]?[weekName];
+        if (weekGames != null && weekGames is List && weekGames.isNotEmpty) {
+          return weekGames;
         }
       }
+      return [];
+    } catch (e) {
+      debugPrint('Error loading local schedule file: $e');
+      return [];
     }
-    debugPrint('No local schedule data found for $weekName');
-    return [];
+  }
+
+  /// Gets the schedule for a specific week, using cached data with periodic updates
+  Future<List<Map<String, dynamic>>> getScheduleForWeekWithLocalFallback(String weekName, {int? year}) async {
+    try {
+      debugPrint('getScheduleForWeekWithLocalFallback called for $weekName');
+      
+      // Always use local schedule service for consistent data
+      debugPrint('Loading schedule from local JSON file');
+      
+      // Use local schedule service to load from JSON file
+      final localService = LocalScheduleService();
+      final games = await localService.getScheduleForWeek(weekName);
+      
+      if (games.isNotEmpty) {
+        debugPrint('Successfully loaded ${games.length} games from local JSON for $weekName');
+        return games;
+      } else {
+        debugPrint('No games found in local JSON for $weekName, falling back to cache service');
+      }
+      
+      // Use cache service for all schedule requests as fallback
+      final cacheService = ScheduleCacheService();
+      return await cacheService.getScheduleForWeek(weekName, year: year);
+    } catch (e) {
+      debugPrint('Error in getScheduleForWeekWithLocalFallback: $e');
+      return [];
+    }
   }
 
   /// Helper to combine date and time strings into ISO8601 for DateTime.parse
   String _combineDateTime(String dateStr, String timeStr) {
-    // Example: "Thursday September 4TH, 2025" and "8:20 PM" -> "2025-09-04T20:20:00"
+    // Example: "Friday September 5TH, 2025" and "6:20 PM" -> "2025-09-05T18:20:00"
     try {
       final dateParts = dateStr.split(' ');
       final month = dateParts[1];
-      final day = dateParts[2].replaceAll(RegExp(r'\D'), '');
+      final day = dateParts[2].replaceAll(RegExp(r'\D'), ''); // Remove "TH", "ST", etc.
       final year = dateParts[3].replaceAll(',', '');
       final timeParts = timeStr.split(' ');
       var hour = int.parse(timeParts[0].split(':')[0]);
@@ -145,7 +140,8 @@ class NFLScheduleService {
         'September': '09', 'October': '10', 'November': '11', 'December': '12',
       }[month] ?? '01';
       return '$year-$monthNum-${day.padLeft(2, '0')}T${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}:00';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error parsing date/time: $dateStr $timeStr - $e');
       return DateTime.now().toIso8601String();
     }
   }
@@ -157,22 +153,85 @@ class NFLScheduleService {
     return [];
   }
 
-  // Disable all API/network methods for local-only mode
+  // Enable API methods for testing preseason availability
   Future<Map<String, dynamic>?> getCurrentWeek() async {
-    debugPrint('API disabled: getCurrentWeek');
-    return null;
+    debugPrint('Testing API: getCurrentWeek');
+    try {
+      final response = await http.get(
+        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=1')),
+        headers: _getHeaders(),
+      ).timeout(Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        debugPrint('API response received for current week');
+        return {
+          'week': 1,
+          'season_type': 1, // preseason
+          'season': 2025,
+          'seasonName': 'PRE'
+        };
+      } else {
+        debugPrint('API error: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('API error in getCurrentWeek: $e');
+      return null;
+    }
   }
+  
   Future<List<Map<String, dynamic>>> getScheduleWithFallback(String weekName) async {
-    debugPrint('API disabled: getScheduleWithFallback');
-    return [];
+    debugPrint('Testing API: getScheduleWithFallback for $weekName');
+    try {
+      // Extract week number from weekName (e.g., "PRE1" -> 1)
+      final weekMatch = RegExp(r'(\d+)').firstMatch(weekName);
+      final week = weekMatch != null ? int.parse(weekMatch.group(1)!) : 1;
+      
+      final response = await http.get(
+        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=1&week=$week')),
+        headers: _getHeaders(),
+      ).timeout(Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        debugPrint('API response received for schedule');
+        return _parseESPNScheduleResponse(data);
+      } else {
+        debugPrint('API error: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('API error in getScheduleWithFallback: $e');
+      return [];
+    }
   }
-  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 2}) async {
-    debugPrint('API disabled: getScheduleForWeek');
-    return [];
+  
+  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 1}) async {
+    debugPrint('Testing API: getScheduleForWeek week=$week, seasonType=$seasonType');
+    try {
+      final response = await http.get(
+        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=$season&seasontype=$seasonType&week=$week')),
+        headers: _getHeaders(),
+      ).timeout(Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        debugPrint('API response received for specific week');
+        return _parseESPNScheduleResponse(data);
+      } else {
+        debugPrint('API error: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('API error in getScheduleForWeek: $e');
+      return [];
+    }
   }
+  
   Future<List<Map<String, dynamic>>> getScheduleFromNFL(String weekName) async {
-    debugPrint('API disabled: getScheduleFromNFL');
-    return [];
+    debugPrint('Testing API: getScheduleFromNFL for $weekName');
+    return await getScheduleWithFallback(weekName);
   }
 
   /// Get season type name

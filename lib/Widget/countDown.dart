@@ -27,10 +27,18 @@ class _CountdownTimerDemoState extends State<CountdownTimerDemo> {
     super.initState();
     DataProvider dataProvider = Provider.of(context, listen: false);
     // Update to 2025 season
-    String year = dataProvider.game?["year"] ?? "2025";
-    date1 = DateTime(int.parse(year), now.month, now.day, now.hour, now.minute, now.second, now.millisecond, now.microsecond);
-    difference = widget.date2.difference(date1!);
-    myDuration = Duration(days: difference!.inDays);
+    String year = dataProvider.game?["year"]?.toString() ?? "2025";
+    try {
+      date1 = DateTime(int.parse(year), now.month, now.day, now.hour, now.minute, now.second, now.millisecond, now.microsecond);
+      difference = widget.date2.difference(date1!);
+      myDuration = Duration(days: difference!.inDays);
+    } catch (e) {
+      print('Error formatting date: $e');
+      // Fallback to current date
+      date1 = DateTime.now();
+      difference = widget.date2.difference(date1!);
+      myDuration = Duration(days: difference!.inDays);
+    }
     startTimer();
   }
 

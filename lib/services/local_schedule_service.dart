@@ -1,0 +1,175 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
+
+class LocalScheduleService {
+  static final LocalScheduleService _instance = LocalScheduleService._internal();
+  factory LocalScheduleService() => _instance;
+  LocalScheduleService._internal();
+
+  /// Load schedule from local JSON file
+  Future<List<Map<String, dynamic>>> getScheduleForWeek(String weekName) async {
+    try {
+      debugPrint('LocalScheduleService: Loading schedule for $weekName');
+      
+      final jsonString = await rootBundle.loadString('assets/data/nfl_schedule_2025.json');
+      final scheduleData = json.decode(jsonString);
+      
+      // New format: scheduleData['weeks'][weekName]
+      final weekGames = scheduleData['weeks']?[weekName];
+      if (weekGames != null && weekGames is List && weekGames.isNotEmpty) {
+        debugPrint('LocalScheduleService: Loaded ${weekGames.length} games for $weekName');
+        return _normalizeScheduleData(weekGames);
+      }
+      
+      debugPrint('LocalScheduleService: No games found for $weekName');
+      return [];
+    } catch (e) {
+      debugPrint('LocalScheduleService: Error loading schedule: $e');
+      return [];
+    }
+  }
+
+  /// Get current week information
+  Future<Map<String, dynamic>?> getCurrentWeek() async {
+    try {
+      debugPrint('LocalScheduleService: Getting current week');
+      
+      // For demo mode, return preseason week 1
+      return {
+        'week': 'PRE1',
+        'season_type': 1, // 1 = preseason, 2 = regular season, 3 = postseason
+        'season': 2025,
+        'seasonName': 'PRE',
+        'year': 2025,
+        'mode': 'PRE'
+      };
+    } catch (e) {
+      debugPrint('LocalScheduleService: Error getting current week: $e');
+      return null;
+    }
+  }
+
+  /// Update scores for a specific week (optional API call)
+  Future<List<Map<String, dynamic>>> updateScoresForWeek(String weekName) async {
+    try {
+      debugPrint('LocalScheduleService: Updating scores for $weekName');
+      
+      // For demo mode, return the same schedule with mock scores
+      final schedule = await getScheduleForWeek(weekName);
+      
+      // Add some mock scores for demo
+      for (var game in schedule) {
+        if (game['score'] == '0' && game['score2'] == '0') {
+          // Add random scores for demo
+          game['score'] = '24';
+          game['score2'] = '17';
+          game['status'] = 'final';
+        }
+      }
+      
+      return schedule;
+    } catch (e) {
+      debugPrint('LocalScheduleService: Error updating scores: $e');
+      return await getScheduleForWeek(weekName);
+    }
+  }
+
+  /// Normalize schedule data to match expected format
+  List<Map<String, dynamic>> _normalizeScheduleData(List<dynamic> weekGames) {
+    List<Map<String, dynamic>> normalizedGames = [];
+    
+    for (var game in weekGames) {
+      // Handle new format with homeTeam/awayTeam objects
+      var homeTeam = game['homeTeam'] ?? {};
+      var awayTeam = game['awayTeam'] ?? {};
+      
+      // Convert ISO date to app's expected format
+      String formattedDate = _formatDateForApp(game['date'] ?? '');
+      
+      var normalizedGame = {
+        'date': formattedDate,
+        'fullname': homeTeam['name'] ?? '',
+        'fullname2': awayTeam['name'] ?? '',
+        'abbreviation': homeTeam['abbreviation'] ?? '',
+        'abbreviation2': awayTeam['abbreviation'] ?? '',
+        'picture': homeTeam['logo'] ?? '',
+        'picture2': awayTeam['logo'] ?? '',
+        'score': game['homeScore']?.toString() ?? '0',
+        'score2': game['awayScore']?.toString() ?? '0',
+        'status': game['status'] ?? 'scheduled',
+        'time': _formatTimeForApp(game['date'] ?? ''),
+        'venue': game['venue'] ?? '',
+        'broadcast': game['broadcast'] ?? '',
+        'favorite': '', // Not provided in new format
+        'spread': 0.0, // Not provided in new format
+        'week': game['week'] ?? '',
+        'mode': game['mode'] ?? '',
+        'weekNumber': game['weekNumber'] ?? 0,
+        'year': game['year'] ?? 2025,
+        'id': game['id'] ?? '',
+        'name': game['name'] ?? '',
+        'shortName': game['shortName'] ?? '',
+      };
+      
+      normalizedGames.add(normalizedGame);
+    }
+    
+    return normalizedGames;
+  }
+
+  /// Convert ISO date to app's expected format: "Friday August 8TH, 2025"
+  String _formatDateForApp(String isoDate) {
+    try {
+      if (isoDate.isEmpty) return 'Thursday August 7TH, 2025'; // Default fallback
+      
+      DateTime dateTime = DateTime.parse(isoDate);
+      
+      const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      String weekday = weekdays[dateTime.weekday - 1];
+      String month = months[dateTime.month - 1];
+      String day = '${dateTime.day}${_getOrdinalSuffix(dateTime.day)}';
+      String year = '${dateTime.year}';
+      
+      return '$weekday $month $day, $year';
+    } catch (e) {
+      debugPrint('LocalScheduleService: Error formatting date: $e');
+      return 'Thursday August 7TH, 2025'; // Default fallback
+    }
+  }
+
+  /// Convert ISO date to time format: "7:00 PM"
+  String _formatTimeForApp(String isoDate) {
+    try {
+      if (isoDate.isEmpty) return '7:00 PM'; // Default fallback
+      
+      DateTime dateTime = DateTime.parse(isoDate).toLocal();
+      String period = dateTime.hour >= 12 ? 'PM' : 'AM';
+      int hour = dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour;
+      hour = hour == 0 ? 12 : hour;
+      String minute = dateTime.minute.toString().padLeft(2, '0');
+      
+      return '$hour:$minute $period';
+    } catch (e) {
+      debugPrint('LocalScheduleService: Error formatting time: $e');
+      return '7:00 PM'; // Default fallback
+    }
+  }
+
+  /// Get ordinal suffix for a number (1st, 2nd, 3rd, etc)
+  String _getOrdinalSuffix(int number) {
+    if (number >= 11 && number <= 13) {
+      return 'TH';
+    }
+    switch (number % 10) {
+      case 1: return 'ST';
+      case 2: return 'ND';
+      case 3: return 'RD';
+      default: return 'TH';
+    }
+  }
+} 

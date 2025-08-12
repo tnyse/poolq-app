@@ -23,7 +23,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late PageController _controller;
   User? user = FirebaseAuth.instance.currentUser;
-  Stream<QuerySnapshot>? _pickrecord;
+  Stream<QuerySnapshot?>? _pickrecord;
   bool _isLoading = true;
   String? _error;
   int _retryCount = 0;
@@ -33,10 +33,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('HomePage: initState called');
+    debugPrint('HomePage: User in initState: ${user?.email ?? "null"}');
     _controller = PageController(
       viewportFraction: 1,
       initialPage: widget.initial ?? 0
     );
+    debugPrint('HomePage: PageController created, calling _initializeData');
     _initializeData(user);
   }
 
@@ -46,7 +49,7 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> _initializeData(User? user) async {
+    Future<void> _initializeData(User? user) async {
     if (!mounted || _isInitialized) return;
 
     try {
@@ -61,40 +64,33 @@ class _HomePageState extends State<HomePage> {
       final authProvider = Provider.of<AuthProviders>(context, listen: false);
       debugPrint('HomePage: _initializeData called with user: ${user?.email ?? "null"}');
       
-      // Check if user is authenticated
-      if (user == null) {
-        throw Exception('User not authenticated');
+      // For demo mode, use simplified initialization
+      if (user == null || user.email == 'demo@poolq.com') {
+        debugPrint('HomePage: Demo mode - using simplified initialization');
+        await _initializeGameData(dataProvider);
+        await _initializePickStream(user);
+        
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+            _isLoading = false;
+          });
+        }
+        return;
       }
       
-      // Initialize game data if not already initialized with timeout
-      if (dataProvider.game == null) {
-        debugPrint('HomePage: dataProvider.game is null, calling getWeek()');
-        await dataProvider.getWeek().timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            debugPrint('HomePage: getWeek() timed out, using default values');
-            dataProvider.game = {"name": "REG1", "year": "2025", "mode": "REG"};
-            dataProvider.notifyListeners();
-          },
-        );
-      }
-      
-      // Initialize user info with timeout
-      await authProvider.getUserInfo().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          debugPrint('HomePage: getUserInfo() timed out');
-          throw Exception('User info fetch timed out');
-        },
-      );
-      
-      // Initialize pick record stream
-      if (mounted) {
-        _pickrecord = FirebaseFirestore.instance
-            .collection("Pick")
-            .where("week", isEqualTo: dataProvider.game!['name'])
-            .where("user", isEqualTo: user.email)
-            .snapshots();
+      // For real users, use full initialization with timeout
+      try {
+        await Future.wait([
+          _initializeGameData(dataProvider),
+          _initializeUserData(authProvider, user),
+          _initializePickStream(user),
+        ]).timeout(Duration(seconds: 10), onTimeout: () {
+          debugPrint('HomePage: Initialization timed out, proceeding with available data');
+          return <void>[];
+        });
+      } catch (e) {
+        debugPrint('HomePage: Initialization timed out, proceeding with available data: $e');
       }
       
       if (mounted) {
@@ -123,11 +119,75 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _initializeGameData(DataProvider dataProvider) async {
+    // Check if user is authenticated (allow demo mode)
+    if (user == null) {
+      // In demo mode, we can proceed without a real user
+      debugPrint('HomePage: Demo mode - no user authenticated, proceeding with demo data');
+    }
+    
+    // Initialize game data if not already initialized
+    if (dataProvider.game == null) {
+      debugPrint('HomePage: dataProvider.game is null, calling getWeek()');
+      await dataProvider.getWeek();
+      debugPrint('HomePage: getWeek() completed');
+    }
+    
+    // Also load game data if not already loaded
+    if (dataProvider.data == null) {
+      debugPrint('HomePage: dataProvider.data is null, calling getGame()');
+      await dataProvider.getGame();
+      debugPrint('HomePage: getGame() completed');
+    }
+    
+    debugPrint('HomePage: _initializeGameData completed');
+  }
+
+  Future<void> _initializeUserData(AuthProviders authProvider, User? user) async {
+    // Initialize user info with timeout (skip for demo mode)
+    if (user != null) {
+      await authProvider.getUserInfo().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () {
+          debugPrint('HomePage: getUserInfo() timed out');
+          throw Exception('User info fetch timed out');
+        },
+      );
+    } else {
+      debugPrint('HomePage: Demo mode - skipping user info fetch');
+    }
+    debugPrint('HomePage: _initializeUserData completed');
+  }
+
+  Future<void> _initializePickStream(User? user) async {
+    // Initialize pick record stream - handle demo mode
+    if (mounted) {
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      if (user?.email == 'demo@poolq.com' || user == null) {
+        // Demo mode - use Stream.empty() to avoid hanging
+        debugPrint('HomePage: Demo mode - using Stream.empty() for pick stream');
+        _pickrecord = Stream.empty();
+      } else {
+        // Real user - use Firebase stream
+        _pickrecord = FirebaseFirestore.instance
+            .collection("Pick")
+            .where("week", isEqualTo: dataProvider.game!['name'])
+            .where("user", isEqualTo: user.email)
+            .snapshots();
+      }
+    }
+    debugPrint('HomePage: _initializePickStream completed');
+  }
+
   @override
   Widget build(BuildContext context) {
+    debugPrint('HomePage: build method called');
+    debugPrint('HomePage: _isLoading: $_isLoading, _isInitialized: $_isInitialized, _error: $_error');
+    
     final dataProvider = Provider.of<DataProvider>(context, listen: true);
 
     if (_isLoading) {
+      debugPrint('HomePage: Showing loading screen');
       return Scaffold(
         body: Center(
           child: Column(
@@ -145,6 +205,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (_error != null) {
+      debugPrint('HomePage: Showing error screen: $_error');
       return Scaffold(
         body: Center(
           child: Column(
@@ -171,16 +232,82 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
+    debugPrint('HomePage: Showing main scaffold');
     return Scaffold(
-      body: StreamBuilder<QuerySnapshot>(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Text('PoolQ'),
+            SizedBox(width: 8),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'DEMO',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Color(0xFF063a73),
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.info_outline),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('You are in demo mode. All features are available for testing.'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: StreamBuilder<QuerySnapshot?>(
         stream: _pickrecord,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot?> snapshot) {
+          debugPrint('HomePage: StreamBuilder state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
+          debugPrint('HomePage: User is: ${user?.email ?? "null"}');
+          
           if (snapshot.hasError) {
+            debugPrint('HomePage: StreamBuilder error: ${snapshot.error}');
             return const Center(child: Text('Something went wrong'));
           }
 
-          if (snapshot.connectionState == ConnectionState.waiting ||
-              snapshot.data == null) {
+          // For demo mode, always show the content regardless of stream state
+          if (user == null || user?.email == 'demo@poolq.com') {
+            debugPrint('HomePage: Demo mode detected, showing content directly');
+            return PageView(
+              controller: _controller,
+              onPageChanged: (index) {
+                if (mounted) {
+                  dataProvider.setValue(index);
+                }
+              },
+              children: [
+                HomePageWidget(
+                  controller: _controller,
+                  isEmpty: true // Demo mode - always show as empty for fresh start
+                ),
+                const LeaderboardWidget(),
+                const UserProfile()
+              ],
+            );
+          }
+
+          // For real users, show loading while waiting for data
+          if (snapshot.connectionState == ConnectionState.waiting || 
+              (snapshot.connectionState == ConnectionState.done && !snapshot.hasData)) {
+            debugPrint('HomePage: Real user mode - showing loading screen');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -211,6 +338,7 @@ class _HomePageState extends State<HomePage> {
             );
           }
 
+          debugPrint('HomePage: Real user mode - showing content with data');
           return PageView(
             controller: _controller,
             onPageChanged: (index) {
@@ -221,7 +349,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               HomePageWidget(
                 controller: _controller,
-                isEmpty: snapshot.data!.docs.isEmpty
+                isEmpty: false
               ),
               const LeaderboardWidget(),
               const UserProfile()
