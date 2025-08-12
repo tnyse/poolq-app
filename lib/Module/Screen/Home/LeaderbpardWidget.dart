@@ -258,6 +258,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     print('LeaderboardWidget: initState called');
     print('LeaderboardWidget: user = ${user?.email ?? "null"}');
     print('LeaderboardWidget: dataProvider.game = ${dataProvider.game}');
+
+    // Set safe defaults to avoid indefinite loading spinners in demo/web
+    setState(() {
+      data = [];
+      normal_data = [];
+      particularData = "null";
+      played = false;
+    });
     
     // Check if dataProvider.game is null
     if (dataProvider.game != null) {
