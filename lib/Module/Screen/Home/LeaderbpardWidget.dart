@@ -491,32 +491,37 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                           ),
                           Row(
                             children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PlayWidget(),
+                              Builder(builder: (context) {
+                                final currentUserId = user?.uid ?? 'demo_user';
+                                final hasEntry = (data != null && data!.any((e) => e['uid'] == currentUserId));
+                                final label = hasEntry ? 'Edit Picks' : 'Play Now';
+                                return ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => hasEntry ? EditPlayWidget() : PlayWidget(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primary,
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                ),
-                                child: Text(
-                                  'Play Now',
-                                  style: TextStyle(
-                                    fontFamily: 'Lexend Deca',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontFamily: 'Lexend Deca',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                ),
-                              ),
+                                );
+                              }),
                               SizedBox(width: 16),
                               InkWell(
                                 onTap: () {

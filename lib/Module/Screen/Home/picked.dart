@@ -1,19 +1,19 @@
-import 'dart:convert';
-import 'PlayerPickWidget.dart';
-import 'LeaderbpardWidget.dart';
+// import 'dart:convert';
+// import 'PlayerPickWidget.dart';
+// import 'LeaderbpardWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../constants.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:poolqapp/Widget/reuse.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
-import 'package:poolqapp/Provider/AuthProviders.dart';
-import '../../../services/nfl_schedule_service.dart';
-import 'package:flutter_svg/svg.dart';
+// import 'package:poolqapp/Provider/AuthProviders.dart';
+// import '../../../services/nfl_schedule_service.dart';
+// import 'package:flutter_svg/svg.dart';
 import 'package:grouped_list/grouped_list.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
@@ -48,26 +48,35 @@ class _PickedWidgetState extends State<PickedWidget> {
     super.initState();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
-    AuthProviders authProvider =
-        Provider.of<AuthProviders>(context, listen: false);
+    // AuthProviders authProvider =
+    //     Provider.of<AuthProviders>(context, listen: false);
 
     // Mock data for testing
     if (kDebugMode) {
       _mockPickRecord();
     }
 
-    _pickrecord = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("uid", isEqualTo: user!.uid)
-        .where("week", isEqualTo: dataProvider.game!["name"])
-        .snapshots();
+    // For demo/web, guard Firestore with user null checks
+    if (user == null) {
+      _pickrecord = Stream.empty();
+    } else {
+      _pickrecord = FirebaseFirestore.instance
+          .collection('pickrecord')
+          .where("uid", isEqualTo: user!.uid)
+          .where("week", isEqualTo: dataProvider.game!["name"])
+          .snapshots();
+    }
 
-    _pickrecordStream = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("week",
-            isEqualTo: "${dataProvider.game!["mode"]}${widget.selectedValue}")
-        .where("uid", isEqualTo: "${widget.userId}")
-        .snapshots();
+    if (widget.userId == null) {
+      _pickrecordStream = Stream.empty();
+    } else {
+      _pickrecordStream = FirebaseFirestore.instance
+          .collection('pickrecord')
+          .where("week",
+              isEqualTo: "${dataProvider.game!["mode"]}${widget.selectedValue}")
+          .where("uid", isEqualTo: "${widget.userId}")
+          .snapshots();
+    }
     // _model = createModel(context, () => PlayModel());
 
     // _model.tieBreakerController ??= TextEditingController();
@@ -235,6 +244,8 @@ class _PickedWidgetState extends State<PickedWidget> {
 
                       return Builder(builder: (context) {
                         bool value = false;
+                        // picks list (unused in current UI but kept for future display)
+                        // ignore: unused_local_variable
                         List new_data = [];
                         QueryDocumentSnapshot? new_data2;
 
@@ -245,6 +256,12 @@ class _PickedWidgetState extends State<PickedWidget> {
                                 Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                                 new_data = data["picks"] ?? [];
                                 new_data2 = document;
+                                // Capture tiebreaker for footer display
+                                if (data.containsKey('tiebreaker')) {
+                                  tiebreaker = (data['tiebreaker'] ?? 0) is int
+                                      ? (data['tiebreaker'] ?? 0)
+                                      : int.tryParse('${data['tiebreaker']}') ?? 0;
+                                }
                               }
                             }
                           }

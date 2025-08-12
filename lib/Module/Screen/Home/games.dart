@@ -1,21 +1,21 @@
-import 'dart:convert';
-import 'PlayerPickWidget.dart';
-import 'LeaderbpardWidget.dart';
+// import 'dart:convert';
+// import 'PlayerPickWidget.dart';
+// import 'LeaderbpardWidget.dart';
 import '../../../Widget/reuse.dart';
-import 'package:flutter_svg/svg.dart';
+// import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
 import '../../../constants.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 import '../../../Provider/homeProvider.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:poolqapp/Provider/AuthProviders.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:poolqapp/Provider/AuthProviders.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/nfl_schedule_service.dart';
-import 'package:poolqapp/constants.dart';
+// import 'package:poolqapp/constants.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
 
 // import 'play_model.dart';
@@ -65,17 +65,11 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
     return [];
   }
 
-  Stream<QuerySnapshot>? _pickrecord;
+  // Stream<QuerySnapshot>? _pickrecord;
   @override
   void initState() {
     super.initState();
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: false);
-    _pickrecord = FirebaseFirestore.instance
-        .collection('pickrecord')
-        .where("uid", isEqualTo: user!.uid)
-        .where("week", isEqualTo: dataProvider.game!["name"])
-        .snapshots();
+    // No extra listeners required here
     getGame(context);
     // _model = createModel(context, () => PlayModel());
 
@@ -190,7 +184,7 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
                   child: Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(1, 20, 1, 1),
                     child: Builder(
-                      // future: getGame(),
+                      // Prevent red screen by rendering a fallback if no data
                       builder: (context) {
                         // Customize what your widget looks like when it's loading.
                         if (data == null) {
@@ -201,6 +195,14 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
                               child: CircularProgressIndicator(
                                 color: primary,
                               ),
+                            ),
+                          );
+                        }
+                        if (data!.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No schedule available for this week',
+                              style: GoogleFonts.poppins(color: Colors.white),
                             ),
                           );
                         }
