@@ -75,6 +75,12 @@ class _PlayWidgetState extends State<PlayWidget> {
     super.initState();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
+    
+    // Clear any existing picks for new entry (Play screen should always start clean)
+    dataProvider.clearPlayerPicks();
+    tieBreakerController.clear();
+    print('Play: Cleared existing picks for new entry');
+    
     // Check if we're in demo mode
     if (user == null || user?.email == 'demo@poolq.com') {
       print('Play: Demo mode detected, using empty stream');
