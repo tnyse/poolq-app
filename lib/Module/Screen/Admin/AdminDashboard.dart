@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:poolqapp/Provider/homeProvider.dart';
+// import 'package:provider/provider.dart';
+// import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/services/nfl_game_service.dart';
 import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../Model/invitation_model.dart';
-import '../../../services/nfl_schedule_service.dart';
+// import '../../../Model/invitation_model.dart';
+// import '../../../services/nfl_schedule_service.dart';
 import '../../../Widget/reuse.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -27,11 +27,13 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   final _maxUsesController = TextEditingController();
   bool _isReusable = true;
   bool _isLoading = false;
+  bool _scoresPublic = false;
+  String _entriesStatusFilter = 'All';
   
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _loadGameData();
   }
   
@@ -41,6 +43,11 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     setState(() {
       _games = games;
       _winners = winners;
+      // Consider scores public when all games are final/completed
+      _scoresPublic = _games.isNotEmpty && _games.every((g) {
+        final s = (g['status'] ?? '').toString().toLowerCase();
+        return s == 'final' || s == 'completed';
+      });
     });
   }
 
@@ -293,6 +300,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           tabs: const [
             Tab(text: 'Game Scores', icon: Icon(Icons.sports_football)),
             Tab(text: 'Winners', icon: Icon(Icons.emoji_events)),
+            Tab(text: 'Entries', icon: Icon(Icons.list_alt)),
             Tab(text: 'Statistics', icon: Icon(Icons.analytics)),
             Tab(text: 'Invitation Codes', icon: Icon(Icons.code)),
           ],
@@ -304,6 +312,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
         children: [
           _buildGameScoresTab(),
           _buildWinnersTab(),
+          _buildEntriesTab(),
           AdminStats(),
           _buildInvitationCodesTab(),
         ],
@@ -323,11 +332,14 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               DropdownButton<String>(
                 value: _selectedWeek,
                 items: [
-                  for (int i = 1; i <= 18; i++)
-                    DropdownMenuItem(
-                      value: 'REG$i',
-                      child: Text('Week $i'),
-                    )
+                  ...List.generate(4, (i) => DropdownMenuItem(
+                        value: 'PRE${i + 1}',
+                        child: Text('Pre Wk ${i + 1}'),
+                      )),
+                  ...List.generate(18, (i) => DropdownMenuItem(
+                        value: 'REG${i + 1}',
+                        child: Text('Week ${i + 1}'),
+                      )),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -337,6 +349,13 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                     });
                   }
                 },
+              ),
+              const SizedBox(width: 16),
+              Chip(
+                avatar: Icon(_scoresPublic ? Icons.public : Icons.schedule,
+                    color: _scoresPublic ? Colors.green : Colors.orange),
+                label: Text(_scoresPublic ? 'Scores public (final)' : 'Scores not public'),
+                backgroundColor: _scoresPublic ? Colors.green.shade50 : Colors.orange.shade50,
               ),
             ],
           ),
@@ -513,11 +532,14 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               DropdownButton<String>(
                 value: _selectedWeek,
                 items: [
-                  for (int i = 1; i <= 18; i++)
-                    DropdownMenuItem(
-                      value: 'REG$i',
-                      child: Text('Week $i'),
-                    )
+                  ...List.generate(4, (i) => DropdownMenuItem(
+                        value: 'PRE${i + 1}',
+                        child: Text('Pre Wk ${i + 1}'),
+                      )),
+                  ...List.generate(18, (i) => DropdownMenuItem(
+                        value: 'REG${i + 1}',
+                        child: Text('Week ${i + 1}'),
+                      )),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -597,6 +619,152 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEntriesTab() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              const Text('Week: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(width: 10),
+              DropdownButton<String>(
+                value: _selectedWeek,
+                items: [
+                  ...List.generate(4, (i) => DropdownMenuItem(
+                        value: 'PRE${i + 1}',
+                        child: Text('Pre Wk ${i + 1}'),
+                      )),
+                  ...List.generate(18, (i) => DropdownMenuItem(
+                        value: 'REG${i + 1}',
+                        child: Text('Week ${i + 1}'),
+                      )),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedWeek = value;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(width: 16),
+              const Text('Status: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: _entriesStatusFilter,
+                items: const [
+                  DropdownMenuItem(value: 'All', child: Text('All')),
+                  DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                  DropdownMenuItem(value: 'verified', child: Text('Verified')),
+                  DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
+                  DropdownMenuItem(value: 'disqualified', child: Text('Disqualified')),
+                ],
+                onChanged: (v) => setState(() => _entriesStatusFilter = v ?? 'All'),
+              ),
+              const Spacer(),
+              Chip(
+                avatar: Icon(_scoresPublic ? Icons.public : Icons.schedule,
+                    color: _scoresPublic ? Colors.green : Colors.orange),
+                label: Text(_scoresPublic ? 'Scores public (final)' : 'Scores not public'),
+                backgroundColor: _scoresPublic ? Colors.green.shade50 : Colors.orange.shade50,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: (_entriesStatusFilter == 'All')
+                ? FirebaseFirestore.instance
+                    .collection('pickrecord')
+                    .where('week', isEqualTo: _selectedWeek)
+                    .snapshots()
+                : FirebaseFirestore.instance
+                    .collection('pickrecord')
+                    .where('week', isEqualTo: _selectedWeek)
+                    .where('paymentStatus', isEqualTo: _entriesStatusFilter)
+                    .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final docs = snapshot.data?.docs ?? [];
+              if (docs.isEmpty) {
+                return const Center(child: Text('No entries for this week'));
+              }
+              return ListView.separated(
+                itemCount: docs.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  final displayName = data['displayName'] ?? data['email'] ?? data['uid'] ?? 'Unknown';
+                  final status = data['paymentStatus'] ?? 'pending';
+                  final tiebreaker = data['tiebreaker']?.toString() ?? '—';
+                  final score = data['score']?.toString();
+                  final rank = data['rank']?.toString();
+                  return ListTile(
+                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    title: Text(displayName),
+                    subtitle: Text('Status: $status • Tiebreaker: $tiebreaker' + (score != null ? ' • Score: $score' : '') + (rank != null ? ' • Rank: $rank' : '')),
+                    trailing: TextButton.icon(
+                      onPressed: () {
+                        _showPicksDialog(context, data);
+                      },
+                      icon: const Icon(Icons.remove_red_eye),
+                      label: const Text('View Picks'),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showPicksDialog(BuildContext context, Map<String, dynamic> pickData) {
+    final picks = (pickData['picks'] as List<dynamic>? ?? []).map((e) => e.toString()).toList();
+    final tiebreaker = pickData['tiebreaker']?.toString() ?? '—';
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Submitted Picks'),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final abbr in picks)
+                      Chip(label: Text(abbr)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text('Tiebreaker: $tiebreaker', style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            )
+          ],
+        );
+      },
     );
   }
 } 
