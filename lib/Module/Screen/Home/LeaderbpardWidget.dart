@@ -675,7 +675,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                 width: MediaQuery.of(context)
                                                     .size
                                                     .width,
-                                                height: 68,
+                                                height: 75,
                                                 decoration: BoxDecoration(
                                                   color: Color(0xFF3474E0),
                                                   // image: DecorationImage(
@@ -915,7 +915,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                 width: MediaQuery.of(context)
                                                     .size
                                                     .width,
-                                                height: 68,
+                                                height: 75,
                                                 decoration: BoxDecoration(
                                                   color: Color(0xFF3474E0),
                                                   boxShadow: [
@@ -1235,7 +1235,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                 width: MediaQuery.of(context)
                                                     .size
                                                     .width,
-                                                height: 70,
+                                                height: 75,
                                                 decoration: BoxDecoration(
                                                   color: normal_data![0]
                                                               ["uid"] ==
@@ -1491,7 +1491,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                 context)
                                                             .size
                                                             .width,
-                                                        height: 70,
+                                                        height: 75,
                                                         decoration:
                                                             BoxDecoration(
                                                           boxShadow: [
@@ -1514,7 +1514,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                           context)
                                                                       .size
                                                                       .width,
-                                                              height: 70,
+                                                              height: 75,
                                                               decoration:
                                                                   BoxDecoration(
                                                                 color: Colors
@@ -1700,7 +1700,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                         MediaQuery.of(context)
                                                             .size
                                                             .width,
-                                                    height: 70,
+                                                    height: 75,
                                                     decoration: BoxDecoration(
                                                       color: Color(0xFF3474E0),
                                                       boxShadow: [
