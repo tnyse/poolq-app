@@ -5,6 +5,7 @@ import 'package:poolqapp/services/nfl_game_service.dart';
 import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:poolqapp/Module/Screen/Admin/PaymentVerificationScreen.dart';
 // import '../../../Model/invitation_model.dart';
 // import '../../../services/nfl_schedule_service.dart';
 import '../../../Widget/reuse.dart';
@@ -33,7 +34,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _loadGameData();
   }
   
@@ -301,6 +302,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
             Tab(text: 'Game Scores', icon: Icon(Icons.sports_football)),
             Tab(text: 'Winners', icon: Icon(Icons.emoji_events)),
             Tab(text: 'Entries', icon: Icon(Icons.list_alt)),
+            Tab(text: 'Notifications', icon: Icon(Icons.notifications)),
             Tab(text: 'Statistics', icon: Icon(Icons.analytics)),
             Tab(text: 'Invitation Codes', icon: Icon(Icons.code)),
           ],
@@ -313,6 +315,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           _buildGameScoresTab(),
           _buildWinnersTab(),
           _buildEntriesTab(),
+          _buildNotificationsTab(),
           AdminStats(),
           _buildInvitationCodesTab(),
         ],
@@ -517,6 +520,119 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
         ),
       ],
     );
+  }
+
+  Widget _buildNotificationsTab() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: const [
+              Icon(Icons.notifications),
+              SizedBox(width: 8),
+              Text('Payment Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('admin_notifications')
+                .orderBy('timestamp', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final docs = snapshot.data?.docs ?? [];
+              if (docs.isEmpty) {
+                return const Center(child: Text('No notifications'));
+              }
+              return ListView.separated(
+                itemCount: docs.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  final isUnread = !(data['read'] == true);
+                  final type = (data['type'] ?? 'pending_payment').toString();
+                  final userName = (data['userDisplayName'] ?? 'Unknown').toString();
+                  final userEmail = (data['userEmail'] ?? '').toString();
+                  final week = (data['week'] ?? '').toString();
+                  final pickRecordId = (data['pickRecordId'] ?? '').toString();
+                  return ListTile(
+                    leading: Stack(
+                      children: [
+                        const CircleAvatar(child: Icon(Icons.receipt_long)),
+                        if (isUnread)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    title: Text('$userName • $week'),
+                    subtitle: Text('Type: $type\n$userEmail'),
+                    isThreeLine: true,
+                    trailing: Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            await _viewPicksFromPickRecordId(pickRecordId);
+                          },
+                          child: const Text('View Picks'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection('admin_notifications')
+                                .doc(doc.id)
+                                .update({'read': true});
+                          },
+                          child: const Text('Mark read'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const PaymentVerificationScreen()),
+                            );
+                          },
+                          icon: const Icon(Icons.verified),
+                          label: const Text('Verify'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _viewPicksFromPickRecordId(String pickRecordId) async {
+    if (pickRecordId.isEmpty) return;
+    try {
+      final snap = await FirebaseFirestore.instance.collection('pickrecord').doc(pickRecordId).get();
+      if (!snap.exists) return;
+      final data = snap.data() as Map<String, dynamic>;
+      _showPicksDialog(context, data);
+    } catch (_) {}
   }
 
   Widget _buildWinnersTab() {
