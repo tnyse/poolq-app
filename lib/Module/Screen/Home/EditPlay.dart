@@ -243,13 +243,24 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
       // Reset player picks to current selections
       dataProvider.setPlayerPicks([]);
 
-      // Load existing picks data (skip for demo mode)
-      if (user != null && dataProvider.game != null) {
-        _pickrecord = FirebaseFirestore.instance
-            .collection('pickrecord')
-            .where("uid", isEqualTo: user!.uid)
-            .where("week", isEqualTo: dataProvider.game!["name"])
-            .get();
+      // Load existing picks data (including demo mode from provider)
+      if (dataProvider.game != null) {
+        // For demo mode, load from mock data stored in provider
+        if (user == null || user?.email == 'demo@poolq.com') {
+          // Load demo picks from the provider's mock data
+          // const demoUserId = 'demo_user';
+          // Demo picks: DET, CLE, WAS with tiebreaker 55
+          dataProvider.setPlayerPicks(["DET", "CLE", "WAS"]);
+          dataProvider.setTieBreaker(55);
+          tieBreakerController.text = "55";
+          print('Loaded demo picks: ["DET", "CLE", "WAS"] with tiebreaker 55');
+        } else {
+          _pickrecord = FirebaseFirestore.instance
+              .collection('pickrecord')
+              .where("uid", isEqualTo: user!.uid)
+              .where("week", isEqualTo: dataProvider.game!["name"])
+              .get();
+        }
       }
 
       if (_pickrecord != null) {

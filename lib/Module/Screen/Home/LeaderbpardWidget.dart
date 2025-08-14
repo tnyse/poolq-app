@@ -641,7 +641,12 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 return index == 0
                                     ? InkWell(
                                         onTap: () {
-                                          if (data![index]["uid"] == (user?.uid ?? 'demo_user')) {
+                                          final currentUserId = user?.uid ?? 'demo_user';
+                                          final rowUserId = data![index]["uid"];
+                                          print('Row tapped: rowUserId=$rowUserId, currentUserId=$currentUserId');
+                                          
+                                          if (rowUserId == currentUserId) {
+                                            print('Opening EditPlayWidget for current user');
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
@@ -649,11 +654,12 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                               ),
                                             );
                                           } else {
+                                            print('Opening PickedWidget for other user');
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) => PickedWidget(
-                                                  userId: data![index]["uid"],
+                                                  userId: rowUserId,
                                                   selectedValue: selectedValue,
                                                 ),
                                               ),
