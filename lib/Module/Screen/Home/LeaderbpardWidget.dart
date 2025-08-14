@@ -558,37 +558,34 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 );
                               }),
                               SizedBox(width: 16),
-                               InkWell(
-                                onTap: () {
-                                  final allFinal = (data2 != null && data2!.isNotEmpty) && data2!.every((g) {
-                                    final s = (g['status'] ?? '').toString().toLowerCase();
-                                    return s == 'final' || s == 'completed';
-                                  });
-                                  if (!allFinal) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Game scores available after all games are final.')),
+                              Builder(builder: (_) {
+                                final allFinal = (data2 != null && data2!.isNotEmpty) && data2!.every((g) {
+                                  final s = (g['status'] ?? '').toString().toLowerCase();
+                                  return s == 'final' || s == 'completed';
+                                });
+                                if (!allFinal) return const SizedBox.shrink();
+                                return InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => GamePlayWidget(selectedValue: selectedValue),
+                                      ),
                                     );
-                                    return;
-                                  }
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => GamePlayWidget(selectedValue: selectedValue),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
-                                  child: Text(
-                                    'View Game Scores'.toUpperCase(),
-                                    style: TextStyle(
-                                      fontFamily: 'Lexend Deca',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(2, 0, 0, 0),
+                                    child: Text(
+                                      'View Game Scores'.toUpperCase(),
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend Deca',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
+                                );
+                              }),
                             ],
                           ),
                         ],
@@ -644,16 +641,24 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 return index == 0
                                     ? InkWell(
                                         onTap: () {
-                                      // Always show the submitted picks summary first
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => PickedWidget(
-                                            userId: data![index]["uid"],
-                                            selectedValue: selectedValue,
-                                          ),
-                                        ),
-                                      );
+                                          if (data![index]["uid"] == (user?.uid ?? 'demo_user')) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => EditPlayWidget(),
+                                              ),
+                                            );
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => PickedWidget(
+                                                  userId: data![index]["uid"],
+                                                  selectedValue: selectedValue,
+                                                ),
+                                              ),
+                                            );
+                                          }
                                         },
                                         child: Column(
                                           children: [
@@ -664,7 +669,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                 width: MediaQuery.of(context)
                                                     .size
                                                     .width,
-                                                height: 70,
+                                                height: 68,
                                                 decoration: BoxDecoration(
                                                   color: Color(0xFF3474E0),
                                                   // image: DecorationImage(
@@ -876,15 +881,24 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                       )
                                     : InkWell(
                                         onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => PickedWidget(
-                                                userId: data![index]["uid"],
-                                                selectedValue: selectedValue,
+                                          if (data![index]["uid"] == (user?.uid ?? 'demo_user')) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => EditPlayWidget(),
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => PickedWidget(
+                                                  userId: data![index]["uid"],
+                                                  selectedValue: selectedValue,
+                                                ),
+                                              ),
+                                            );
+                                          }
                                         },
                                         child: Column(
                                           children: [
@@ -895,7 +909,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                 width: MediaQuery.of(context)
                                                     .size
                                                     .width,
-                                                height: 70,
+                                                height: 68,
                                                 decoration: BoxDecoration(
                                                   color: Color(0xFF3474E0),
                                                   boxShadow: [
