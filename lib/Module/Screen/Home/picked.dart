@@ -252,7 +252,38 @@ class _PickedWidgetState extends State<PickedWidget> {
                         QueryDocumentSnapshot? new_data2;
 
                         runFunction() async {
-                          if (snapshot2.data != null && snapshot2.data!.docs.isNotEmpty) {
+                          // Check if this is demo mode and handle accordingly
+                          if ((user == null || user?.email == 'demo@poolq.com') && 
+                              (widget.userId == 'demo_user' || widget.userId == (user?.uid ?? 'demo_user'))) {
+                            // Demo mode: use predefined picks
+                            final List<String> demoPicks = [
+                              "IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", 
+                              "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"
+                            ];
+                            tiebreaker = 55;
+                            
+                            // Merge demo picks with actual schedule to display home/away and selection
+                            final dataProvider = Provider.of<DataProvider>(context, listen: false);
+                            final String weekName = "${dataProvider.game!["mode"]}${widget.selectedValue}";
+                            final scheduleService = NFLScheduleService();
+                            final schedule = await scheduleService.getScheduleForWeekWithLocalFallback(weekName);
+                            List<Map<String, dynamic>> merged = [];
+                            for (int i = 0; i < schedule.length; i++) {
+                              final g = schedule[i];
+                              final sel = i < demoPicks.length ? demoPicks[i] : '';
+                              merged.add({
+                                'date': g['date'],
+                                'home': g['home'] ?? g['fullname'] ?? '',
+                                'away': g['away'] ?? g['fullname2'] ?? '',
+                                'abbreviation': g['abbreviation'] ?? '',
+                                'abbreviation2': g['abbreviation2'] ?? '',
+                                'selected': sel,
+                              });
+                            }
+                            new_data = merged;
+                            print('PickedWidget: Loaded demo picks for all 16 PRE1 games: $demoPicks');
+                          } else if (snapshot2.data != null && snapshot2.data!.docs.isNotEmpty) {
+                            // Normal mode: load from Firestore
                             for (var document in snapshot2.data!.docs) {
                               if (document.data() != null) {
                                 final Map<String, dynamic> pickDoc = document.data() as Map<String, dynamic>;

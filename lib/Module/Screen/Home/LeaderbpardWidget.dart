@@ -187,7 +187,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           "displayName": "Demo User",
           "photoURL": "",
           "score": 0,
-          "picks": ["DET", "CLE", "WAS"],
+          "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"],
           "tiebreaker": 55,
           "rank": 1,
           "week": "PRE1",

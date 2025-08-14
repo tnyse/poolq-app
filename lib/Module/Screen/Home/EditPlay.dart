@@ -249,11 +249,15 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
         if (user == null || user?.email == 'demo@poolq.com') {
           // Load demo picks from the provider's mock data
           // const demoUserId = 'demo_user';
-          // Demo picks: DET, CLE, WAS with tiebreaker 55
-          dataProvider.setPlayerPicks(["DET", "CLE", "WAS"]);
+          // Demo picks: all away teams from PRE1 games with tiebreaker 55
+          List<String> demoPicks = [
+            "IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", 
+            "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"
+          ];
+          dataProvider.setPlayerPicks(demoPicks);
           dataProvider.setTieBreaker(55);
           tieBreakerController.text = "55";
-          print('Loaded demo picks: ["DET", "CLE", "WAS"] with tiebreaker 55');
+          print('Loaded demo picks for all 16 PRE1 games: $demoPicks with tiebreaker 55');
         } else {
           _pickrecord = FirebaseFirestore.instance
               .collection('pickrecord')
