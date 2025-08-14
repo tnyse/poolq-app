@@ -11,7 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
 // import 'package:poolqapp/Provider/AuthProviders.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:poolqapp/Module/Screen/Home/picks.dart';
 // import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
@@ -178,59 +178,83 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     // Check if we're in demo mode
     print('LeaderboardWidget: Checking demo mode - user = ${user?.email ?? "null"}');
     if (user == null || user?.email == 'demo@poolq.com') {
-      print('LeaderboardWidget: Demo mode detected, using mock leaderboard data');
+      print('LeaderboardWidget: Demo mode detected, fetching demo entries from Firestore');
       
-      // Create mock leaderboard data
-      List<Map<String, dynamic>> mockLeaderboard = [
-        {
+      try {
+        // Fetch demo entries from Firestore
+        final weekName = "${dataProvider.game!["mode"]}${selectedValue}";
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('pickrecord')
+            .where('week', isEqualTo: weekName)
+            .where('isDemoEntry', isEqualTo: true)
+            .orderBy('submittedAt', descending: true)
+            .get();
+
+        List<Map<String, dynamic>> demoLeaderboard = [];
+        
+        // Add current demo user at the top if exists
+        final currentDemoUser = {
           "uid": "demo_user",
-          "displayName": "Demo User",
+          "displayName": "Demo User (Current)",
           "photoURL": "",
           "score": 0,
           "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"],
           "tiebreaker": 55,
           "rank": 1,
-          "week": "PRE1",
-        },
-        {
-          "uid": "john_doe",
-          "displayName": "John Doe", 
-          "photoURL": "",
-          "score": 0,
-          "picks": ["ATL", "CAR", "NE"],
-          "tiebreaker": 45,
-          "rank": 2,
-          "week": "PRE1",
-        },
-        {
-          "uid": "jane_smith",
-          "displayName": "Jane Smith",
-          "photoURL": "",
-          "score": 0,
-          "picks": ["DET", "CLE", "WAS"],
-          "tiebreaker": 72,
-          "rank": 3,
-          "week": "PRE1",
-        },
-      ];
-      
-      setState(() {
-        data = mockLeaderboard;
-        normal_data = [...mockLeaderboard];
-        this.played = true;
-        particularData = data!.singleWhere(
-            (element) => element['uid'] == (user?.uid ?? 'demo_user'),
-            orElse: () => "null");
-        if (particularData == "null") {
-          print("demo user not found in leaderboard");
-        } else {
-          data!.remove(particularData);
-          data = [particularData, ...?data];
+          "week": weekName,
+        };
+        demoLeaderboard.add(currentDemoUser);
+
+        // Add saved demo entries
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data();
+          demoLeaderboard.add({
+            "uid": data['uid'] ?? '',
+            "displayName": data['displayName'] ?? 'Demo Entry',
+            "photoURL": data['photoURL'] ?? '',
+            "score": data['score'] ?? 0,
+            "picks": List<String>.from(data['picks'] ?? []),
+            "tiebreaker": data['tiebreaker'] ?? 0,
+            "rank": demoLeaderboard.length + 1,
+            "week": weekName,
+          });
         }
-      });
-      
-      print('Successfully loaded ${mockLeaderboard.length} mock leaderboard entries');
-      return mockLeaderboard;
+
+        setState(() {
+          data = demoLeaderboard;
+          normal_data = [...demoLeaderboard];
+          this.played = true;
+          particularData = demoLeaderboard.first; // Current demo user is always first
+        });
+        
+        print('Successfully loaded ${demoLeaderboard.length} demo leaderboard entries (${querySnapshot.docs.length} from Firestore)');
+        return demoLeaderboard;
+      } catch (e) {
+        print('Error fetching demo entries, using fallback: $e');
+        
+        // Fallback to single demo user if Firestore fails
+        List<Map<String, dynamic>> fallbackLeaderboard = [
+          {
+            "uid": "demo_user",
+            "displayName": "Demo User",
+            "photoURL": "",
+            "score": 0,
+            "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"],
+            "tiebreaker": 55,
+            "rank": 1,
+            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+          },
+        ];
+        
+        setState(() {
+          data = fallbackLeaderboard;
+          normal_data = [...fallbackLeaderboard];
+          this.played = true;
+          particularData = fallbackLeaderboard.first;
+        });
+        
+        return fallbackLeaderboard;
+      }
     }
     
     var response = await http.get(
