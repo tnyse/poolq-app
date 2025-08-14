@@ -15,7 +15,7 @@ import 'package:poolqapp/Provider/homeProvider.dart';
 // import 'package:poolqapp/Module/Screen/Home/picks.dart';
 // import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
-import 'Play.dart';
+// import 'Play.dart';
 import '../../../services/nfl_schedule_service.dart';
 // import 'package:poolqapp/Widget/reuse.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -41,6 +41,37 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   List? normal_data;
   var particularData;
   bool? played;
+
+  Future<void> _showPaymentModal(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Complete Payment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text('Entry fee: \$10.00'),
+              SizedBox(height: 8),
+              Text('Pay using one of the methods below:'),
+              SizedBox(height: 8),
+              SelectableText('Venmo: https://venmo.com/u/PoolQPayments'),
+              SelectableText('PayPal: poolq.payments@gmail.com'),
+              SelectableText('Zelle: poolq.payments@gmail.com'),
+              SelectableText('Cash App: \$PoolQPayments'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future getGame(context, selectedValue) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
@@ -496,13 +527,17 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 final hasEntry = (data != null && data!.any((e) => e['uid'] == currentUserId));
                                 final label = hasEntry ? 'Edit Picks' : 'Play Now';
                                 return ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => hasEntry ? EditPlayWidget() : PlayWidget(),
-                                      ),
-                                    );
+                                  onPressed: () async {
+                                    if (!hasEntry) {
+                                      await _showPaymentModal(context);
+                                    } else {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EditPlayWidget(),
+                                        ),
+                                      );
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primary,
@@ -523,13 +558,22 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 );
                               }),
                               SizedBox(width: 16),
-                              InkWell(
+                               InkWell(
                                 onTap: () {
+                                  final allFinal = (data2 != null && data2!.isNotEmpty) && data2!.every((g) {
+                                    final s = (g['status'] ?? '').toString().toLowerCase();
+                                    return s == 'final' || s == 'completed';
+                                  });
+                                  if (!allFinal) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Game scores available after all games are final.')),
+                                    );
+                                    return;
+                                  }
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => GamePlayWidget(
-                                          selectedValue: selectedValue),
+                                      builder: (context) => GamePlayWidget(selectedValue: selectedValue),
                                     ),
                                   );
                                 },
@@ -1178,14 +1222,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                           data![index]["uid"]
                                                       ? null
                                                       : Color(0xFF3474E0),
-                                                  image: normal_data![0]
-                                                              ["uid"] ==
-                                                          data![index]["uid"]
-                                                      ? DecorationImage(
-                                                          image: AssetImage(
-                                                              "assets/images/winner.png"),
-                                                          fit: BoxFit.cover)
-                                                      : null,
+                                                  // remove winner background in demo/rows
                                                   boxShadow: [
                                                     BoxShadow(
                                                       color: Color(0x411D2429),
@@ -1437,11 +1474,6 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                         height: 70,
                                                         decoration:
                                                             BoxDecoration(
-                                                          image: DecorationImage(
-                                                              image: AssetImage(
-                                                                  "assets/images/winner.png"),
-                                                              fit:
-                                                                  BoxFit.cover),
                                                           boxShadow: [
                                                             BoxShadow(
                                                               color: Color(

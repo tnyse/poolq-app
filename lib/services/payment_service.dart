@@ -17,6 +17,7 @@ class PaymentService {
   static const String PAYPAL_EMAIL = 'poolq.payments@gmail.com';
   static const String ZELLE_EMAIL = 'poolq.payments@gmail.com';
   static const String CASHAPP_HANDLE = '\$PoolQPayments';
+  static const String VENMO_URL = 'https://venmo.com/u/PoolQPayments';
   static const double ENTRY_FEE = 10.0;
 
   // Admin notification email
@@ -88,6 +89,11 @@ class PaymentService {
   /// Get payment methods for display
   Map<String, dynamic> getPaymentMethods() {
     return {
+      'venmo': {
+        'name': 'Venmo',
+        'identifier': VENMO_URL,
+        'instructions': 'Send \$${ENTRY_FEE.toStringAsFixed(2)} via Venmo link and include your name in the note.'
+      },
       'paypal': {
         'name': 'PayPal',
         'identifier': PAYPAL_EMAIL,
@@ -119,6 +125,9 @@ class PaymentService {
     // For now, we'll just copy relevant information to clipboard
     String textToCopy = '';
     switch (paymentMethod.toLowerCase()) {
+      case 'venmo':
+        textToCopy = VENMO_URL;
+        break;
       case 'paypal':
         textToCopy = PAYPAL_EMAIL;
         break;
