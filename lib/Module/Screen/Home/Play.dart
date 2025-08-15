@@ -77,9 +77,10 @@ class _PlayWidgetState extends State<PlayWidget> {
         Provider.of<DataProvider>(context, listen: false);
     
     // Clear any existing picks for new entry (Play screen should always start clean)
+    print('Play: Before clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
     dataProvider.clearPlayerPicks();
     tieBreakerController.clear();
-    print('Play: Cleared existing picks for new entry');
+    print('Play: After clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
     
     // Check if we're in demo mode
     if (user == null || user?.email == 'demo@poolq.com') {
