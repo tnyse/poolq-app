@@ -15,7 +15,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:poolqapp/Module/Screen/Home/picks.dart';
 // import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
-// import 'Play.dart';
+import 'Play.dart';
 import '../../../services/nfl_schedule_service.dart';
 // import 'package:poolqapp/Widget/reuse.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -66,6 +66,18 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop(); // Close modal first
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlayWidget(),
+                  ),
+                );
+              },
+              child: const Text('Continue to Entry'),
             ),
           ],
         );
@@ -192,14 +204,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
 
         List<Map<String, dynamic>> demoLeaderboard = [];
         
-        // Add current demo user at the top if exists
+        // Add current demo user at the top - this represents the current session (no picks yet)
         final currentDemoUser = {
-          "uid": "demo_user",
-          "displayName": "Demo User (Current)",
+          "uid": "demo_user_current",
+          "displayName": "Demo User (Current Session)",
           "photoURL": "",
           "score": 0,
-          "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"],
-          "tiebreaker": 55,
+          "picks": [], // Empty picks for current session
+          "tiebreaker": null,
           "rank": 1,
           "week": weekName,
         };
@@ -548,7 +560,15 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                             children: [
                               Builder(builder: (context) {
                                 final currentUserId = user?.uid ?? 'demo_user';
-                                final hasEntry = (data != null && data!.any((e) => e['uid'] == currentUserId));
+                                // For demo mode, always show "Play Now" to create new unique entrants for testing
+                                bool hasEntry = false;
+                                if (user != null && user?.email != 'demo@poolq.com') {
+                                  // Normal mode: check if user has any entry
+                                  hasEntry = (data != null && data!.any((e) => e['uid'] == currentUserId));
+                                } else {
+                                  // Demo mode: always allow new entries for testing multiple entrants
+                                  hasEntry = false;
+                                }
                                 final label = hasEntry ? 'Edit Picks' : 'Play Now';
                                 return ElevatedButton(
                                   onPressed: () async {
@@ -665,11 +685,20 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 return index == 0
                                     ? InkWell(
                                         onTap: () {
-                                          final currentUserId = user?.uid ?? 'demo_user';
                                           final rowUserId = data![index]["uid"];
-                                          print('Row tapped: rowUserId=$rowUserId, currentUserId=$currentUserId');
+                                          print('Row tapped: rowUserId=$rowUserId');
                                           
-                                          if (rowUserId == currentUserId) {
+                                          // In demo mode, current session user should go to new entry (PlayWidget)
+                                          if ((user == null || user?.email == 'demo@poolq.com') && 
+                                              rowUserId == 'demo_user_current') {
+                                            print('Opening PlayWidget for demo current session');
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => PlayWidget(),
+                                              ),
+                                            );
+                                          } else if (rowUserId == (user?.uid ?? 'demo_user')) {
                                             print('Opening EditPlayWidget for current user');
                                             Navigator.push(
                                               context,

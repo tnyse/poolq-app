@@ -243,11 +243,11 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   dataProvider.game == null) {
                                 customSnackbar(context, 'loading games');
                               } else {
-                                // Navigate to EditPlayWidget for entry form (same as leaderboard Play Now)
+                                // Navigate to PlayWidget for new entry form
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => EditPlayWidget(),
+                                    builder: (context) => PlayWidget(),
                                   ),
                                 );
                               }
