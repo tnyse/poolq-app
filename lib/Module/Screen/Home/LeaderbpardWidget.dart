@@ -200,26 +200,30 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
         
         List<Map<String, dynamic>> demoLeaderboard = [];
         
-        // Add current demo user at the top - this represents the current session (no picks yet)
+        // Determine if this week is completed (has final scores) or in progress
+        final isWeekCompleted = weekName == 'REG1'; // REG1 has completed games with scores
+        final isCurrentWeek = weekName == 'REG1'; // REG1 is the current picking week
+        
+        // Add single demo user entry (the actual user) - only ONE entry
         final currentDemoUser = {
           "uid": "demo_user_current",
           "displayName": "Demo User (Current Session)",
           "photoURL": "",
-          "score": 0,
-          "picks": [], // Empty picks for current session
-          "tiebreaker": null,
-          "rank": 1,
+          "score": isWeekCompleted ? 8 : 0, // Show score only if week is completed
+          "picks": isCurrentWeek ? [] : ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], // Empty picks for current week
+          "tiebreaker": isCurrentWeek ? null : 50,
+          "rank": isWeekCompleted ? 5 : 1, // Rank based on completion status
           "week": weekName,
+          "hasSubmittedPicks": !isCurrentWeek,
         };
         demoLeaderboard.add(currentDemoUser);
         
-        // Add sample demo players with picks
+        // Add AI players with proper Week 1 2025 picks and scores
         final samplePlayers = [
-          {"uid": "demo_sarah", "displayName": "Sarah Wilson", "score": 14, "picks": ["BAL", "PHI", "SEA", "CAR", "ATL"], "tiebreaker": 21},
-          {"uid": "demo_mike", "displayName": "Mike Johnson", "score": 12, "picks": ["NE", "GB", "LAR", "HOU", "MIN"], "tiebreaker": 24},
-          {"uid": "demo_jessica", "displayName": "Jessica Chen", "score": 11, "picks": ["DAL", "SEA", "MIA", "NYJ", "KC"], "tiebreaker": 17},
-          {"uid": "demo_alex", "displayName": "Alex Rodriguez", "score": 10, "picks": ["SF", "DEN", "PIT", "JAX", "TEN"], "tiebreaker": 19},
-          {"uid": "demo_emma", "displayName": "Emma Thompson", "score": 9, "picks": ["TB", "ARI", "CHI", "NO", "LAC"], "tiebreaker": 22},
+          {"uid": "demo_mike", "displayName": "Mike Johnson", "score": isWeekCompleted ? 12 : 0, "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"], "tiebreaker": 24},
+          {"uid": "demo_jessica", "displayName": "Jessica Chen", "score": isWeekCompleted ? 11 : 0, "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], "tiebreaker": 17},
+          {"uid": "demo_alex", "displayName": "Alex Rodriguez", "score": isWeekCompleted ? 10 : 0, "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"], "tiebreaker": 19},
+          {"uid": "demo_emma", "displayName": "Emma Thompson", "score": isWeekCompleted ? 9 : 0, "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], "tiebreaker": 22},
         ];
         
         for (int i = 0; i < samplePlayers.length; i++) {
@@ -253,48 +257,60 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
       } catch (e) {
         print('Error fetching demo entries, using fallback: $e');
         
-        // Fallback to multiple mock demo entries if Firestore fails
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        // Fallback: Use same logic as above to avoid duplicates
+        final fallbackWeekName = "${dataProvider.game!["mode"]}${selectedValue}";
+        final isWeekCompletedFallback = fallbackWeekName == 'REG1';
         List<Map<String, dynamic>> fallbackLeaderboard = [
           {
             "uid": "demo_user_current",
-            "displayName": "Demo User (Current)",
+            "displayName": "Demo User (Current Session)",
             "photoURL": "",
-            "score": 0,
-            "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS"],
-            "tiebreaker": 55,
-            "rank": 1,
-            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+            "score": isWeekCompletedFallback ? 8 : 0,
+            "picks": isWeekCompletedFallback ? ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"] : [],
+            "tiebreaker": isWeekCompletedFallback ? 50 : null,
+            "rank": isWeekCompletedFallback ? 5 : 1,
+            "week": fallbackWeekName,
+            "hasSubmittedPicks": isWeekCompletedFallback,
           },
           {
-            "uid": "demo_user_1",
-            "displayName": "Alex Johnson #1642",
+            "uid": "demo_mike",
+            "displayName": "Mike Johnson",
             "photoURL": "",
-            "score": 0,
-            "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"],
-            "tiebreaker": 45,
-            "rank": 2,
-            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+            "score": isWeekCompletedFallback ? 12 : 0,
+            "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"],
+            "tiebreaker": 24,
+            "rank": isWeekCompletedFallback ? 1 : 2,
+            "week": fallbackWeekName,
           },
           {
-            "uid": "demo_user_2",
-            "displayName": "Casey Smith #1643",
+            "uid": "demo_jessica",
+            "displayName": "Jessica Chen",
             "photoURL": "",
-            "score": 0,
-            "picks": ["BAL", "PHI", "SEA", "CAR", "ATL", "NE", "BUF", "ARI", "MIN", "JAX", "GB", "TB", "SF", "CHI", "LAC", "NO"],
-            "tiebreaker": 52,
-            "rank": 3,
-            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+            "score": isWeekCompletedFallback ? 11 : 0,
+            "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"],
+            "tiebreaker": 17,
+            "rank": isWeekCompletedFallback ? 2 : 3,
+            "week": fallbackWeekName,
           },
           {
-            "uid": "demo_user_3",
-            "displayName": "Jordan Brown #1644",
+            "uid": "demo_alex",
+            "displayName": "Alex Rodriguez",
             "photoURL": "",
-            "score": 0,
-            "picks": ["IND", "PHI", "LV", "CAR", "DET", "NE", "NYG", "KC", "MIN", "HOU", "NYJ", "JAX", "TEN", "SF", "MIA", "LAC"],
-            "tiebreaker": 60,
-            "rank": 4,
-            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+            "score": isWeekCompletedFallback ? 10 : 0,
+            "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"],
+            "tiebreaker": 19,
+            "rank": isWeekCompletedFallback ? 3 : 4,
+            "week": fallbackWeekName,
+          },
+          {
+            "uid": "demo_emma",
+            "displayName": "Emma Thompson",
+            "photoURL": "",
+            "score": isWeekCompletedFallback ? 9 : 0,
+            "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"],
+            "tiebreaker": 22,
+            "rank": isWeekCompletedFallback ? 4 : 5,
+            "week": fallbackWeekName,
           },
         ];
         
