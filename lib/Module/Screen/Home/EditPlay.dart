@@ -1,22 +1,17 @@
-import 'dart:convert';
 import 'PlayerPickWidget.dart';
-import 'LeaderbpardWidget.dart';
 import '../../../Widget/reuse.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
 import '../../../constants.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import '../../../Provider/homeProvider.dart';
-import '../../../Provider/AuthProviders.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
 import '../../../services/nfl_schedule_service.dart';
-import 'package:poolqapp/constants.dart';
+import '../../../services/game_state_service.dart';
 
 class EditPlayWidget extends StatefulWidget {
   const EditPlayWidget({Key? key}) : super(key: key);
@@ -34,6 +29,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
 
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
+  final GameStateService _gameStateService = GameStateService();
   
   Future getGame(context) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
@@ -60,133 +56,6 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
       print('EditPlay: Game name: ${dataProvider.game!["name"]}');
       
       // Always load real schedule data (even in demo mode)
-      if (false) { // Disabled mock data - always use real schedule
-        print('EditPlay: Demo mode detected, using mock data');
-        
-        // Check if this is preseason or regular season
-        final isPreseason = dataProvider.game!["name"].startsWith('PRE');
-        print('EditPlay: Week type: ${dataProvider.game!["name"]} (Preseason: $isPreseason)');
-        
-        final mockGames = isPreseason ? [
-          // Preseason Week 1 Games
-          {
-            'date': 'Thursday August 7TH, 2025',
-            'fullname': 'New England Patriots',
-            'fullname2': 'Detroit Lions',
-            'abbreviation': 'NE',
-            'abbreviation2': 'DET',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '7:30 PM',
-            'venue': 'Gillette Stadium',
-            'broadcast': 'NFL Network',
-            'favorite': '',
-            'spread': 0.0,
-          },
-          {
-            'date': 'Friday August 8TH, 2025',
-            'fullname': 'Buffalo Bills',
-            'fullname2': 'Indianapolis Colts',
-            'abbreviation': 'BUF',
-            'abbreviation2': 'IND',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '7:00 PM',
-            'venue': 'Highmark Stadium',
-            'broadcast': 'NFL Network',
-            'favorite': '',
-            'spread': 0.0,
-          },
-          {
-            'date': 'Saturday August 9TH, 2025',
-            'fullname': 'Dallas Cowboys',
-            'fullname2': 'Los Angeles Rams',
-            'abbreviation': 'DAL',
-            'abbreviation2': 'LAR',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '8:00 PM',
-            'venue': 'AT&T Stadium',
-            'broadcast': 'NFL Network',
-            'favorite': '',
-            'spread': 0.0,
-          },
-          {
-            'date': 'Sunday August 10TH, 2025',
-            'fullname': 'Kansas City Chiefs',
-            'fullname2': 'Cincinnati Bengals',
-            'abbreviation': 'KC',
-            'abbreviation2': 'CIN',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '4:25 PM',
-            'venue': 'Arrowhead Stadium',
-            'broadcast': 'CBS',
-            'favorite': '',
-            'spread': 0.0,
-          },
-        ] : [
-          // Regular Season Week 1 Games (fallback)
-          {
-            'date': 'Thursday September 4TH, 2025',
-            'fullname': 'Kansas City Chiefs',
-            'fullname2': 'Baltimore Ravens',
-            'abbreviation': 'KC',
-            'abbreviation2': 'BAL',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '8:20 PM',
-            'venue': 'Arrowhead Stadium',
-            'broadcast': 'NBC',
-            'favorite': '',
-            'spread': 0.0,
-          },
-          {
-            'date': 'Sunday September 7TH, 2025',
-            'fullname': 'Dallas Cowboys',
-            'fullname2': 'Philadelphia Eagles',
-            'abbreviation': 'DAL',
-            'abbreviation2': 'PHI',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '4:25 PM',
-            'venue': 'AT&T Stadium',
-            'broadcast': 'FOX',
-            'favorite': '',
-            'spread': 0.0,
-          },
-          {
-            'date': 'Monday September 8TH, 2025',
-            'fullname': 'Green Bay Packers',
-            'fullname2': 'Chicago Bears',
-            'abbreviation': 'GB',
-            'abbreviation2': 'CHI',
-            'score': '0',
-            'score2': '0',
-            'status': 'scheduled',
-            'time': '8:15 PM',
-            'venue': 'Lambeau Field',
-            'broadcast': 'ESPN',
-            'favorite': '',
-            'spread': 0.0,
-          },
-        ];
-        
-        setState(() {
-          data = mockGames;
-          isLoading = false;
-          errorMessage = null;
-        });
-        print('EditPlay: Successfully loaded ${mockGames.length} mock games for demo');
-        return mockGames;
-      }
-      
       print('EditPlay: Loading real schedule from local file for ${dataProvider.game!["name"]}');
       
       // Only use local file for schedule display
@@ -194,13 +63,20 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
         dataProvider.game!["name"]
       );
       if (games.isNotEmpty) {
+        // CRITICAL: Hide scores during editing phase
+        List<Map<String, dynamic>> sanitizedGames = _gameStateService.sanitizeGamesList(
+          games,
+          screenContext: 'editplay',
+          isPickingPhase: true,
+        );
+        
         setState(() {
-          data = games;
+          data = sanitizedGames;
           isLoading = false;
           errorMessage = null;
         });
-        print('Successfully loaded ${games.length} games for editing from local file');
-        return games;
+        print('🏈 EDIT PLAY: Successfully loaded ${sanitizedGames.length} games for editing (scores hidden)');
+        return sanitizedGames;
       } else {
         throw Exception('No games data available from local file');
       }
@@ -637,9 +513,8 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               print('Team 1 button pressed: ${gameItem["abbreviation"]}');
                                                               print('Current picks: ${dataProvider.playerPicks}');
                                                               
-                                                              // Check if either team from this game is already picked
+                                                              // Check if this team is already picked
                                                               bool hasTeam1 = dataProvider.playerPicks!.contains(gameItem["abbreviation"]);
-                                                              bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
                                                               
                                                               if (hasTeam1) {
                                                                 // User is trying to pick the same team again
@@ -818,8 +693,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                 print('Team 2 button pressed: ${gameItem["abbreviation2"]}');
                                                                 print('Current picks: ${dataProvider.playerPicks}');
                                                                 
-                                                                // Check if either team from this game is already picked
-                                                                bool hasTeam1 = dataProvider.playerPicks!.contains(gameItem["abbreviation"]);
+                                                                // Check if this team is already picked
                                                                 bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
                                                                 
                                                                 if (hasTeam2) {

@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
 import 'package:poolqapp/screens/auth/login_screen.dart';
 import 'package:poolqapp/screens/auth/register_screen.dart';
-import 'package:poolqapp/screens/auth/demo_registration_screen.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -58,7 +57,7 @@ class _LandingPageState extends State<LandingPage> {
           ),
         );
         
-        // Navigate to home page with demo flag
+        // Navigate directly to pick page for testing
         Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
@@ -78,39 +77,6 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  Future<void> _deleteAccount(BuildContext context) async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Delete user data from Firestore first
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .delete();
-        
-        // Delete the user account
-        await user.delete();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account deleted successfully')),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please login first to delete your account')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting account: ${e.toString()}')),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,27 +152,6 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                     const SizedBox(height: 16),
                     
-                    // Demo Registration Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => DemoRegistrationScreen()),
-                        );
-                      },
-                      child: const Text('Create Demo Account', style: TextStyle(fontSize: 18)),
-                    ),
-                    const SizedBox(height: 16),
-                    
                     // Quick Demo Login Button
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -220,22 +165,6 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                       onPressed: () => _quickDemoLogin(context),
                       child: const Text('Try Demo Mode', style: TextStyle(fontSize: 18)),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Delete Account Button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: primaryBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () => _deleteAccount(context),
-                      child: const Text('Delete Account', style: TextStyle(fontSize: 18)),
                     ),
                     const SizedBox(height: 16),
                     

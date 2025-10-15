@@ -16,6 +16,13 @@ class PickModel {
   final String? paymentReference;
   final DateTime? verifiedAt;
   final String? verifiedBy;
+  final String? photoURL;
+  final int? tiebreakerDiff;
+  final bool? isDemoEntry;
+
+  // Convenience getters for backward compatibility
+  String get uid => userId;
+  String get week => weekName;
 
   PickModel({
     required this.pickId,
@@ -33,6 +40,9 @@ class PickModel {
     this.paymentReference,
     this.verifiedAt,
     this.verifiedBy,
+    this.photoURL,
+    this.tiebreakerDiff,
+    this.isDemoEntry,
   });
 
   factory PickModel.fromFirestore(DocumentSnapshot doc) {
@@ -53,6 +63,9 @@ class PickModel {
       paymentReference: data['paymentReference'],
       verifiedAt: data['verifiedAt'] != null ? (data['verifiedAt'] as Timestamp).toDate() : null,
       verifiedBy: data['verifiedBy'],
+      photoURL: data['photoURL'],
+      tiebreakerDiff: data['tiebreakerDiff'],
+      isDemoEntry: data['isDemoEntry'],
     );
   }
 
@@ -91,6 +104,9 @@ class PickModel {
     String? paymentReference,
     DateTime? verifiedAt,
     String? verifiedBy,
+    String? photoURL,
+    int? tiebreakerDiff,
+    bool? isDemoEntry,
   }) {
     return PickModel(
       pickId: pickId ?? this.pickId,
@@ -108,6 +124,9 @@ class PickModel {
       paymentReference: paymentReference ?? this.paymentReference,
       verifiedAt: verifiedAt ?? this.verifiedAt,
       verifiedBy: verifiedBy ?? this.verifiedBy,
+      photoURL: photoURL ?? this.photoURL,
+      tiebreakerDiff: tiebreakerDiff ?? this.tiebreakerDiff,
+      isDemoEntry: isDemoEntry ?? this.isDemoEntry,
     );
   }
 

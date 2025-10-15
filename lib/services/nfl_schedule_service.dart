@@ -155,60 +155,87 @@ class NFLScheduleService {
 
   // Enable API methods for testing preseason availability
   Future<Map<String, dynamic>?> getCurrentWeek() async {
-    debugPrint('Testing API: getCurrentWeek');
+    debugPrint('NFLScheduleService: Getting current week from API');
     try {
+      // Use regular season data (seasontype=2) for real 2025 NFL season
       final response = await http.get(
-        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=1')),
+        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=2')),
         headers: _getHeaders(),
       ).timeout(Duration(seconds: 10));
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        debugPrint('API response received for current week');
+        debugPrint('NFLScheduleService: API response received for current week');
+        
+        // Extract current week from API response
+        final events = data['events'] as List?;
+        if (events != null && events.isNotEmpty) {
+          final firstEvent = events.first;
+          final weekInfo = firstEvent['season']?['week'];
+          final weekNumber = weekInfo?['number'] ?? 1;
+          
+          return {
+            'week': 'REG$weekNumber',
+            'weekNumber': weekNumber,
+            'season_type': 2, // regular season
+            'season': 2025,
+            'seasonName': 'REG',
+            'year': 2025,
+            'mode': 'REG'
+          };
+        }
+        
+        // Fallback if no events found
         return {
-          'week': 1,
-          'season_type': 1, // preseason
+          'week': 'REG2',
+          'weekNumber': 2,
+          'season_type': 2,
           'season': 2025,
-          'seasonName': 'PRE'
+          'seasonName': 'REG',
+          'year': 2025,
+          'mode': 'REG'
         };
       } else {
-        debugPrint('API error: ${response.statusCode}');
+        debugPrint('NFLScheduleService: API error: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('API error in getCurrentWeek: $e');
+      debugPrint('NFLScheduleService: API error in getCurrentWeek: $e');
       return null;
     }
   }
   
   Future<List<Map<String, dynamic>>> getScheduleWithFallback(String weekName) async {
-    debugPrint('Testing API: getScheduleWithFallback for $weekName');
+    debugPrint('NFLScheduleService: getScheduleWithFallback for $weekName');
     try {
-      // Extract week number from weekName (e.g., "PRE1" -> 1)
+      // Extract week number from weekName (e.g., "REG1" -> 1, "PRE1" -> 1)
       final weekMatch = RegExp(r'(\d+)').firstMatch(weekName);
       final week = weekMatch != null ? int.parse(weekMatch.group(1)!) : 1;
       
+      // Determine season type based on week name
+      final seasonType = weekName.startsWith('PRE') ? 1 : 2; // 1=preseason, 2=regular
+      
       final response = await http.get(
-        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=1&week=$week')),
+        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=$seasonType&week=$week')),
         headers: _getHeaders(),
       ).timeout(Duration(seconds: 10));
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        debugPrint('API response received for schedule');
+        debugPrint('NFLScheduleService: API response received for schedule');
         return _parseESPNScheduleResponse(data);
       } else {
-        debugPrint('API error: ${response.statusCode}');
+        debugPrint('NFLScheduleService: API error: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      debugPrint('API error in getScheduleWithFallback: $e');
+      debugPrint('NFLScheduleService: API error in getScheduleWithFallback: $e');
       return [];
     }
   }
   
-  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 1}) async {
-    debugPrint('Testing API: getScheduleForWeek week=$week, seasonType=$seasonType');
+  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 2}) async {
+    debugPrint('NFLScheduleService: getScheduleForWeek week=$week, seasonType=$seasonType');
     try {
       final response = await http.get(
         Uri.parse(_getApiUrl('$_espnScheduleUrl?year=$season&seasontype=$seasonType&week=$week')),
@@ -217,14 +244,14 @@ class NFLScheduleService {
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        debugPrint('API response received for specific week');
+        debugPrint('NFLScheduleService: API response received for specific week');
         return _parseESPNScheduleResponse(data);
       } else {
-        debugPrint('API error: ${response.statusCode}');
+        debugPrint('NFLScheduleService: API error: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      debugPrint('API error in getScheduleForWeek: $e');
+      debugPrint('NFLScheduleService: API error in getScheduleForWeek: $e');
       return [];
     }
   }

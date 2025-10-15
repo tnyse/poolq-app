@@ -103,6 +103,7 @@ class _EnhancedLeaderboardState extends State<EnhancedLeaderboard> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔥🔥🔥 ENHANCED LEADERBOARD WIDGET IS BUILDING! 🔥🔥🔥');
     final dataProvider = Provider.of<DataProvider>(context);
     
     return Scaffold(
@@ -232,27 +233,43 @@ class _EnhancedLeaderboardState extends State<EnhancedLeaderboard> {
                                           )
                                         : null,
                                   onTap: () {
+                                    print('EnhancedLeaderboard: User tapped on ${entry['displayName']} (${entry['uid']})');
+                                    print('EnhancedLeaderboard: Deadline passed: $deadlinePassed, Is current user: $isCurrentUser');
+                                    
                                     if (deadlinePassed) {
                                       // Show picks after deadline
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => PickedWidget(
-                                            userId: entry['uid'],
-                                            selectedValue: dataProvider.game?["name"]?.toString().replaceAll("REG", "").replaceAll("PRE", "") ?? "1",
+                                      print('EnhancedLeaderboard: Navigating to PickedWidget for ${entry['uid']}');
+                                      try {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PickedWidget(
+                                              userId: entry['uid'],
+                                              selectedValue: dataProvider.game?["name"]?.toString().replaceAll("REG", "").replaceAll("PRE", "") ?? "1",
+                                            ),
                                           ),
-                                        ),
-                                      );
+                                        );
+                                        print('EnhancedLeaderboard: Successfully navigated to PickedWidget');
+                                      } catch (e) {
+                                        print('EnhancedLeaderboard: ERROR navigating to PickedWidget: $e');
+                                      }
                                     } else if (isCurrentUser) {
                                       // Allow editing own picks before deadline
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const EditPlayWidget(),
-                                        ),
-                                      );
+                                      print('EnhancedLeaderboard: Navigating to EditPlayWidget for current user');
+                                      try {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const EditPlayWidget(),
+                                          ),
+                                        );
+                                        print('EnhancedLeaderboard: Successfully navigated to EditPlayWidget');
+                                      } catch (e) {
+                                        print('EnhancedLeaderboard: ERROR navigating to EditPlayWidget: $e');
+                                      }
                                     } else {
                                       // Show message that deadline hasn't passed
+                                      print('EnhancedLeaderboard: Showing snackbar - deadline not passed');
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text('Picks will be visible after entry deadline'),

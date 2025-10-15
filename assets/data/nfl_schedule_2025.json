@@ -1,1 +1,475 @@
-{"season": 2025, "lastUpdated": "2025-08-12T00:10:12.599471+00:00", "totalGames": 64, "weeks": {"PRE1": [{"id": "game-PRE1-1", "date": "2025-08-07T23:00:00Z", "name": "Indianapolis Colts at Baltimore Ravens", "shortName": "IND @ BAL", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "awayTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "homeScore": 24, "awayScore": 16, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Baltimore Ravens Stadium", "broadcast": ""}, {"id": "game-PRE1-2", "date": "2025-08-07T23:30:00Z", "name": "Cincinnati Bengals at Philadelphia Eagles", "shortName": "CIN @ PHI", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "awayTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "homeScore": 34, "awayScore": 27, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Philadelphia Eagles Stadium", "broadcast": ""}, {"id": "game-PRE1-3", "date": "2025-08-08T02:00:00Z", "name": "Las Vegas Raiders at Seattle Seahawks", "shortName": "LV @ SEA", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "awayTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "homeScore": 23, "awayScore": 23, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Seattle Seahawks Stadium", "broadcast": ""}, {"id": "game-PRE1-4", "date": "2025-08-08T23:00:00Z", "name": "Cleveland Browns at Carolina Panthers", "shortName": "CLE @ CAR", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "awayTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "homeScore": 10, "awayScore": 30, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Carolina Panthers Stadium", "broadcast": ""}, {"id": "game-PRE1-5", "date": "2025-08-08T23:00:00Z", "name": "Detroit Lions at Atlanta Falcons", "shortName": "DET @ ATL", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "awayTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "homeScore": 10, "awayScore": 17, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Atlanta Falcons Stadium", "broadcast": ""}, {"id": "game-PRE1-6", "date": "2025-08-08T23:30:00Z", "name": "Washington Commanders at New England Patriots", "shortName": "WAS @ NE", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "awayTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "homeScore": 48, "awayScore": 18, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "New England Patriots Stadium", "broadcast": ""}, {"id": "game-PRE1-7", "date": "2025-08-09T17:00:00Z", "name": "New York Giants at Buffalo Bills", "shortName": "NYG @ BUF", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "awayTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "homeScore": 25, "awayScore": 34, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Buffalo Bills Stadium", "broadcast": ""}, {"id": "game-PRE1-8", "date": "2025-08-10T00:00:00Z", "name": "Kansas City Chiefs at Arizona Cardinals", "shortName": "KC @ ARI", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "awayTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "homeScore": 20, "awayScore": 17, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Arizona Cardinals Stadium", "broadcast": ""}, {"id": "game-PRE1-9", "date": "2025-08-09T23:00:00Z", "name": "Dallas Cowboys at Los Angeles Rams", "shortName": "DAL @ LAR", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "awayTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "homeScore": 31, "awayScore": 21, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Los Angeles Rams Stadium", "broadcast": ""}, {"id": "game-PRE1-10", "date": "2025-08-09T20:00:00Z", "name": "Houston Texans at Minnesota Vikings", "shortName": "HOU @ MIN", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "awayTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "homeScore": 20, "awayScore": 10, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Minnesota Vikings Stadium", "broadcast": ""}, {"id": "game-PRE1-11", "date": "2025-08-09T23:00:00Z", "name": "New York Jets at Green Bay Packers", "shortName": "NYJ @ GB", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "awayTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "homeScore": 10, "awayScore": 30, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Green Bay Packers Stadium", "broadcast": ""}, {"id": "game-PRE1-12", "date": "2025-08-09T23:00:00Z", "name": "Pittsburgh Steelers at Jacksonville Jaguars", "shortName": "PIT @ JAX", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "awayTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "homeScore": 25, "awayScore": 31, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Jacksonville Jaguars Stadium", "broadcast": ""}, {"id": "game-PRE1-13", "date": "2025-08-09T23:30:00Z", "name": "Tennessee Titans at Tampa Bay Buccaneers", "shortName": "TEN @ TB", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "awayTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "homeScore": 29, "awayScore": 7, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Tampa Bay Buccaneers Stadium", "broadcast": ""}, {"id": "game-PRE1-14", "date": "2025-08-10T00:30:00Z", "name": "Denver Broncos at San Francisco 49ers", "shortName": "DEN @ SF", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "awayTeam": {"id": "7", "name": "Denver Broncos", "abbreviation": "DEN", "logo": "assets/images/teams/DEN.png", "color": "#FB4F14"}, "homeScore": 9, "awayScore": 30, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "San Francisco 49ers Stadium", "broadcast": ""}, {"id": "game-PRE1-15", "date": "2025-08-10T17:00:00Z", "name": "Miami Dolphins at Chicago Bears", "shortName": "MIA @ CHI", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "awayTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "homeScore": 24, "awayScore": 24, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Chicago Bears Stadium", "broadcast": ""}, {"id": "game-PRE1-16", "date": "2025-08-10T23:05:00Z", "name": "New Orleans Saints at Los Angeles Chargers", "shortName": "NO @ LAC", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "awayTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "homeScore": 27, "awayScore": 13, "status": "STATUS_FINAL", "statusDetail": "Final", "completed": true, "venue": "Los Angeles Chargers Stadium", "broadcast": ""}], "PRE2": [{"id": "game-PRE2-1", "date": "2025-08-15T23:00:00Z", "name": "Tennessee Titans at Atlanta Falcons", "shortName": "TEN @ ATL", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "awayTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Atlanta Falcons Stadium", "broadcast": ""}, {"id": "game-PRE2-2", "date": "2025-08-16T02:00:00Z", "name": "Kansas City Chiefs at Seattle Seahawks", "shortName": "KC @ SEA", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "awayTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Seattle Seahawks Stadium", "broadcast": ""}, {"id": "game-PRE2-3", "date": "2025-08-16T17:00:00Z", "name": "Carolina Panthers at Houston Texans", "shortName": "CAR @ HOU", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "awayTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Houston Texans Stadium", "broadcast": ""}, {"id": "game-PRE2-4", "date": "2025-08-16T17:00:00Z", "name": "Green Bay Packers at Indianapolis Colts", "shortName": "GB @ IND", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "awayTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Indianapolis Colts Stadium", "broadcast": ""}, {"id": "game-PRE2-5", "date": "2025-08-16T17:00:00Z", "name": "Miami Dolphins at Detroit Lions", "shortName": "MIA @ DET", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "awayTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Detroit Lions Stadium", "broadcast": ""}, {"id": "game-PRE2-6", "date": "2025-08-16T17:00:00Z", "name": "New England Patriots at Minnesota Vikings", "shortName": "NE @ MIN", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "awayTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Minnesota Vikings Stadium", "broadcast": ""}, {"id": "game-PRE2-7", "date": "2025-08-16T17:00:00Z", "name": "Cleveland Browns at Philadelphia Eagles", "shortName": "CLE @ PHI", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "awayTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Philadelphia Eagles Stadium", "broadcast": ""}, {"id": "game-PRE2-8", "date": "2025-08-16T23:00:00Z", "name": "Baltimore Ravens at Dallas Cowboys", "shortName": "BAL @ DAL", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "awayTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Dallas Cowboys Stadium", "broadcast": ""}, {"id": "game-PRE2-9", "date": "2025-08-16T23:00:00Z", "name": "New York Jets at New York Giants", "shortName": "NYJ @ NYG", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "awayTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Giants Stadium", "broadcast": ""}, {"id": "game-PRE2-10", "date": "2025-08-16T23:00:00Z", "name": "Tampa Bay Buccaneers at Pittsburgh Steelers", "shortName": "TB @ PIT", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "awayTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Pittsburgh Steelers Stadium", "broadcast": ""}, {"id": "game-PRE2-11", "date": "2025-08-17T01:30:00Z", "name": "Arizona Cardinals at Denver Broncos", "shortName": "ARI @ DEN", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "7", "name": "Denver Broncos", "abbreviation": "DEN", "logo": "assets/images/teams/DEN.png", "color": "#FB4F14"}, "awayTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Denver Broncos Stadium", "broadcast": ""}, {"id": "game-PRE2-12", "date": "2025-08-16T20:00:00Z", "name": "San Francisco 49ers at Las Vegas Raiders", "shortName": "SF @ LV", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "awayTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Las Vegas Raiders Stadium", "broadcast": ""}, {"id": "game-PRE2-13", "date": "2025-08-17T02:00:00Z", "name": "Los Angeles Chargers at Los Angeles Rams", "shortName": "LAC @ LAR", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "awayTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Los Angeles Rams Stadium", "broadcast": ""}, {"id": "game-PRE2-14", "date": "2025-08-17T17:00:00Z", "name": "Jacksonville Jaguars at New Orleans Saints", "shortName": "JAX @ NO", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "awayTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New Orleans Saints Stadium", "broadcast": ""}, {"id": "game-PRE2-15", "date": "2025-08-17T00:00:00Z", "name": "Buffalo Bills at Chicago Bears", "shortName": "BUF @ CHI", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "awayTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Chicago Bears Stadium", "broadcast": ""}, {"id": "game-PRE2-16", "date": "2025-08-18T00:00:00Z", "name": "Cincinnati Bengals at Washington Commanders", "shortName": "CIN @ WAS", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "awayTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Washington Commanders Stadium", "broadcast": ""}], "PRE3": [{"id": "game-PRE3-1", "date": "2025-08-21T00:00:00Z", "name": "New England Patriots at New York Giants", "shortName": "NE @ NYG", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "awayTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Giants Stadium", "broadcast": ""}, {"id": "game-PRE3-2", "date": "2025-08-21T23:00:00Z", "name": "Pittsburgh Steelers at Carolina Panthers", "shortName": "PIT @ CAR", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "awayTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Carolina Panthers Stadium", "broadcast": ""}, {"id": "game-PRE3-3", "date": "2025-08-22T00:00:00Z", "name": "Atlanta Falcons at Dallas Cowboys", "shortName": "ATL @ DAL", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "awayTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Dallas Cowboys Stadium", "broadcast": ""}, {"id": "game-PRE3-4", "date": "2025-08-22T00:20:00Z", "name": "Chicago Bears at Kansas City Chiefs", "shortName": "CHI @ KC", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "awayTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Kansas City Chiefs Stadium", "broadcast": ""}, {"id": "game-PRE3-5", "date": "2025-08-22T23:30:00Z", "name": "Philadelphia Eagles at New York Jets", "shortName": "PHI @ NYJ", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "awayTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Jets Stadium", "broadcast": ""}, {"id": "game-PRE3-6", "date": "2025-08-22T00:00:00Z", "name": "Minnesota Vikings at Tennessee Titans", "shortName": "MIN @ TEN", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "awayTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tennessee Titans Stadium", "broadcast": ""}, {"id": "game-PRE3-7", "date": "2025-08-23T16:00:00Z", "name": "Washington Commanders at Baltimore Ravens", "shortName": "WAS @ BAL", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "awayTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Baltimore Ravens Stadium", "broadcast": ""}, {"id": "game-PRE3-8", "date": "2025-08-23T17:00:00Z", "name": "Indianapolis Colts at Cincinnati Bengals", "shortName": "IND @ CIN", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "awayTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cincinnati Bengals Stadium", "broadcast": ""}, {"id": "game-PRE3-9", "date": "2025-08-23T17:00:00Z", "name": "Houston Texans at Detroit Lions", "shortName": "HOU @ DET", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "awayTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Detroit Lions Stadium", "broadcast": ""}, {"id": "game-PRE3-10", "date": "2025-08-23T17:00:00Z", "name": "Los Angeles Rams at Cleveland Browns", "shortName": "LAR @ CLE", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "awayTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cleveland Browns Stadium", "broadcast": ""}, {"id": "game-PRE3-11", "date": "2025-08-23T17:00:00Z", "name": "Denver Broncos at New Orleans Saints", "shortName": "DEN @ NO", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "awayTeam": {"id": "7", "name": "Denver Broncos", "abbreviation": "DEN", "logo": "assets/images/teams/DEN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New Orleans Saints Stadium", "broadcast": ""}, {"id": "game-PRE3-12", "date": "2025-08-23T20:00:00Z", "name": "Seattle Seahawks at Green Bay Packers", "shortName": "SEA @ GB", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "awayTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Green Bay Packers Stadium", "broadcast": ""}, {"id": "game-PRE3-13", "date": "2025-08-23T23:30:00Z", "name": "Buffalo Bills at Tampa Bay Buccaneers", "shortName": "BUF @ TB", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "awayTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tampa Bay Buccaneers Stadium", "broadcast": ""}, {"id": "game-PRE3-14", "date": "2025-08-23T23:00:00Z", "name": "Miami Dolphins at Jacksonville Jaguars", "shortName": "MIA @ JAX", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "awayTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Jacksonville Jaguars Stadium", "broadcast": ""}, {"id": "game-PRE3-15", "date": "2025-08-24T00:30:00Z", "name": "Los Angeles Chargers at San Francisco 49ers", "shortName": "LAC @ SF", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "awayTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "San Francisco 49ers Stadium", "broadcast": ""}, {"id": "game-PRE3-16", "date": "2025-08-24T02:00:00Z", "name": "Las Vegas Raiders at Arizona Cardinals", "shortName": "LV @ ARI", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "awayTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Arizona Cardinals Stadium", "broadcast": ""}], "REG1": [{"id": "game-REG1-1", "date": "2025-09-04T20:20:00Z", "name": "Kansas City Chiefs at Baltimore Ravens", "shortName": "KC @ BAL", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "awayTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Baltimore Ravens Stadium", "broadcast": ""}, {"id": "game-REG1-2", "date": "2025-09-07T17:00:00Z", "name": "Los Angeles Rams at Detroit Lions", "shortName": "LAR @ DET", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "awayTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Detroit Lions Stadium", "broadcast": ""}, {"id": "game-REG1-3", "date": "2025-09-07T17:00:00Z", "name": "Atlanta Falcons at Pittsburgh Steelers", "shortName": "ATL @ PIT", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "awayTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Pittsburgh Steelers Stadium", "broadcast": ""}, {"id": "game-REG1-4", "date": "2025-09-07T17:00:00Z", "name": "Arizona Cardinals at Buffalo Bills", "shortName": "ARI @ BUF", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "awayTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Buffalo Bills Stadium", "broadcast": ""}, {"id": "game-REG1-5", "date": "2025-09-07T17:00:00Z", "name": "Cincinnati Bengals at Cleveland Browns", "shortName": "CIN @ CLE", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "awayTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cleveland Browns Stadium", "broadcast": ""}, {"id": "game-REG1-6", "date": "2025-09-07T17:00:00Z", "name": "Houston Texans at Indianapolis Colts", "shortName": "HOU @ IND", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "awayTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Indianapolis Colts Stadium", "broadcast": ""}, {"id": "game-REG1-7", "date": "2025-09-07T17:00:00Z", "name": "Jacksonville Jaguars at Miami Dolphins", "shortName": "JAX @ MIA", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "awayTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Miami Dolphins Stadium", "broadcast": ""}, {"id": "game-REG1-8", "date": "2025-09-07T17:00:00Z", "name": "Chicago Bears at Tennessee Titans", "shortName": "CHI @ TEN", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "awayTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tennessee Titans Stadium", "broadcast": ""}, {"id": "game-REG1-9", "date": "2025-09-07T17:00:00Z", "name": "New England Patriots at Cincinnati Bengals", "shortName": "NE @ CIN", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "awayTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cincinnati Bengals Stadium", "broadcast": ""}, {"id": "game-REG1-10", "date": "2025-09-07T17:00:00Z", "name": "Carolina Panthers at New Orleans Saints", "shortName": "CAR @ NO", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "awayTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New Orleans Saints Stadium", "broadcast": ""}, {"id": "game-REG1-11", "date": "2025-09-07T17:00:00Z", "name": "Minnesota Vikings at New York Giants", "shortName": "MIN @ NYG", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "awayTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Giants Stadium", "broadcast": ""}, {"id": "game-REG1-12", "date": "2025-09-07T20:05:00Z", "name": "Las Vegas Raiders at Los Angeles Chargers", "shortName": "LV @ LAC", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "awayTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Los Angeles Chargers Stadium", "broadcast": ""}, {"id": "game-REG1-13", "date": "2025-09-07T20:25:00Z", "name": "Washington Commanders at Tampa Bay Buccaneers", "shortName": "WAS @ TB", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "awayTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tampa Bay Buccaneers Stadium", "broadcast": ""}, {"id": "game-REG1-14", "date": "2025-09-08T20:15:00Z", "name": "Dallas Cowboys at New York Jets", "shortName": "DAL @ NYJ", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "awayTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Jets Stadium", "broadcast": ""}, {"id": "game-REG1-15", "date": "2025-09-08T20:20:00Z", "name": "San Francisco 49ers at Seattle Seahawks", "shortName": "SF @ SEA", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "awayTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Seattle Seahawks Stadium", "broadcast": ""}, {"id": "game-REG1-16", "date": "2025-09-08T20:25:00Z", "name": "Philadelphia Eagles at Green Bay Packers", "shortName": "PHI @ GB", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "awayTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Green Bay Packers Stadium", "broadcast": ""}]}, "allGames": [{"id": "game-PRE1-1", "date": "2025-08-07T23:00:00Z", "name": "Indianapolis Colts at Baltimore Ravens", "shortName": "IND @ BAL", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "awayTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Baltimore Ravens Stadium", "broadcast": ""}, {"id": "game-PRE1-2", "date": "2025-08-07T23:30:00Z", "name": "Cincinnati Bengals at Philadelphia Eagles", "shortName": "CIN @ PHI", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "awayTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Philadelphia Eagles Stadium", "broadcast": ""}, {"id": "game-PRE1-3", "date": "2025-08-08T02:00:00Z", "name": "Las Vegas Raiders at Seattle Seahawks", "shortName": "LV @ SEA", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "awayTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Seattle Seahawks Stadium", "broadcast": ""}, {"id": "game-PRE1-4", "date": "2025-08-08T23:00:00Z", "name": "Cleveland Browns at Carolina Panthers", "shortName": "CLE @ CAR", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "awayTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Carolina Panthers Stadium", "broadcast": ""}, {"id": "game-PRE1-5", "date": "2025-08-08T23:00:00Z", "name": "Detroit Lions at Atlanta Falcons", "shortName": "DET @ ATL", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "awayTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Atlanta Falcons Stadium", "broadcast": ""}, {"id": "game-PRE1-6", "date": "2025-08-08T23:30:00Z", "name": "Washington Commanders at New England Patriots", "shortName": "WAS @ NE", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "awayTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New England Patriots Stadium", "broadcast": ""}, {"id": "game-PRE1-7", "date": "2025-08-09T17:00:00Z", "name": "New York Giants at Buffalo Bills", "shortName": "NYG @ BUF", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "awayTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Buffalo Bills Stadium", "broadcast": ""}, {"id": "game-PRE1-8", "date": "2025-08-10T00:00:00Z", "name": "Kansas City Chiefs at Arizona Cardinals", "shortName": "KC @ ARI", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "awayTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Arizona Cardinals Stadium", "broadcast": ""}, {"id": "game-PRE1-9", "date": "2025-08-09T23:00:00Z", "name": "Dallas Cowboys at Los Angeles Rams", "shortName": "DAL @ LAR", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "awayTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Los Angeles Rams Stadium", "broadcast": ""}, {"id": "game-PRE1-10", "date": "2025-08-09T20:00:00Z", "name": "Houston Texans at Minnesota Vikings", "shortName": "HOU @ MIN", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "awayTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Minnesota Vikings Stadium", "broadcast": ""}, {"id": "game-PRE1-11", "date": "2025-08-09T23:00:00Z", "name": "New York Jets at Green Bay Packers", "shortName": "NYJ @ GB", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "awayTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Green Bay Packers Stadium", "broadcast": ""}, {"id": "game-PRE1-12", "date": "2025-08-09T23:00:00Z", "name": "Pittsburgh Steelers at Jacksonville Jaguars", "shortName": "PIT @ JAX", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "awayTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Jacksonville Jaguars Stadium", "broadcast": ""}, {"id": "game-PRE1-13", "date": "2025-08-09T23:30:00Z", "name": "Tennessee Titans at Tampa Bay Buccaneers", "shortName": "TEN @ TB", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "awayTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tampa Bay Buccaneers Stadium", "broadcast": ""}, {"id": "game-PRE1-14", "date": "2025-08-10T00:30:00Z", "name": "Denver Broncos at San Francisco 49ers", "shortName": "DEN @ SF", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "awayTeam": {"id": "7", "name": "Denver Broncos", "abbreviation": "DEN", "logo": "assets/images/teams/DEN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "San Francisco 49ers Stadium", "broadcast": ""}, {"id": "game-PRE1-15", "date": "2025-08-10T17:00:00Z", "name": "Miami Dolphins at Chicago Bears", "shortName": "MIA @ CHI", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "awayTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Chicago Bears Stadium", "broadcast": ""}, {"id": "game-PRE1-16", "date": "2025-08-10T23:05:00Z", "name": "New Orleans Saints at Los Angeles Chargers", "shortName": "NO @ LAC", "week": "PRE1", "mode": "PRE", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "awayTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Los Angeles Chargers Stadium", "broadcast": ""}, {"id": "game-PRE2-1", "date": "2025-08-15T23:00:00Z", "name": "Tennessee Titans at Atlanta Falcons", "shortName": "TEN @ ATL", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "awayTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Atlanta Falcons Stadium", "broadcast": ""}, {"id": "game-PRE2-2", "date": "2025-08-16T02:00:00Z", "name": "Kansas City Chiefs at Seattle Seahawks", "shortName": "KC @ SEA", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "awayTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Seattle Seahawks Stadium", "broadcast": ""}, {"id": "game-PRE2-3", "date": "2025-08-16T17:00:00Z", "name": "Carolina Panthers at Houston Texans", "shortName": "CAR @ HOU", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "awayTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Houston Texans Stadium", "broadcast": ""}, {"id": "game-PRE2-4", "date": "2025-08-16T17:00:00Z", "name": "Green Bay Packers at Indianapolis Colts", "shortName": "GB @ IND", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "awayTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Indianapolis Colts Stadium", "broadcast": ""}, {"id": "game-PRE2-5", "date": "2025-08-16T17:00:00Z", "name": "Miami Dolphins at Detroit Lions", "shortName": "MIA @ DET", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "awayTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Detroit Lions Stadium", "broadcast": ""}, {"id": "game-PRE2-6", "date": "2025-08-16T17:00:00Z", "name": "New England Patriots at Minnesota Vikings", "shortName": "NE @ MIN", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "awayTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Minnesota Vikings Stadium", "broadcast": ""}, {"id": "game-PRE2-7", "date": "2025-08-16T17:00:00Z", "name": "Cleveland Browns at Philadelphia Eagles", "shortName": "CLE @ PHI", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "awayTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Philadelphia Eagles Stadium", "broadcast": ""}, {"id": "game-PRE2-8", "date": "2025-08-16T23:00:00Z", "name": "Baltimore Ravens at Dallas Cowboys", "shortName": "BAL @ DAL", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "awayTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Dallas Cowboys Stadium", "broadcast": ""}, {"id": "game-PRE2-9", "date": "2025-08-16T23:00:00Z", "name": "New York Jets at New York Giants", "shortName": "NYJ @ NYG", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "awayTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Giants Stadium", "broadcast": ""}, {"id": "game-PRE2-10", "date": "2025-08-16T23:00:00Z", "name": "Tampa Bay Buccaneers at Pittsburgh Steelers", "shortName": "TB @ PIT", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "awayTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Pittsburgh Steelers Stadium", "broadcast": ""}, {"id": "game-PRE2-11", "date": "2025-08-17T01:30:00Z", "name": "Arizona Cardinals at Denver Broncos", "shortName": "ARI @ DEN", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "7", "name": "Denver Broncos", "abbreviation": "DEN", "logo": "assets/images/teams/DEN.png", "color": "#FB4F14"}, "awayTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Denver Broncos Stadium", "broadcast": ""}, {"id": "game-PRE2-12", "date": "2025-08-16T20:00:00Z", "name": "San Francisco 49ers at Las Vegas Raiders", "shortName": "SF @ LV", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "awayTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Las Vegas Raiders Stadium", "broadcast": ""}, {"id": "game-PRE2-13", "date": "2025-08-17T02:00:00Z", "name": "Los Angeles Chargers at Los Angeles Rams", "shortName": "LAC @ LAR", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "awayTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Los Angeles Rams Stadium", "broadcast": ""}, {"id": "game-PRE2-14", "date": "2025-08-17T17:00:00Z", "name": "Jacksonville Jaguars at New Orleans Saints", "shortName": "JAX @ NO", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "awayTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New Orleans Saints Stadium", "broadcast": ""}, {"id": "game-PRE2-15", "date": "2025-08-17T00:00:00Z", "name": "Buffalo Bills at Chicago Bears", "shortName": "BUF @ CHI", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "awayTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Chicago Bears Stadium", "broadcast": ""}, {"id": "game-PRE2-16", "date": "2025-08-18T00:00:00Z", "name": "Cincinnati Bengals at Washington Commanders", "shortName": "CIN @ WAS", "week": "PRE2", "mode": "PRE", "weekNumber": 2, "year": 2025, "homeTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "awayTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Washington Commanders Stadium", "broadcast": ""}, {"id": "game-PRE3-1", "date": "2025-08-21T00:00:00Z", "name": "New England Patriots at New York Giants", "shortName": "NE @ NYG", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "awayTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Giants Stadium", "broadcast": ""}, {"id": "game-PRE3-2", "date": "2025-08-21T23:00:00Z", "name": "Pittsburgh Steelers at Carolina Panthers", "shortName": "PIT @ CAR", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "awayTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Carolina Panthers Stadium", "broadcast": ""}, {"id": "game-PRE3-3", "date": "2025-08-22T00:00:00Z", "name": "Atlanta Falcons at Dallas Cowboys", "shortName": "ATL @ DAL", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "awayTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Dallas Cowboys Stadium", "broadcast": ""}, {"id": "game-PRE3-4", "date": "2025-08-22T00:20:00Z", "name": "Chicago Bears at Kansas City Chiefs", "shortName": "CHI @ KC", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "awayTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Kansas City Chiefs Stadium", "broadcast": ""}, {"id": "game-PRE3-5", "date": "2025-08-22T23:30:00Z", "name": "Philadelphia Eagles at New York Jets", "shortName": "PHI @ NYJ", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "awayTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Jets Stadium", "broadcast": ""}, {"id": "game-PRE3-6", "date": "2025-08-22T00:00:00Z", "name": "Minnesota Vikings at Tennessee Titans", "shortName": "MIN @ TEN", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "awayTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tennessee Titans Stadium", "broadcast": ""}, {"id": "game-PRE3-7", "date": "2025-08-23T16:00:00Z", "name": "Washington Commanders at Baltimore Ravens", "shortName": "WAS @ BAL", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "awayTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Baltimore Ravens Stadium", "broadcast": ""}, {"id": "game-PRE3-8", "date": "2025-08-23T17:00:00Z", "name": "Indianapolis Colts at Cincinnati Bengals", "shortName": "IND @ CIN", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "awayTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cincinnati Bengals Stadium", "broadcast": ""}, {"id": "game-PRE3-9", "date": "2025-08-23T17:00:00Z", "name": "Houston Texans at Detroit Lions", "shortName": "HOU @ DET", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "awayTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Detroit Lions Stadium", "broadcast": ""}, {"id": "game-PRE3-10", "date": "2025-08-23T17:00:00Z", "name": "Los Angeles Rams at Cleveland Browns", "shortName": "LAR @ CLE", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "awayTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cleveland Browns Stadium", "broadcast": ""}, {"id": "game-PRE3-11", "date": "2025-08-23T17:00:00Z", "name": "Denver Broncos at New Orleans Saints", "shortName": "DEN @ NO", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "awayTeam": {"id": "7", "name": "Denver Broncos", "abbreviation": "DEN", "logo": "assets/images/teams/DEN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New Orleans Saints Stadium", "broadcast": ""}, {"id": "game-PRE3-12", "date": "2025-08-23T20:00:00Z", "name": "Seattle Seahawks at Green Bay Packers", "shortName": "SEA @ GB", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "awayTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Green Bay Packers Stadium", "broadcast": ""}, {"id": "game-PRE3-13", "date": "2025-08-23T23:30:00Z", "name": "Buffalo Bills at Tampa Bay Buccaneers", "shortName": "BUF @ TB", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "awayTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tampa Bay Buccaneers Stadium", "broadcast": ""}, {"id": "game-PRE3-14", "date": "2025-08-23T23:00:00Z", "name": "Miami Dolphins at Jacksonville Jaguars", "shortName": "MIA @ JAX", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "awayTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Jacksonville Jaguars Stadium", "broadcast": ""}, {"id": "game-PRE3-15", "date": "2025-08-24T00:30:00Z", "name": "Los Angeles Chargers at San Francisco 49ers", "shortName": "LAC @ SF", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "awayTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "San Francisco 49ers Stadium", "broadcast": ""}, {"id": "game-PRE3-16", "date": "2025-08-24T02:00:00Z", "name": "Las Vegas Raiders at Arizona Cardinals", "shortName": "LV @ ARI", "week": "PRE3", "mode": "PRE", "weekNumber": 3, "year": 2025, "homeTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "awayTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Arizona Cardinals Stadium", "broadcast": ""}, {"id": "game-REG1-1", "date": "2025-09-04T20:20:00Z", "name": "Kansas City Chiefs at Baltimore Ravens", "shortName": "KC @ BAL", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "33", "name": "Baltimore Ravens", "abbreviation": "BAL", "logo": "assets/images/teams/BAL.png", "color": "#241773"}, "awayTeam": {"id": "12", "name": "Kansas City Chiefs", "abbreviation": "KC", "logo": "assets/images/teams/KC.png", "color": "#E31837"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Baltimore Ravens Stadium", "broadcast": ""}, {"id": "game-REG1-2", "date": "2025-09-07T17:00:00Z", "name": "Los Angeles Rams at Detroit Lions", "shortName": "LAR @ DET", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "8", "name": "Detroit Lions", "abbreviation": "DET", "logo": "assets/images/teams/DET.png", "color": "#0076B6"}, "awayTeam": {"id": "14", "name": "Los Angeles Rams", "abbreviation": "LAR", "logo": "assets/images/teams/LAR.png", "color": "#003594"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Detroit Lions Stadium", "broadcast": ""}, {"id": "game-REG1-3", "date": "2025-09-07T17:00:00Z", "name": "Atlanta Falcons at Pittsburgh Steelers", "shortName": "ATL @ PIT", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "23", "name": "Pittsburgh Steelers", "abbreviation": "PIT", "logo": "assets/images/teams/PIT.png", "color": "#FFB612"}, "awayTeam": {"id": "1", "name": "Atlanta Falcons", "abbreviation": "ATL", "logo": "assets/images/teams/ATL.png", "color": "#A71930"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Pittsburgh Steelers Stadium", "broadcast": ""}, {"id": "game-REG1-4", "date": "2025-09-07T17:00:00Z", "name": "Arizona Cardinals at Buffalo Bills", "shortName": "ARI @ BUF", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "2", "name": "Buffalo Bills", "abbreviation": "BUF", "logo": "assets/images/teams/BUF.png", "color": "#00338D"}, "awayTeam": {"id": "22", "name": "Arizona Cardinals", "abbreviation": "ARI", "logo": "assets/images/teams/ARI.png", "color": "#97233F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Buffalo Bills Stadium", "broadcast": ""}, {"id": "game-REG1-5", "date": "2025-09-07T17:00:00Z", "name": "Cincinnati Bengals at Cleveland Browns", "shortName": "CIN @ CLE", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "5", "name": "Cleveland Browns", "abbreviation": "CLE", "logo": "assets/images/teams/CLE.png", "color": "#311D00"}, "awayTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cleveland Browns Stadium", "broadcast": ""}, {"id": "game-REG1-6", "date": "2025-09-07T17:00:00Z", "name": "Houston Texans at Indianapolis Colts", "shortName": "HOU @ IND", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "11", "name": "Indianapolis Colts", "abbreviation": "IND", "logo": "assets/images/teams/IND.png", "color": "#002C5F"}, "awayTeam": {"id": "34", "name": "Houston Texans", "abbreviation": "HOU", "logo": "assets/images/teams/HOU.png", "color": "#03202F"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Indianapolis Colts Stadium", "broadcast": ""}, {"id": "game-REG1-7", "date": "2025-09-07T17:00:00Z", "name": "Jacksonville Jaguars at Miami Dolphins", "shortName": "JAX @ MIA", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "15", "name": "Miami Dolphins", "abbreviation": "MIA", "logo": "assets/images/teams/MIA.png", "color": "#008E97"}, "awayTeam": {"id": "30", "name": "Jacksonville Jaguars", "abbreviation": "JAX", "logo": "assets/images/teams/JAX.png", "color": "#006778"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Miami Dolphins Stadium", "broadcast": ""}, {"id": "game-REG1-8", "date": "2025-09-07T17:00:00Z", "name": "Chicago Bears at Tennessee Titans", "shortName": "CHI @ TEN", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "10", "name": "Tennessee Titans", "abbreviation": "TEN", "logo": "assets/images/teams/TEN.png", "color": "#0C2340"}, "awayTeam": {"id": "3", "name": "Chicago Bears", "abbreviation": "CHI", "logo": "assets/images/teams/CHI.png", "color": "#0B162A"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tennessee Titans Stadium", "broadcast": ""}, {"id": "game-REG1-9", "date": "2025-09-07T17:00:00Z", "name": "New England Patriots at Cincinnati Bengals", "shortName": "NE @ CIN", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "4", "name": "Cincinnati Bengals", "abbreviation": "CIN", "logo": "assets/images/teams/CIN.png", "color": "#FB4F14"}, "awayTeam": {"id": "17", "name": "New England Patriots", "abbreviation": "NE", "logo": "assets/images/teams/NE.png", "color": "#002244"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Cincinnati Bengals Stadium", "broadcast": ""}, {"id": "game-REG1-10", "date": "2025-09-07T17:00:00Z", "name": "Carolina Panthers at New Orleans Saints", "shortName": "CAR @ NO", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "18", "name": "New Orleans Saints", "abbreviation": "NO", "logo": "assets/images/teams/NO.png", "color": "#D3BC8D"}, "awayTeam": {"id": "29", "name": "Carolina Panthers", "abbreviation": "CAR", "logo": "assets/images/teams/CAR.png", "color": "#0085CA"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New Orleans Saints Stadium", "broadcast": ""}, {"id": "game-REG1-11", "date": "2025-09-07T17:00:00Z", "name": "Minnesota Vikings at New York Giants", "shortName": "MIN @ NYG", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "19", "name": "New York Giants", "abbreviation": "NYG", "logo": "assets/images/teams/NYG.png", "color": "#0B2265"}, "awayTeam": {"id": "16", "name": "Minnesota Vikings", "abbreviation": "MIN", "logo": "assets/images/teams/MIN.png", "color": "#4F2683"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Giants Stadium", "broadcast": ""}, {"id": "game-REG1-12", "date": "2025-09-07T20:05:00Z", "name": "Las Vegas Raiders at Los Angeles Chargers", "shortName": "LV @ LAC", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "24", "name": "Los Angeles Chargers", "abbreviation": "LAC", "logo": "assets/images/teams/LAC.png", "color": "#0080C6"}, "awayTeam": {"id": "13", "name": "Las Vegas Raiders", "abbreviation": "LV", "logo": "assets/images/teams/LV.png", "color": "#000000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Los Angeles Chargers Stadium", "broadcast": ""}, {"id": "game-REG1-13", "date": "2025-09-07T20:25:00Z", "name": "Washington Commanders at Tampa Bay Buccaneers", "shortName": "WAS @ TB", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "27", "name": "Tampa Bay Buccaneers", "abbreviation": "TB", "logo": "assets/images/teams/TB.png", "color": "#D50A0A"}, "awayTeam": {"id": "28", "name": "Washington Commanders", "abbreviation": "WAS", "logo": "assets/images/teams/WAS.png", "color": "#5A1414"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Tampa Bay Buccaneers Stadium", "broadcast": ""}, {"id": "game-REG1-14", "date": "2025-09-08T20:15:00Z", "name": "Dallas Cowboys at New York Jets", "shortName": "DAL @ NYJ", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "20", "name": "New York Jets", "abbreviation": "NYJ", "logo": "assets/images/teams/NYJ.png", "color": "#125740"}, "awayTeam": {"id": "6", "name": "Dallas Cowboys", "abbreviation": "DAL", "logo": "assets/images/teams/DAL.png", "color": "#041E42"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "New York Jets Stadium", "broadcast": ""}, {"id": "game-REG1-15", "date": "2025-09-08T20:20:00Z", "name": "San Francisco 49ers at Seattle Seahawks", "shortName": "SF @ SEA", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "26", "name": "Seattle Seahawks", "abbreviation": "SEA", "logo": "assets/images/teams/SEA.png", "color": "#002244"}, "awayTeam": {"id": "25", "name": "San Francisco 49ers", "abbreviation": "SF", "logo": "assets/images/teams/SF.png", "color": "#AA0000"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Seattle Seahawks Stadium", "broadcast": ""}, {"id": "game-REG1-16", "date": "2025-09-08T20:25:00Z", "name": "Philadelphia Eagles at Green Bay Packers", "shortName": "PHI @ GB", "week": "REG1", "mode": "REG", "weekNumber": 1, "year": 2025, "homeTeam": {"id": "9", "name": "Green Bay Packers", "abbreviation": "GB", "logo": "assets/images/teams/GB.png", "color": "#203731"}, "awayTeam": {"id": "21", "name": "Philadelphia Eagles", "abbreviation": "PHI", "logo": "assets/images/teams/PHI.png", "color": "#004C54"}, "homeScore": null, "awayScore": null, "status": "scheduled", "statusDetail": "Scheduled", "completed": false, "venue": "Green Bay Packers Stadium", "broadcast": ""}]}
+{
+  "season": 2025,
+  "lastUpdated": "2025-10-14T00:00:00.000Z",
+  "totalGames": 272,
+  "currentWeek": "REG1",
+  "weeks": {
+    "REG1": [
+      {
+        "id": "game-REG1-1",
+        "date": "2025-09-05T00:20:00Z",
+        "name": "Dallas Cowboys at Philadelphia Eagles",
+        "shortName": "DAL @ PHI",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "21",
+          "name": "Philadelphia Eagles",
+          "abbreviation": "PHI",
+          "logo": "assets/images/teams/PHI.png",
+          "color": "#004C54"
+        },
+        "awayTeam": {
+          "id": "6",
+          "name": "Dallas Cowboys",
+          "abbreviation": "DAL",
+          "logo": "assets/images/teams/DAL.png",
+          "color": "#041E42"
+        },
+        "homeScore": 24,
+        "awayScore": 20,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Lincoln Financial Field",
+        "broadcast": "TNF"
+      },
+      {
+        "id": "game-REG1-2",
+        "date": "2025-09-06T00:00:00Z",
+        "name": "Kansas City Chiefs at Los Angeles Chargers",
+        "shortName": "KC @ LAC",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "24",
+          "name": "Los Angeles Chargers",
+          "abbreviation": "LAC",
+          "logo": "assets/images/teams/LAC.png",
+          "color": "#0080C6"
+        },
+        "awayTeam": {
+          "id": "12",
+          "name": "Kansas City Chiefs",
+          "abbreviation": "KC",
+          "logo": "assets/images/teams/KC.png",
+          "color": "#E31837"
+        },
+        "homeScore": 27,
+        "awayScore": 21,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "SoFi Stadium",
+        "broadcast": "FRI"
+      },
+      {
+        "id": "game-REG1-3",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Tampa Bay Buccaneers at Atlanta Falcons",
+        "shortName": "TB @ ATL",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "1",
+          "name": "Atlanta Falcons",
+          "abbreviation": "ATL",
+          "logo": "assets/images/teams/ATL.png",
+          "color": "#A71930"
+        },
+        "awayTeam": {
+          "id": "27",
+          "name": "Tampa Bay Buccaneers",
+          "abbreviation": "TB",
+          "logo": "assets/images/teams/TB.png",
+          "color": "#D50A0A"
+        },
+        "homeScore": 20,
+        "awayScore": 23,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Mercedes-Benz Stadium",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-4",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Pittsburgh Steelers at New York Jets",
+        "shortName": "PIT @ NYJ",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "20",
+          "name": "New York Jets",
+          "abbreviation": "NYJ",
+          "logo": "assets/images/teams/NYJ.png",
+          "color": "#125740"
+        },
+        "awayTeam": {
+          "id": "23",
+          "name": "Pittsburgh Steelers",
+          "abbreviation": "PIT",
+          "logo": "assets/images/teams/PIT.png",
+          "color": "#FFB612"
+        },
+        "homeScore": 32,
+        "awayScore": 34,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "MetLife Stadium",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-5",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Miami Dolphins at Indianapolis Colts",
+        "shortName": "MIA @ IND",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "11",
+          "name": "Indianapolis Colts",
+          "abbreviation": "IND",
+          "logo": "assets/images/teams/IND.png",
+          "color": "#002C5F"
+        },
+        "awayTeam": {
+          "id": "15",
+          "name": "Miami Dolphins",
+          "abbreviation": "MIA",
+          "logo": "assets/images/teams/MIA.png",
+          "color": "#008E97"
+        },
+        "homeScore": 33,
+        "awayScore": 8,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Lucas Oil Stadium",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-6",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Carolina Panthers at Jacksonville Jaguars",
+        "shortName": "CAR @ JAX",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "30",
+          "name": "Jacksonville Jaguars",
+          "abbreviation": "JAX",
+          "logo": "assets/images/teams/JAX.png",
+          "color": "#006778"
+        },
+        "awayTeam": {
+          "id": "29",
+          "name": "Carolina Panthers",
+          "abbreviation": "CAR",
+          "logo": "assets/images/teams/CAR.png",
+          "color": "#0085CA"
+        },
+        "homeScore": 26,
+        "awayScore": 10,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "TIAA Bank Field",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-7",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "New York Giants at Washington Commanders",
+        "shortName": "NYG @ WAS",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "28",
+          "name": "Washington Commanders",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
+          "color": "#5A1414"
+        },
+        "awayTeam": {
+          "id": "19",
+          "name": "New York Giants",
+          "abbreviation": "NYG",
+          "logo": "assets/images/teams/NYG.png",
+          "color": "#0B2265"
+        },
+        "homeScore": 21,
+        "awayScore": 6,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "FedExField",
+        "broadcast": "FOX"
+      },
+      {
+        "id": "game-REG1-8",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Arizona Cardinals at New Orleans Saints",
+        "shortName": "ARI @ NO",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "18",
+          "name": "New Orleans Saints",
+          "abbreviation": "NO",
+          "logo": "assets/images/teams/NO.png",
+          "color": "#D3BC8D"
+        },
+        "awayTeam": {
+          "id": "22",
+          "name": "Arizona Cardinals",
+          "abbreviation": "ARI",
+          "logo": "assets/images/teams/ARI.png",
+          "color": "#97233F"
+        },
+        "homeScore": 13,
+        "awayScore": 20,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Caesars Superdome",
+        "broadcast": "FOX"
+      },
+      {
+        "id": "game-REG1-9",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Cincinnati Bengals at Cleveland Browns",
+        "shortName": "CIN @ CLE",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "5",
+          "name": "Cleveland Browns",
+          "abbreviation": "CLE",
+          "logo": "assets/images/teams/CLE.png",
+          "color": "#311D00"
+        },
+        "awayTeam": {
+          "id": "4",
+          "name": "Cincinnati Bengals",
+          "abbreviation": "CIN",
+          "logo": "assets/images/teams/CIN.png",
+          "color": "#FB4F14"
+        },
+        "homeScore": 16,
+        "awayScore": 17,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Cleveland Browns Stadium",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-10",
+        "date": "2025-09-08T17:00:00Z",
+        "name": "Las Vegas Raiders at New England Patriots",
+        "shortName": "LV @ NE",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "17",
+          "name": "New England Patriots",
+          "abbreviation": "NE",
+          "logo": "assets/images/teams/NE.png",
+          "color": "#002244"
+        },
+        "awayTeam": {
+          "id": "13",
+          "name": "Las Vegas Raiders",
+          "abbreviation": "LV",
+          "logo": "assets/images/teams/LV.png",
+          "color": "#000000"
+        },
+        "homeScore": 13,
+        "awayScore": 20,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Gillette Stadium",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-11",
+        "date": "2025-09-08T20:05:00Z",
+        "name": "San Francisco 49ers at Seattle Seahawks",
+        "shortName": "SF @ SEA",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "26",
+          "name": "Seattle Seahawks",
+          "abbreviation": "SEA",
+          "logo": "assets/images/teams/SEA.png",
+          "color": "#002244"
+        },
+        "awayTeam": {
+          "id": "25",
+          "name": "San Francisco 49ers",
+          "abbreviation": "SF",
+          "logo": "assets/images/teams/SF.png",
+          "color": "#AA0000"
+        },
+        "homeScore": 13,
+        "awayScore": 17,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Lumen Field",
+        "broadcast": "FOX"
+      },
+      {
+        "id": "game-REG1-12",
+        "date": "2025-09-08T20:05:00Z",
+        "name": "Tennessee Titans at Denver Broncos",
+        "shortName": "TEN @ DEN",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "7",
+          "name": "Denver Broncos",
+          "abbreviation": "DEN",
+          "logo": "assets/images/teams/DEN.png",
+          "color": "#FB4F14"
+        },
+        "awayTeam": {
+          "id": "10",
+          "name": "Tennessee Titans",
+          "abbreviation": "TEN",
+          "logo": "assets/images/teams/TEN.png",
+          "color": "#0C2340"
+        },
+        "homeScore": 20,
+        "awayScore": 12,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Empower Field at Mile High",
+        "broadcast": "CBS"
+      },
+      {
+        "id": "game-REG1-13",
+        "date": "2025-09-08T20:25:00Z",
+        "name": "Detroit Lions at Green Bay Packers",
+        "shortName": "DET @ GB",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "9",
+          "name": "Green Bay Packers",
+          "abbreviation": "GB",
+          "logo": "assets/images/teams/GB.png",
+          "color": "#203731"
+        },
+        "awayTeam": {
+          "id": "8",
+          "name": "Detroit Lions",
+          "abbreviation": "DET",
+          "logo": "assets/images/teams/DET.png",
+          "color": "#0076B6"
+        },
+        "homeScore": 27,
+        "awayScore": 13,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Lambeau Field",
+        "broadcast": "FOX"
+      },
+      {
+        "id": "game-REG1-14",
+        "date": "2025-09-08T20:25:00Z",
+        "name": "Houston Texans at Los Angeles Rams",
+        "shortName": "HOU @ LAR",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "14",
+          "name": "Los Angeles Rams",
+          "abbreviation": "LAR",
+          "logo": "assets/images/teams/LAR.png",
+          "color": "#003594"
+        },
+        "awayTeam": {
+          "id": "34",
+          "name": "Houston Texans",
+          "abbreviation": "HOU",
+          "logo": "assets/images/teams/HOU.png",
+          "color": "#03202F"
+        },
+        "homeScore": 14,
+        "awayScore": 9,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "SoFi Stadium",
+        "broadcast": "NBC"
+      },
+      {
+        "id": "game-REG1-15",
+        "date": "2025-09-09T00:20:00Z",
+        "name": "Baltimore Ravens at Buffalo Bills",
+        "shortName": "BAL @ BUF",
+        "week": "REG1",
+        "mode": "REG",
+        "weekNumber": 1,
+        "year": 2025,
+        "homeTeam": {
+          "id": "2",
+          "name": "Buffalo Bills",
+          "abbreviation": "BUF",
+          "logo": "assets/images/teams/BUF.png",
+          "color": "#00338D"
+        },
+        "awayTeam": {
+          "id": "33",
+          "name": "Baltimore Ravens",
+          "abbreviation": "BAL",
+          "logo": "assets/images/teams/BAL.png",
+          "color": "#241773"
+        },
+        "homeScore": 41,
+        "awayScore": 40,
+        "status": "STATUS_FINAL",
+        "statusDetail": "Final",
+        "completed": true,
+        "venue": "Highmark Stadium",
+        "broadcast": "MNF"
+      }
+    ]
+  }
+}

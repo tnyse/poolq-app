@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'nfl_schedule_service.dart';
+import 'time_simulation_service.dart';
 
 class ScheduleCacheService {
   static final ScheduleCacheService _instance = ScheduleCacheService._internal();
@@ -15,6 +16,7 @@ class ScheduleCacheService {
   static const Duration _forceUpdateDuration = Duration(days: 1); // Force update every 24 hours
 
   final NFLScheduleService _scheduleService = NFLScheduleService();
+  final TimeSimulationService _timeSimulation = TimeSimulationService();
 
   /// Get schedule for a specific week, using cached data if available
   Future<List<Map<String, dynamic>>> getScheduleForWeek(String weekName, {int? year}) async {
@@ -50,13 +52,25 @@ class ScheduleCacheService {
     try {
       debugPrint('ScheduleCacheService: Getting current week');
       
-      // Check if we're in demo mode
+      // Check if time simulation is enabled for testing
+      if (_timeSimulation.isSimulationEnabled) {
+        final simulatedWeekInfo = _timeSimulation.getSimulatedWeekInfo();
+        if (simulatedWeekInfo != null) {
+          debugPrint('ScheduleCacheService: Using simulated week: ${simulatedWeekInfo['week']}');
+          return simulatedWeekInfo;
+        }
+      }
+      
+      // Check if we're in demo mode - use real 2025 season data
       if (kIsWeb) {
-        debugPrint('ScheduleCacheService: Web platform detected, using default current week');
+        debugPrint('ScheduleCacheService: Web platform detected, using real 2025 season data');
+        // Use REG1 (Regular Season Week 1) - for testing with completed games
         return {
-          'week': 'PRE1',
+          'week': 'REG1', 
+          'weekNumber': 1,
           'year': 2025,
-          'mode': 'PRE',
+          'mode': 'REG',
+          'seasonType': 2, // Regular season
         };
       }
       

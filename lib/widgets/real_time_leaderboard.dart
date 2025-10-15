@@ -27,6 +27,11 @@ class _RealTimeLeaderboardState extends State<RealTimeLeaderboard> {
 
   @override
   Widget build(BuildContext context) {
+    print('⚡⚡⚡ REAL TIME LEADERBOARD WIDGET IS BUILDING! ⚡⚡⚡');
+    print('RealTimeLeaderboard: Building widget for week ${widget.weekName}');
+    print('RealTimeLeaderboard: Current user: ${_currentUser?.uid ?? "null"}');
+    print('RealTimeLeaderboard: Show user highlight: ${widget.showUserHighlight}');
+    
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('pickrecord')
@@ -36,23 +41,50 @@ class _RealTimeLeaderboardState extends State<RealTimeLeaderboard> {
           .orderBy('tiebreakerDiff', descending: false)
           .snapshots(),
       builder: (context, snapshot) {
+        print('RealTimeLeaderboard: StreamBuilder state - Connection: ${snapshot.connectionState}');
+        print('RealTimeLeaderboard: StreamBuilder state - HasData: ${snapshot.hasData}');
+        print('RealTimeLeaderboard: StreamBuilder state - HasError: ${snapshot.hasError}');
+        
         if (snapshot.hasError) {
-          return _buildErrorWidget('Error loading leaderboard');
+          print('RealTimeLeaderboard: ERROR in StreamBuilder: ${snapshot.error}');
+          return _buildErrorWidget('Error loading leaderboard: ${snapshot.error}');
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('RealTimeLeaderboard: Loading leaderboard data...');
           return _buildLoadingWidget();
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          print('RealTimeLeaderboard: No data available - docs count: ${snapshot.data?.docs.length ?? 0}');
           return _buildEmptyWidget();
         }
 
-        final picks = snapshot.data!.docs
-            .map((doc) => PickModel.fromFirestore(doc))
-            .toList();
+        print('RealTimeLeaderboard: Processing ${snapshot.data!.docs.length} documents');
+        
+        try {
+          final picks = snapshot.data!.docs
+              .map((doc) {
+                print('RealTimeLeaderboard: Processing document ${doc.id}');
+                try {
+                  final pick = PickModel.fromFirestore(doc);
+                  print('RealTimeLeaderboard: Successfully parsed pick for ${pick.displayName}');
+                  return pick;
+                } catch (e) {
+                  print('RealTimeLeaderboard: ERROR parsing document ${doc.id}: $e');
+                  print('RealTimeLeaderboard: Document data: ${doc.data()}');
+                  rethrow;
+                }
+              })
+              .toList();
 
-        return _buildLeaderboardList(picks);
+          print('RealTimeLeaderboard: Successfully processed ${picks.length} picks');
+          return _buildLeaderboardList(picks);
+        } catch (e, stackTrace) {
+          print('RealTimeLeaderboard: ERROR processing picks: $e');
+          print('RealTimeLeaderboard: Stack trace: $stackTrace');
+          return _buildErrorWidget('Error processing leaderboard data: $e');
+        }
       },
     );
   }
@@ -109,6 +141,9 @@ class _RealTimeLeaderboardState extends State<RealTimeLeaderboard> {
   }
 
   Widget _buildLeaderboardItem(PickModel pick, int rank, bool isCurrentUser) {
+    print('RealTimeLeaderboard: Building item for ${pick.displayName} - Rank: $rank, Current User: $isCurrentUser');
+    print('RealTimeLeaderboard: Pick details - Score: ${pick.score}, Picks: ${pick.picks?.length ?? 0}, Tiebreaker: ${pick.tiebreaker}');
+    
     final isTopThree = rank <= 3;
     
     return Container(
@@ -206,8 +241,105 @@ class _RealTimeLeaderboardState extends State<RealTimeLeaderboard> {
               ),
           ],
         ),
+        onTap: () {
+          print('🎯🎯🎯 REAL-TIME LEADERBOARD CLICK DETECTED! Player: ${pick.displayName}');
+          
+          // Show alert dialog first to confirm click detection
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('🎯 RealTime Click Detected!'),
+                content: Text('You successfully clicked on "${pick.displayName}"! \n\nThis is from RealTimeLeaderboard widget. \n\nWould you like to view their picks?'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog
+                      // Then show picks
+                      _showPlayerPicks(context, pick);
+                    },
+                    child: Text('Yes, View Picks'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Just close dialog
+                    },
+                    child: Text('Cancel'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
+  }
+
+  void _showPlayerPicks(BuildContext context, PickModel pick) {
+    print('RealTimeLeaderboard: User tapped on ${pick.displayName} (${pick.userId})');
+    print('RealTimeLeaderboard: Pick data - Score: ${pick.score}, Week: ${pick.week}, Picks: ${pick.picks}');
+    
+    try {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          print('RealTimeLeaderboard: Building dialog for ${pick.displayName}');
+          return AlertDialog(
+            title: Text('${pick.displayName}\'s Picks'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Week: ${pick.week}',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text('Score: ${pick.score ?? 0}'),
+                SizedBox(height: 8),
+                if (pick.tiebreaker != null)
+                  Text('Tiebreaker: ${pick.tiebreaker}'),
+                SizedBox(height: 16),
+                Text(
+                  'Picks:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                if (pick.picks != null && pick.picks!.isNotEmpty)
+                  ...pick.picks!.map((pickTeam) => Padding(
+                    padding: EdgeInsets.symmetric(vertical: 2),
+                    child: Text('• $pickTeam'),
+                  ))
+                else
+                  Text('No picks available'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  print('RealTimeLeaderboard: Closing dialog for ${pick.displayName}');
+                  Navigator.of(context).pop();
+                },
+                child: Text('Close'),
+              ),
+            ],
+          );
+        },
+      );
+      print('RealTimeLeaderboard: Dialog shown successfully for ${pick.displayName}');
+    } catch (e, stackTrace) {
+      print('RealTimeLeaderboard: ERROR showing dialog for ${pick.displayName}: $e');
+      print('RealTimeLeaderboard: Stack trace: $stackTrace');
+      
+      // Fallback: Show a simple snackbar with the error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading picks for ${pick.displayName}: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   Color _getRankColor(int rank) {

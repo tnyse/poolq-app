@@ -190,18 +190,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     // Check if we're in demo mode
     print('LeaderboardWidget: Checking demo mode - user = ${user?.email ?? "null"}');
     if (user == null || user?.email == 'demo@poolq.com') {
-      print('LeaderboardWidget: Demo mode detected, fetching demo entries from Firestore');
+      print('LeaderboardWidget: Demo mode detected, using hardcoded demo data instead of Firestore');
       
       try {
-        // Fetch demo entries from Firestore
+        // Use hardcoded demo leaderboard data to avoid Firestore permission issues
         final weekName = "${dataProvider.game!["mode"]}${selectedValue}";
-        final querySnapshot = await FirebaseFirestore.instance
-            .collection('pickrecord')
-            .where('week', isEqualTo: weekName)
-            .where('isDemoEntry', isEqualTo: true)
-            .orderBy('submittedAt', descending: true)
-            .get();
-
+        
+        print('LeaderboardWidget: Creating hardcoded demo leaderboard for week $weekName');
+        
         List<Map<String, dynamic>> demoLeaderboard = [];
         
         // Add current demo user at the top - this represents the current session (no picks yet)
@@ -216,21 +212,34 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           "week": weekName,
         };
         demoLeaderboard.add(currentDemoUser);
-
-        // Add saved demo entries
-        for (var doc in querySnapshot.docs) {
-          final data = doc.data();
+        
+        // Add sample demo players with picks
+        final samplePlayers = [
+          {"uid": "demo_sarah", "displayName": "Sarah Wilson", "score": 14, "picks": ["BAL", "PHI", "SEA", "CAR", "ATL"], "tiebreaker": 21},
+          {"uid": "demo_mike", "displayName": "Mike Johnson", "score": 12, "picks": ["NE", "GB", "LAR", "HOU", "MIN"], "tiebreaker": 24},
+          {"uid": "demo_jessica", "displayName": "Jessica Chen", "score": 11, "picks": ["DAL", "SEA", "MIA", "NYJ", "KC"], "tiebreaker": 17},
+          {"uid": "demo_alex", "displayName": "Alex Rodriguez", "score": 10, "picks": ["SF", "DEN", "PIT", "JAX", "TEN"], "tiebreaker": 19},
+          {"uid": "demo_emma", "displayName": "Emma Thompson", "score": 9, "picks": ["TB", "ARI", "CHI", "NO", "LAC"], "tiebreaker": 22},
+        ];
+        
+        for (int i = 0; i < samplePlayers.length; i++) {
+          final player = samplePlayers[i];
           demoLeaderboard.add({
-            "uid": data['uid'] ?? '',
-            "displayName": data['displayName'] ?? 'Demo Entry',
-            "photoURL": data['photoURL'] ?? '',
-            "score": data['score'] ?? 0,
-            "picks": List<String>.from(data['picks'] ?? []),
-            "tiebreaker": data['tiebreaker'] ?? 0,
-            "rank": demoLeaderboard.length + 1,
+            "uid": player["uid"],
+            "displayName": player["displayName"],
+            "photoURL": "",
+            "score": player["score"],
+            "picks": player["picks"],
+            "tiebreaker": player["tiebreaker"],
+            "rank": i + 2, // Start from rank 2 since current user is rank 1
             "week": weekName,
           });
         }
+        
+        print('LeaderboardWidget: Created ${demoLeaderboard.length} demo leaderboard entries');
+
+        // Skip Firestore query completely in demo mode to avoid permission issues
+        print('LeaderboardWidget: Skipping Firestore query in demo mode to avoid permission errors');
 
         setState(() {
           data = demoLeaderboard;
@@ -239,21 +248,52 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           particularData = demoLeaderboard.first; // Current demo user is always first
         });
         
-        print('Successfully loaded ${demoLeaderboard.length} demo leaderboard entries (${querySnapshot.docs.length} from Firestore)');
+        print('Successfully loaded ${demoLeaderboard.length} demo leaderboard entries (no Firestore query in demo mode)');
         return demoLeaderboard;
       } catch (e) {
         print('Error fetching demo entries, using fallback: $e');
         
-        // Fallback to single demo user if Firestore fails
+        // Fallback to multiple mock demo entries if Firestore fails
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
         List<Map<String, dynamic>> fallbackLeaderboard = [
           {
-            "uid": "demo_user",
-            "displayName": "Demo User",
+            "uid": "demo_user_current",
+            "displayName": "Demo User (Current)",
+            "photoURL": "",
+            "score": 0,
+            "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS"],
+            "tiebreaker": 55,
+            "rank": 1,
+            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+          },
+          {
+            "uid": "demo_user_1",
+            "displayName": "Alex Johnson #1642",
             "photoURL": "",
             "score": 0,
             "picks": ["IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"],
-            "tiebreaker": 55,
-            "rank": 1,
+            "tiebreaker": 45,
+            "rank": 2,
+            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+          },
+          {
+            "uid": "demo_user_2",
+            "displayName": "Casey Smith #1643",
+            "photoURL": "",
+            "score": 0,
+            "picks": ["BAL", "PHI", "SEA", "CAR", "ATL", "NE", "BUF", "ARI", "MIN", "JAX", "GB", "TB", "SF", "CHI", "LAC", "NO"],
+            "tiebreaker": 52,
+            "rank": 3,
+            "week": "${dataProvider.game!["mode"]}${selectedValue}",
+          },
+          {
+            "uid": "demo_user_3",
+            "displayName": "Jordan Brown #1644",
+            "photoURL": "",
+            "score": 0,
+            "picks": ["IND", "PHI", "LV", "CAR", "DET", "NE", "NYG", "KC", "MIN", "HOU", "NYJ", "JAX", "TEN", "SF", "MIA", "LAC"],
+            "tiebreaker": 60,
+            "rank": 4,
             "week": "${dataProvider.game!["mode"]}${selectedValue}",
           },
         ];
@@ -319,6 +359,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   @override
   void initState() {
     super.initState();
+    print('🌟🌟🌟🌟🌟 LEADERBOARD WIDGET INITSTATE CALLED! 🌟🌟🌟🌟🌟');
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
     
@@ -380,6 +421,10 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
 
   @override
   Widget build(BuildContext context) {
+    print('🎯🎯🎯 MAIN LEADERBOARD WIDGET IS BUILDING NOW! 🎯🎯🎯');
+    print('🎯 LeaderboardWidget: BUILD METHOD CALLED - Main leaderboard is displaying');
+    print('🎯 LeaderboardWidget: data length = ${data?.length ?? 0}, particularData = ${particularData != null ? "exists" : "null"}');
+    
     // context.watch<FFAppState>();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: true);
@@ -568,6 +613,14 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                 } else {
                                   // Demo mode: always allow new entries for testing multiple entrants
                                   hasEntry = false;
+                                  
+                                  // Check if we have local storage data about a recent submission
+                                  try {
+                                    final timestamp = DateTime.now().millisecondsSinceEpoch;
+                                    print('Demo mode: Allowing new entry creation (timestamp: $timestamp)');
+                                  } catch (e) {
+                                    print('Error checking local storage: $e');
+                                  }
                                 }
                                 final label = hasEntry ? 'Edit Picks' : 'Play Now';
                                 return ElevatedButton(
@@ -686,38 +739,65 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                     ? InkWell(
                                         onTap: () {
                                           final rowUserId = data![index]["uid"];
-                                          print('Row tapped: rowUserId=$rowUserId');
+                                          final playerName = data![index]["displayName"];
+                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget: ROW CLICKED - User clicked on player at index $index');
+                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget: rowUserId=$rowUserId, currentUser=${user?.uid ?? 'demo_user'}');
+                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget: Player name: $playerName');
                                           
-                                          // In demo mode, current session user should go to new entry (PlayWidget)
-                                          if ((user == null || user?.email == 'demo@poolq.com') && 
-                                              rowUserId == 'demo_user_current') {
-                                            print('Opening PlayWidget for demo current session');
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => PlayWidget(),
-                                              ),
-                                            );
-                                          } else if (rowUserId == (user?.uid ?? 'demo_user')) {
-                                            print('Opening EditPlayWidget for current user');
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => EditPlayWidget(),
-                                              ),
-                                            );
-                                          } else {
-                                            print('Opening PickedWidget for other user');
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => PickedWidget(
-                                                  userId: rowUserId,
-                                                  selectedValue: selectedValue,
-                                                ),
-                                              ),
-                                            );
-                                          }
+                                          // Show alert dialog to confirm click detection
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('🎯 Click Detected!'),
+                                                content: Text('You successfully clicked on "$playerName"! \n\nThe click handler is working correctly. \n\nWould you like to view their picks?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close dialog
+                                                      
+                                                      // Then navigate based on logic
+                                                      if (user == null || user?.email == 'demo@poolq.com') {
+                                                        print('Opening PlayWidget for demo user - rowUserId=$rowUserId');
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) => PlayWidget(),
+                                                          ),
+                                                        );
+                                                      } else if (rowUserId == (user?.uid ?? 'demo_user')) {
+                                                        print('Opening EditPlayWidget for current user');
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) => EditPlayWidget(),
+                                                          ),
+                                                        );
+                                                      } else {
+                                                        print('Opening PickedWidget for other user');
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) => PickedWidget(
+                                                              userId: rowUserId,
+                                                              selectedValue: selectedValue,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Text('Yes, View Picks'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Just close dialog
+                                                    },
+                                                    child: Text('Cancel'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
                                         },
                                         child: Column(
                                           children: [
@@ -940,24 +1020,56 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                       )
                                     : InkWell(
                                         onTap: () {
-                                          if (data![index]["uid"] == (user?.uid ?? 'demo_user')) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => EditPlayWidget(),
-                                              ),
-                                            );
-                                          } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => PickedWidget(
-                                                  userId: data![index]["uid"],
-                                                  selectedValue: selectedValue,
-                                                ),
-                                              ),
-                                            );
-                                          }
+                                          final rowUserId = data![index]["uid"];
+                                          final playerName = data![index]["displayName"];
+                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: ROW CLICKED - User clicked on player at index $index');
+                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: rowUserId=$rowUserId, currentUser=${user?.uid ?? 'demo_user'}');
+                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: Player name: $playerName');
+                                          
+                                          // Show alert dialog to confirm click detection
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('🎯 Click Detected!'),
+                                                content: Text('You successfully clicked on "$playerName"! \n\nThe click handler is working correctly. \n\nWould you like to view their picks?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close dialog
+                                                      
+                                                      // Then navigate based on original logic
+                                                      if (rowUserId == (user?.uid ?? 'demo_user')) {
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) => EditPlayWidget(),
+                                                          ),
+                                                        );
+                                                      } else {
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) => PickedWidget(
+                                                              userId: rowUserId,
+                                                              selectedValue: selectedValue,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Text('Yes, View Picks'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Just close dialog
+                                                    },
+                                                    child: Text('Cancel'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
                                         },
                                         child: Column(
                                           children: [

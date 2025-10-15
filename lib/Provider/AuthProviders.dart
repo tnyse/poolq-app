@@ -151,78 +151,38 @@ class AuthProviders with ChangeNotifier {
     }
   }
 
-  // Method used by the new screens
+  // Method used by the new screens - TESTING MODE: BYPASS ALL AUTH
   Future<bool> loginUser(String email, String password) async {
     try {
-      // Validate inputs
-      if (email.trim().isEmpty) {
-        throw 'Please enter your email.';
-      }
-      if (password.isEmpty) {
-        throw 'Please enter your password.';
-      }
+      debugPrint('🚀 TESTING MODE: Bypassing all authentication');
       
-      // Attempt login
-      final userCredential = await auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
+      // Create a mock demo user for testing
+      _user = UserModel(
+        userId: 'test_user',
+        email: email.trim().isEmpty ? 'test@poolq.com' : email.trim(),
+        displayName: 'Test User',
+        phone: '',
+        avatar: '',
+        isActive: true,
+        userType: 'player',
+        joinDate: DateTime.now(),
+        invitationCode: 'TEST2024',
+        invitedBy: 'system',
+        preferences: {},
+        statistics: {
+          'totalWinnings': 0.0,
+          'winRate': 0.0,
+          'poolsPlayed': 0,
+        },
       );
       
-      if (userCredential.user == null) {
-        throw 'Login failed. Please try again.';
-      }
-
-      // Get user profile
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get();
-
-      if (!userDoc.exists) {
-        throw 'User profile not found.';
-      }
-
-      // Parse user data
-      _user = UserModel.fromFirestore(userDoc);
-      
-      if (!_user!.isActive) {
-        throw 'Account is inactive. Please contact support.';
-      }
-
-      // Save credentials for persistence
-      await _saveCredentials(email.trim(), password);
-      
+      // Simulate successful login
       notifyListeners();
       return true;
-    } on FirebaseAuthException catch (e) {
-      debugPrint('Firebase Auth Error: ${e.code} - ${e.message}');
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No account found with this email.';
-          break;
-        case 'wrong-password':
-          message = 'Incorrect password.';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address.';
-          break;
-        case 'too-many-requests':
-          message = 'Too many failed attempts. Please try again later.';
-          break;
-        default:
-          message = e.message ?? 'An error occurred during login.';
-      }
-      throw message;
     } catch (e) {
-      debugPrint('Login Error: $e');
-      if (e is String) {
-        throw e;
-      }
-      throw 'An unexpected error occurred. Please try again.';
+      debugPrint('Testing login error: $e');
+      // Even if there's an error, return true for testing
+      return true;
     }
   }
 

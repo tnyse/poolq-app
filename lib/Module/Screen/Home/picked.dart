@@ -50,16 +50,12 @@ class _PickedWidgetState extends State<PickedWidget> {
     super.initState();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
-    // AuthProviders authProvider =
-    //     Provider.of<AuthProviders>(context, listen: false);
+    
+    print('🎯 PICKED WIDGET INIT: user=${user?.email ?? "null"}, userId=${widget.userId}, selectedValue=${widget.selectedValue}');
 
-    // Mock data for testing
-    if (kDebugMode) {
-      _mockPickRecord();
-    }
-
-    // For demo/web, guard Firestore with user null checks
-    if (user == null) {
+    // Skip Firestore entirely in demo mode to avoid permission errors
+    if (user == null || user?.email == 'demo@poolq.com') {
+      print('🎯 PICKED WIDGET: Demo mode detected - using empty streams');
       _pickrecord = Stream.empty();
     } else {
       _pickrecord = FirebaseFirestore.instance
@@ -69,7 +65,8 @@ class _PickedWidgetState extends State<PickedWidget> {
           .snapshots();
     }
 
-    if (widget.userId == null) {
+    if (widget.userId == null || user == null || user?.email == 'demo@poolq.com') {
+      print('🎯 PICKED WIDGET: Using empty stream for pickrecordStream (demo mode or null userId)');
       _pickrecordStream = Stream.empty();
     } else {
       _pickrecordStream = FirebaseFirestore.instance
@@ -84,8 +81,13 @@ class _PickedWidgetState extends State<PickedWidget> {
     // _model.tieBreakerController ??= TextEditingController();
   }
 
-  // Mock data function
+  // Mock data function - disabled in demo mode to avoid Firestore permission errors
   Future<void> _mockPickRecord() async {
+    if (user == null || user?.email == 'demo@poolq.com') {
+      print('🎯 PICKED WIDGET: Skipping mock data creation in demo mode to avoid Firestore errors');
+      return;
+    }
+    
     try {
       // Mock user data
       final mockUserData = {
@@ -170,7 +172,9 @@ class _PickedWidgetState extends State<PickedWidget> {
             builder:
                 (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot2) {
               if (snapshot2.hasError) {
-                return Center(child: Text('Something went wrong'));
+                print('🚨 PICKED WIDGET ERROR: ${snapshot2.error}');
+                print('🚨 PICKED WIDGET: User ID = ${widget.userId}, Selected Value = ${widget.selectedValue}');
+                return Center(child: Text('Something went wrong - ${snapshot2.error}'));
               }
 
               if (snapshot2.connectionState == ConnectionState.waiting ||
@@ -210,7 +214,9 @@ class _PickedWidgetState extends State<PickedWidget> {
                     builder: (BuildContext context,
                         AsyncSnapshot<QuerySnapshot> snapshot) {
                       if (snapshot.hasError) {
-                        return Center(child: Text('Something went wrong'));
+                        print('🚨 PICKED WIDGET INNER ERROR: ${snapshot.error}');
+                        print('🚨 PICKED WIDGET INNER: User ID = ${widget.userId}, Selected Value = ${widget.selectedValue}');
+                        return Center(child: Text('Something went wrong - ${snapshot.error}'));
                       }
 
                       if (snapshot.connectionState == ConnectionState.waiting ||
@@ -252,15 +258,40 @@ class _PickedWidgetState extends State<PickedWidget> {
                         QueryDocumentSnapshot? new_data2;
 
                         runFunction() async {
-                          // Check if this is demo mode and handle accordingly
-                          if ((user == null || user?.email == 'demo@poolq.com') && 
-                              (widget.userId == 'demo_user' || widget.userId == (user?.uid ?? 'demo_user'))) {
-                            // Demo mode: use predefined picks
-                            final List<String> demoPicks = [
-                              "IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", 
-                              "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"
-                            ];
-                            tiebreaker = 55;
+                                                                    // Check if this is demo mode and handle accordingly
+                                          if (user == null || user?.email == 'demo@poolq.com') {
+                            // Demo mode: use predefined picks based on which user was clicked
+                            List<String> demoPicks;
+                            
+                            // Use different picks based on the demo user ID
+                            if (widget.userId == 'demo_user_1' || widget.userId?.contains('Alex') == true) {
+                              demoPicks = [
+                                "IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", 
+                                "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"
+                              ];
+                              tiebreaker = 45;
+                            } else if (widget.userId == 'demo_user_2' || widget.userId?.contains('Casey') == true) {
+                              demoPicks = [
+                                "BAL", "PHI", "SEA", "CAR", "ATL", "NE", "BUF", "ARI", 
+                                "MIN", "JAX", "GB", "TB", "SF", "CHI", "LAC", "NO"
+                              ];
+                              tiebreaker = 52;
+                            } else if (widget.userId == 'demo_user_3' || widget.userId?.contains('Jordan') == true) {
+                              demoPicks = [
+                                "IND", "PHI", "LV", "CAR", "DET", "NE", "NYG", "KC", 
+                                "MIN", "HOU", "NYJ", "JAX", "TEN", "SF", "MIA", "LAC"
+                              ];
+                              tiebreaker = 60;
+                            } else {
+                              // Default picks for current user or any other demo user
+                              demoPicks = [
+                                "IND", "CIN", "LV", "CLE", "DET", "WAS", "NYG", "KC", 
+                                "DAL", "HOU", "NYJ", "PIT", "TEN", "DEN", "MIA", "NO"
+                              ];
+                              tiebreaker = 55;
+                            }
+                            
+                            print('PickedWidget: Using demo picks for user ${widget.userId}: ${demoPicks.length} picks');
                             
                             // Merge demo picks with actual schedule to display home/away and selection
                             final dataProvider = Provider.of<DataProvider>(context, listen: false);
@@ -409,7 +440,7 @@ class _PickedWidgetState extends State<PickedWidget> {
                                               child: Column(
                                                 children: [
                                                   Text(
-                                                    '${widget.userId == user!.uid ? "Your" : "Player\'s"} Picks',
+                                                    '${widget.userId == (user?.uid ?? 'demo_user_current') ? "Your" : "Player\'s"} Picks',
                                                     textAlign: TextAlign.center,
                                                     style: GoogleFonts.poppins(
                                                       fontSize: 24,

@@ -1,21 +1,15 @@
-import 'dart:convert';
 import 'PlayerPickWidget.dart';
-import 'LeaderbpardWidget.dart';
 import '../../../Widget/reuse.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
 import 'package:poolqapp/constants.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import '../../../Provider/homeProvider.dart';
 import 'package:grouped_list/grouped_list.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:poolqapp/Provider/AuthProviders.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
 import '../../../services/nfl_schedule_service.dart';
+import '../../../services/game_state_service.dart';
 
 
 class PlayWidget extends StatefulWidget {
@@ -33,6 +27,8 @@ class _PlayWidgetState extends State<PlayWidget> {
 
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
+  final GameStateService _gameStateService = GameStateService();
+  
   Future getGame(context) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
     final scheduleService = NFLScheduleService();
@@ -45,11 +41,18 @@ class _PlayWidgetState extends State<PlayWidget> {
         dataProvider.game!["name"]
       );
       if (games.isNotEmpty) {
+        // CRITICAL: Hide scores during picking phase
+        List<Map<String, dynamic>> sanitizedGames = _gameStateService.sanitizeGamesList(
+          games,
+          screenContext: 'play',
+          isPickingPhase: true,
+        );
+        
         setState(() {
-          data = games;
+          data = sanitizedGames;
         });
         print("Successfully loaded [32m${games.length}[0m games from local file");
-        return games;
+        return sanitizedGames;
       } else {
         throw Exception('No games data available from local file');
       }
@@ -69,7 +72,7 @@ class _PlayWidgetState extends State<PlayWidget> {
     }
   }
 
-  Stream<QuerySnapshot>? _pickrecord;
+  // Removed unused _pickrecord field
   @override
   void initState() {
     super.initState();
@@ -77,21 +80,19 @@ class _PlayWidgetState extends State<PlayWidget> {
         Provider.of<DataProvider>(context, listen: false);
     
     // Clear any existing picks for new entry (Play screen should always start clean)
-    print('Play: Before clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
-    dataProvider.clearPlayerPicks();
-    tieBreakerController.clear();
-    print('Play: After clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
+    // Use addPostFrameCallback to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('Play: Before clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
+      dataProvider.clearPlayerPicks();
+      tieBreakerController.clear();
+      print('Play: After clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
+    });
     
     // Check if we're in demo mode
     if (user == null || user?.email == 'demo@poolq.com') {
-      print('Play: Demo mode detected, using empty stream');
-      _pickrecord = Stream.empty();
+      print('Play: Demo mode detected');
     } else {
-      _pickrecord = FirebaseFirestore.instance
-          .collection('pickrecord')
-          .where("uid", isEqualTo: user!.uid)
-          .where("week", isEqualTo: dataProvider.game!["name"])
-          .snapshots();
+      print('Play: Real user mode');
     }
     getGame(context);
     // _model = createModel(context, () => PlayModel());
@@ -420,14 +421,11 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                           ),
                                                                         );
                                                                       }
-                                                                      dataProvider
-                                                                          .removeFromPlayerPicks(
-                                                                              gameItem[
-                                                                                  "abbreviation"]);
-                                                                      dataProvider
-                                                                          .addToPlayerPicks(
-                                                                              gameItem[
-                                                                                  "abbreviation2"]);
+                                                                      // Remove both teams first to ensure clean selection
+                                                                      dataProvider.removeFromPlayerPicks(gameItem["abbreviation"]);
+                                                                      dataProvider.removeFromPlayerPicks(gameItem["abbreviation2"]);
+                                                                      // Then add the selected team
+                                                                      dataProvider.addToPlayerPicks(gameItem["abbreviation2"]);
                                                                     },
                                                                     child: Row(
                                                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -602,14 +600,11 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                           ),
                                                                         );
                                                                       }
-                                                                      dataProvider
-                                                                          .removeFromPlayerPicks(
-                                                                              gameItem[
-                                                                                  "abbreviation2"]);
-                                                                      dataProvider
-                                                                          .addToPlayerPicks(
-                                                                              gameItem[
-                                                                                  "abbreviation"]);
+                                                                                                                                              // Remove both teams first to ensure clean selection
+                                                                        dataProvider.removeFromPlayerPicks(gameItem["abbreviation"]);
+                                                                        dataProvider.removeFromPlayerPicks(gameItem["abbreviation2"]);
+                                                                        // Then add the selected team
+                                                                        dataProvider.addToPlayerPicks(gameItem["abbreviation"]);
                                                                     },
                                                                     child: Row(
                                                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -838,8 +833,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                       Image.asset("assets/images/checked.png")),
                               onPressed: () async {
                                 var _shouldSetState = false;
-                                if (tieBreakerController.text == null ||
-                                    tieBreakerController.text == '') {
+                                if (tieBreakerController.text.isEmpty) {
                                   await showDialog(
                                     context: context,
                                     builder: (alertDialogContext) {

@@ -1,21 +1,17 @@
-import 'dart:convert';
-import 'dart:io';
-import 'HomePage.dart';
 import 'LeaderbpardWidget.dart';
 import 'ManualPaymentScreen.dart';
 import 'package:flutter/material.dart';
 import '../../../constants.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:poolqapp/Widget/reuse.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
+import '../../../services/simulation_controller.dart';
+import '../../../Model/pick_model.dart';
+import '../../../screens/results_announcement_page.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/services/payment_service.dart';
-import 'package:path_provider/path_provider.dart';
 
 class PlayerPicksWidget extends StatefulWidget {
   const PlayerPicksWidget({
@@ -804,66 +800,88 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
         ),
       );
 
-      // Create demo picks data
-      final demoPicksData = {
-        "week": dataProvider?.game?['name'] ?? "PRE1",
-        "tiebreaker": dataProvider?.tiebreaker?.toString() ?? "0",
-        'date': DateTime.now().toIso8601String(),
-        'picks': dataProvider?.playerPicks ?? [],
-        'uid': 'demo_user',
-        "displayName": 'Demo User',
-        "photoURL": '',
-        "paymentStatus": "verified",
-        "demo": true,
-      };
+      // Get user and pick data
+      final weekName = dataProvider?.game?['name'] ?? "REG1";
+      final tiebreaker = dataProvider?.tiebreaker?.toString() ?? "0";
+      final picks = dataProvider?.playerPicks?.cast<String>() ?? [];
+      
+      print('🎯 Starting 5-Player Simulation for $weekName');
+      print('User picks: ${picks.length} picks, tiebreaker: $tiebreaker');
 
-      // Platform-specific handling for saving picks
-      if (kIsWeb) {
-        // For web, use localStorage or just show success message
-        print('Demo picks data (web): $demoPicksData');
-        print('Note: On web platform, picks are stored in memory only');
-      } else {
-        // For mobile platforms, save to local file
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/demo_picks.json');
-        
-        // Read existing data or create new list
-        List<Map<String, dynamic>> existingPicks = [];
-        if (await file.exists()) {
-          final content = await file.readAsString();
-          existingPicks = List<Map<String, dynamic>>.from(jsonDecode(content));
-        }
-        
-        // Add new picks
-        existingPicks.add(demoPicksData);
-        
-        // Write back to file
-        await file.writeAsString(jsonEncode(existingPicks));
-        
-        print('Demo picks saved to: ${file.path}');
-        print('Picks data: $demoPicksData');
+      // Create user's pick model
+      final userPick = PickModel(
+        pickId: 'user_${user?.uid ?? 'demo_user'}_${weekName}',
+        userId: user?.uid ?? 'demo_user',
+        displayName: user?.displayName ?? 'You',
+        weekName: weekName,
+        picks: picks,
+        tiebreaker: int.tryParse(tiebreaker) ?? 0,
+        submittedAt: DateTime.now(),
+        paymentStatus: 'verified',
+        entryFee: 10.0,
+        isActive: true,
+        photoURL: user?.photoURL ?? '',
+        isDemoEntry: true,
+      );
+
+      // Save user picks first
+      final paymentService = PaymentService();
+      try {
+        await paymentService.savePicksAndCreatePaymentEntry(
+          picks: picks,
+          tiebreaker: tiebreaker,
+          weekName: weekName,
+        );
+        print('✅ User picks saved successfully');
+      } catch (e) {
+        print('⚠️ Firestore save failed (continuing in demo mode): $e');
       }
+
+      // Start the 5-player simulation
+      final simulationController = SimulationController();
+      final simulationStarted = await simulationController.startSimulation(weekName, userPick);
 
       // Close loading dialog
       Navigator.pop(context);
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Picks submitted successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (simulationStarted) {
+        // Show exciting success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎉 Simulation Started! Generating AI opponents...'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
 
-      // Navigate to leaderboard
-      await Future.delayed(Duration(seconds: 1));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LeaderboardWidget(),
-        ),
-      );
+        // Wait a moment for drama
+        await Future.delayed(Duration(seconds: 2));
+
+        // Navigate to results announcement page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultsAnnouncementPage(weekName: weekName),
+          ),
+        );
+      } else {
+        // Fallback to regular leaderboard if simulation fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Picks submitted! View results on leaderboard.'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        await Future.delayed(Duration(seconds: 1));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LeaderboardWidget(),
+          ),
+        );
+      }
     } catch (e) {
       // Close loading dialog if open
       Navigator.pop(context);
