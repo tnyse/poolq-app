@@ -22,6 +22,7 @@ import 'package:poolqapp/screens/landing_page.dart';
 import 'screens/admin/admin_players_page.dart';
 import 'package:poolqapp/screens/front_page.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,13 @@ Future<void> initializeServices() async {
     } catch (e) {
       debugPrint('Error initializing Firebase: $e');
       // Continue without Firebase for demo mode
+    }
+
+    // Load remote app config (week / preseason free flag)
+    try {
+      await AppConfigService().load().timeout(Duration(seconds: 3));
+    } catch (e) {
+      debugPrint('Error loading AppConfigService: $e');
     }
     
     // Initialize GetStorage

@@ -130,7 +130,9 @@ class PickModel {
     );
   }
 
-  bool get isValid => paymentStatus == 'verified' && isActive;
+  bool get isValid =>
+      (paymentStatus == 'verified' || paymentStatus == 'auto_verified') &&
+      isActive;
   bool get isPendingPayment => paymentStatus == 'pending';
   bool get isDisqualified => paymentStatus == 'disqualified';
 } 

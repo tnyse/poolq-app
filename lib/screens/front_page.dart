@@ -77,15 +77,17 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
         _errorMessage = null;
       });
 
-      // Load previous week results (REG1 has completed games)
-      final previousWeekGames = await _nflService.getScheduleForWeekWithLocalFallback('REG1');
+      // Prefer HoF / prior preseason when available; else PRE1
+      final previousWeekGames =
+          await _nflService.getScheduleForWeekWithLocalFallback('PRE0');
       final completedGames = previousWeekGames
           .where((game) => game['completed'] == true)
           .take(6) // Show top 6 games
           .toList();
 
       // Load current week schedule (for upcoming games)
-      final currentWeekGames = await _nflService.getScheduleForWeekWithLocalFallback('REG1');
+      final currentWeekGames =
+          await _nflService.getScheduleForWeekWithLocalFallback('PRE1');
       final upcomingGames = currentWeekGames
           .where((game) => game['completed'] != true)
           .take(4) // Show next 4 games

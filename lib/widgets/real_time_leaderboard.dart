@@ -36,7 +36,7 @@ class _RealTimeLeaderboardState extends State<RealTimeLeaderboard> {
       stream: FirebaseFirestore.instance
           .collection('pickrecord')
           .where('week', isEqualTo: widget.weekName)
-          .where('paymentStatus', isEqualTo: 'verified')
+          .where('paymentStatus', whereIn: ['verified', 'auto_verified'])
           .orderBy('score', descending: true)
           .orderBy('tiebreakerDiff', descending: false)
           .snapshots(),

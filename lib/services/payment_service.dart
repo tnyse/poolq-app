@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:poolqapp/constants/payment_status.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 import '../services/scoring_service.dart';
 
 class PaymentService {
@@ -13,7 +15,7 @@ class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Payment methods configuration
+  // Single source of truth for payment handles (all UIs must use these).
   static const String PAYPAL_EMAIL = 'poolq.payments@gmail.com';
   static const String ZELLE_EMAIL = 'poolq.payments@gmail.com';
   static const String CASHAPP_HANDLE = '\$PoolQPayments';
@@ -22,6 +24,9 @@ class PaymentService {
 
   // Admin notification email
   static const String ADMIN_EMAIL = 'admin@poolq.com';
+
+  /// Deterministic pick document id — one entry per user per week.
+  static String pickDocumentId(String uid, String weekName) => '${uid}_$weekName';
 
   /// Save user picks and create pending payment entry
   Future<String> savePicksAndCreatePaymentEntry({
@@ -44,7 +49,15 @@ class PaymentService {
         throw Exception('Invalid picks. Please ensure you have selected exactly one team for each game.');
       }
 
-      // Create picks document with pending payment status
+      final config = AppConfigService();
+      if (!config.isLoaded) {
+        await config.load();
+      }
+      final autoVerify = config.preseasonFree && weekName.startsWith('PRE');
+      final status =
+          autoVerify ? PaymentStatus.autoVerified : PaymentStatus.pending;
+
+      final docId = pickDocumentId(user.uid, weekName);
       final picksData = {
         'uid': user.uid,
         'displayName': user.displayName ?? 'Unknown',
@@ -53,41 +66,71 @@ class PaymentService {
         'picks': picks,
         'tiebreaker': int.tryParse(tiebreaker) ?? 0,
         'submittedAt': FieldValue.serverTimestamp(),
-        'paymentStatus': 'pending', // pending, paid, verified, disqualified
-        'entryFee': ENTRY_FEE,
+        'paymentStatus': status,
+        'entryFee': autoVerify ? 0.0 : ENTRY_FEE,
         'isActive': true,
         'score': null,
         'rank': null,
         'tiebreakerDiff': null,
       };
 
-      // Save to pickrecord collection
-      DocumentReference docRef = await _firestore.collection('pickrecord').add(picksData);
+      final batch = _firestore.batch();
+      final pickRef = _firestore.collection('pickrecord').doc(docId);
+      batch.set(pickRef, picksData, SetOptions(merge: true));
 
-      // Create payment tracking document
-      await _firestore.collection('payment_tracking').doc(docRef.id).set({
-        'pickRecordId': docRef.id,
+      final trackingRef = _firestore.collection('payment_tracking').doc(docId);
+      batch.set(trackingRef, {
+        'pickRecordId': docId,
         'uid': user.uid,
         'displayName': user.displayName ?? 'Unknown',
         'week': weekName,
-        'amount': ENTRY_FEE,
-        'status': 'pending',
+        'amount': autoVerify ? 0.0 : ENTRY_FEE,
+        'status': status,
         'createdAt': FieldValue.serverTimestamp(),
-        'adminVerified': false,
-      });
+        'adminVerified': autoVerify,
+      }, SetOptions(merge: true));
 
-      // Send admin notification email
-      await _sendAdminNotification(
-        userDisplayName: user.displayName ?? 'Unknown',
-        userEmail: user.email ?? '',
-        weekName: weekName,
-        pickRecordId: docRef.id,
-      );
+      await batch.commit();
 
-      return docRef.id;
+      if (!autoVerify) {
+        await _sendAdminNotification(
+          userDisplayName: user.displayName ?? 'Unknown',
+          userEmail: user.email ?? '',
+          weekName: weekName,
+          pickRecordId: docId,
+        );
+      }
+
+      return docId;
     } catch (e) {
       throw Exception('Failed to save picks: $e');
     }
+  }
+
+  /// Player reports that external payment was sent.
+  Future<void> reportPaymentSent(String pickRecordId) async {
+    final batch = _firestore.batch();
+    final pickRef = _firestore.collection('pickrecord').doc(pickRecordId);
+    final trackingRef =
+        _firestore.collection('payment_tracking').doc(pickRecordId);
+
+    batch.set(
+      pickRef,
+      {
+        'paymentStatus': PaymentStatus.sent,
+        'paymentReportedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+    batch.set(
+      trackingRef,
+      {
+        'status': PaymentStatus.sent,
+        'paymentReportedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+    await batch.commit();
   }
 
   /// Get payment methods for display
@@ -191,7 +234,7 @@ class PaymentService {
         .collection('pickrecord')
         .where('uid', isEqualTo: user.uid)
         .where('week', isEqualTo: weekName)
-        .where('paymentStatus', isEqualTo: 'pending')
+        .where('paymentStatus', isEqualTo: PaymentStatus.pending)
         .get();
 
     return query.docs.isNotEmpty;
@@ -202,16 +245,13 @@ class PaymentService {
     final user = _auth.currentUser;
     if (user == null) return null;
 
-    final query = await _firestore
+    final doc = await _firestore
         .collection('pickrecord')
-        .where('uid', isEqualTo: user.uid)
-        .where('week', isEqualTo: weekName)
-        .orderBy('submittedAt', descending: true)
-        .limit(1)
+        .doc(pickDocumentId(user.uid, weekName))
         .get();
 
-    if (query.docs.isNotEmpty) {
-      return query.docs.first.data()['paymentStatus'] as String?;
+    if (doc.exists) {
+      return doc.data()?['paymentStatus'] as String?;
     }
     return null;
   }
@@ -223,14 +263,14 @@ class PaymentService {
       
       // Update pick record status
       await _firestore.collection('pickrecord').doc(pickRecordId).update({
-        'paymentStatus': 'verified',
+        'paymentStatus': PaymentStatus.verified,
         'verifiedAt': FieldValue.serverTimestamp(),
         'verifiedBy': adminId,
       });
 
       // Update payment tracking
       await _firestore.collection('payment_tracking').doc(pickRecordId).update({
-        'status': 'verified',
+        'status': PaymentStatus.verified,
         'adminVerified': true,
         'verifiedAt': FieldValue.serverTimestamp(),
         'verifiedBy': adminId,
@@ -262,7 +302,7 @@ class PaymentService {
       
       // Update pick record status
       await _firestore.collection('pickrecord').doc(pickRecordId).update({
-        'paymentStatus': 'rejected',
+        'paymentStatus': PaymentStatus.rejected,
         'rejectedAt': FieldValue.serverTimestamp(),
         'rejectedBy': adminId,
         'rejectionReason': reason,
@@ -270,7 +310,7 @@ class PaymentService {
 
       // Update payment tracking
       await _firestore.collection('payment_tracking').doc(pickRecordId).update({
-        'status': 'rejected',
+        'status': PaymentStatus.rejected,
         'rejectedAt': FieldValue.serverTimestamp(),
         'rejectedBy': adminId,
         'rejectionReason': reason,
@@ -300,7 +340,10 @@ class PaymentService {
     try {
       final query = await _firestore
           .collection('pickrecord')
-          .where('paymentStatus', isEqualTo: 'pending')
+          .where('paymentStatus', whereIn: [
+            PaymentStatus.pending,
+            PaymentStatus.sent,
+          ])
           .orderBy('submittedAt', descending: true)
           .get();
 
@@ -361,26 +404,25 @@ class PaymentService {
         'picks': picks,
         'tiebreaker': finalTiebreaker,
         'submittedAt': FieldValue.serverTimestamp(),
-        'paymentStatus': 'verified', // Auto-verify demo entries for testing
+        'paymentStatus': PaymentStatus.verified,
         'entryFee': ENTRY_FEE,
         'isActive': true,
         'score': null,
         'rank': null,
         'tiebreakerDiff': null,
-        'isDemoEntry': true, // Mark as demo for easy identification
+        'isDemoEntry': true,
       };
 
-      // Save to pickrecord collection
-      DocumentReference docRef = await _firestore.collection('pickrecord').add(picksData);
+      // Unique demo docs (intentional for testing many entrants)
+      final docRef = await _firestore.collection('pickrecord').add(picksData);
 
-      // Create verified payment tracking for demo entry
       await _firestore.collection('payment_tracking').doc(docRef.id).set({
         'pickRecordId': docRef.id,
         'uid': demoUid,
         'displayName': demoName,
         'week': weekName,
         'amount': ENTRY_FEE,
-        'status': 'verified',
+        'status': PaymentStatus.verified,
         'createdAt': FieldValue.serverTimestamp(),
         'adminVerified': true,
         'isDemoEntry': true,

@@ -402,22 +402,38 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
     }
   }
 
-  void _handleContinue() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(initial: 1), // Go to leaderboard tab
-      ),
-      (route) => false,
-    );
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Thank you! Your payment will be verified within 24 hours.'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 3),
-      ),
-    );
+  Future<void> _handleContinue() async {
+    setState(() => _isLoading = true);
+    try {
+      await _paymentService.reportPaymentSent(widget.pickRecordId);
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(initial: 1),
+        ),
+        (route) => false,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Payment reported — we\'ll verify within 24 hours.',
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not report payment. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showSkipPaymentDialog(BuildContext context) {

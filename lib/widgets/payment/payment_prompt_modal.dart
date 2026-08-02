@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/services/payment_service.dart';
 
 /// Payment prompt modal with methods and deadline information
 class PaymentPromptModal extends StatelessWidget {
@@ -147,22 +149,22 @@ class PaymentPromptModal extends StatelessWidget {
               ],
             ),
             
-            const SizedBox(height: 20),
-            
-            // Skip button (for demo/testing)
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onSkipPayment();
-              },
-              child: Text(
-                'Skip Payment (Demo Mode)',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 14,
+            if (kDebugMode) ...[
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onSkipPayment();
+                },
+                child: Text(
+                  'Skip Payment (Debug)',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -258,13 +260,20 @@ class PaymentPromptModal extends StatelessWidget {
   }
 
   String _getPaymentInfo(String method) {
+    final methods = PaymentService().getPaymentMethods();
     switch (method) {
       case 'Venmo':
-        return '@poolq-admin';
+        return methods['venmo']?['identifier'] as String? ??
+            PaymentService.VENMO_URL;
       case 'Cash App':
-        return '\$poolq-admin';
+        return methods['cashapp']?['identifier'] as String? ??
+            PaymentService.CASHAPP_HANDLE;
       case 'PayPal':
-        return 'poolq.admin@gmail.com';
+        return methods['paypal']?['identifier'] as String? ??
+            PaymentService.PAYPAL_EMAIL;
+      case 'Zelle':
+        return methods['zelle']?['identifier'] as String? ??
+            PaymentService.ZELLE_EMAIL;
       default:
         return 'Contact admin for payment info';
     }

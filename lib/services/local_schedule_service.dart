@@ -2,18 +2,33 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import 'package:poolqapp/constants/season_config.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 
 class LocalScheduleService {
   static final LocalScheduleService _instance = LocalScheduleService._internal();
   factory LocalScheduleService() => _instance;
   LocalScheduleService._internal();
 
+  Future<String> _loadScheduleJson() async {
+    final year = AppConfigService().isLoaded
+        ? AppConfigService().currentSeason
+        : SeasonConfig.currentSeasonYear();
+    final primary = SeasonConfig.assetPathForYear(year);
+    try {
+      return await rootBundle.loadString(primary);
+    } catch (_) {
+      // Fallback to previous season asset if 2026 not bundled yet
+      return await rootBundle.loadString(SeasonConfig.assetPathForYear(year - 1));
+    }
+  }
+
   /// Load schedule from local JSON file
   Future<List<Map<String, dynamic>>> getScheduleForWeek(String weekName) async {
     try {
       debugPrint('LocalScheduleService: Loading schedule for $weekName');
       
-      final jsonString = await rootBundle.loadString('assets/data/nfl_schedule_2025.json');
+      final jsonString = await _loadScheduleJson();
       final scheduleData = json.decode(jsonString);
       
       // New format: scheduleData['weeks'][weekName]
@@ -35,15 +50,22 @@ class LocalScheduleService {
   Future<Map<String, dynamic>?> getCurrentWeek() async {
     try {
       debugPrint('LocalScheduleService: Getting current week');
+      final config = AppConfigService();
+      final week = config.isLoaded
+          ? config.activeWeek
+          : SeasonConfig.defaultWeekName();
+      final year = config.isLoaded
+          ? config.currentSeason
+          : SeasonConfig.currentSeasonYear();
+      final mode = SeasonConfig.modeFromWeek(week);
       
-      // For demo mode, return preseason week 1
       return {
-        'week': 'PRE1',
-        'season_type': 1, // 1 = preseason, 2 = regular season, 3 = postseason
-        'season': 2025,
-        'seasonName': 'PRE',
-        'year': 2025,
-        'mode': 'PRE'
+        'week': week,
+        'season_type': SeasonConfig.seasonTypeFromWeek(week),
+        'season': year,
+        'seasonName': mode,
+        'year': year,
+        'mode': mode,
       };
     } catch (e) {
       debugPrint('LocalScheduleService: Error getting current week: $e');

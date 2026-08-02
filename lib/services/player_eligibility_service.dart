@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:poolqapp/constants/payment_status.dart';
 
 /// Service for managing player eligibility based on payment status
 class PlayerEligibilityService {
@@ -9,9 +10,7 @@ class PlayerEligibilityService {
   /// Check if a player is eligible based on payment status
   bool isPlayerEligible(Map<String, dynamic> playerData) {
     final paymentStatus = playerData['paymentStatus'] ?? 'unpaid';
-    
-    // Only verified payments are eligible
-    return paymentStatus == 'verified';
+    return PaymentStatus.isEligible(paymentStatus);
   }
 
   /// Get eligibility status with reason
@@ -19,19 +18,40 @@ class PlayerEligibilityService {
     final paymentStatus = playerData['paymentStatus'] ?? 'unpaid';
     
     switch (paymentStatus) {
-      case 'verified':
+      case PaymentStatus.verified:
         return EligibilityStatus(
           isEligible: true,
           reason: 'Payment verified',
           statusColor: Colors.green,
           icon: Icons.check_circle,
         );
-      case 'pending':
+      case PaymentStatus.autoVerified:
+        return EligibilityStatus(
+          isEligible: true,
+          reason: 'Free preseason entry',
+          statusColor: Colors.green,
+          icon: Icons.check_circle,
+        );
+      case PaymentStatus.sent:
+        return EligibilityStatus(
+          isEligible: false,
+          reason: 'Payment reported — awaiting verification',
+          statusColor: Colors.amber,
+          icon: Icons.hourglass_top,
+        );
+      case PaymentStatus.pending:
         return EligibilityStatus(
           isEligible: false,
           reason: 'Payment pending verification',
           statusColor: Colors.orange,
           icon: Icons.schedule,
+        );
+      case PaymentStatus.rejected:
+        return EligibilityStatus(
+          isEligible: false,
+          reason: 'Payment rejected',
+          statusColor: Colors.red,
+          icon: Icons.cancel,
         );
       case 'unpaid':
         return EligibilityStatus(

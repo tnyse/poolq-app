@@ -1,3 +1,4 @@
+import 'HomePage.dart';
 import 'LeaderbpardWidget.dart';
 import 'ManualPaymentScreen.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../../../services/simulation_controller.dart';
 import '../../../Model/pick_model.dart';
 import '../../../screens/results_announcement_page.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 import 'package:poolqapp/services/payment_service.dart';
 import '../../../widgets/payment/payment_prompt_modal.dart';
 
@@ -612,23 +614,41 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
         return;
       }
 
-      // Save picks with pending payment status
+      final weekName = dataProvider.game?['name'] ?? "";
       final pickRecordId = await paymentService.savePicksAndCreatePaymentEntry(
         picks: dataProvider.playerPicks ?? [],
         tiebreaker: dataProvider.tiebreaker?.toString() ?? "",
-        weekName: dataProvider.game?['name'] ?? "",
+        weekName: weekName,
       );
 
       // Close loading dialog
       Navigator.pop(context);
 
-      // Navigate to manual payment screen
+      // PRE free / auto-verify: skip payment screen
+      final config = AppConfigService();
+      if (!config.isLoaded) await config.load();
+      if (config.preseasonFree && weekName.startsWith('PRE')) {
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage(initial: 1)),
+          (route) => false,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You\'re in! Preseason entry is free.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        return;
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => ManualPaymentScreen(
             pickRecordId: pickRecordId,
-            weekName: dataProvider.game?['name'] ?? "",
+            weekName: weekName,
             entryFee: PaymentService.ENTRY_FEE,
           ),
         ),

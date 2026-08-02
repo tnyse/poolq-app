@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:poolqapp/constants/season_config.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 import 'nfl_schedule_service.dart';
 import 'time_simulation_service.dart';
 
@@ -61,16 +63,25 @@ class ScheduleCacheService {
         }
       }
       
-      // Check if we're in demo mode - use real 2025 season data
+      // Web: prefer appConfig / season defaults (PRE for preseason launch)
       if (kIsWeb) {
-        debugPrint('ScheduleCacheService: Web platform detected, using real 2025 season data');
-        // Use REG1 (Regular Season Week 1) - for testing with completed games
+        final config = AppConfigService();
+        final week = config.isLoaded
+            ? config.activeWeek
+            : SeasonConfig.defaultWeekName();
+        final year = config.isLoaded
+            ? config.currentSeason
+            : SeasonConfig.currentSeasonYear();
+        final mode = SeasonConfig.modeFromWeek(week);
+        debugPrint(
+          'ScheduleCacheService: Web platform — week=$week year=$year',
+        );
         return {
-          'week': 'REG1', 
-          'weekNumber': 1,
-          'year': 2025,
-          'mode': 'REG',
-          'seasonType': 2, // Regular season
+          'week': week,
+          'weekNumber': int.tryParse(week.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1,
+          'year': year,
+          'mode': mode,
+          'seasonType': SeasonConfig.seasonTypeFromWeek(week),
         };
       }
       
@@ -201,7 +212,10 @@ class ScheduleCacheService {
     try {
       // Try to fetch preseason first (since that's what we're testing)
       final preseasonResponse = await http.get(
-        Uri.parse('https://site.api.espn.com/apis/site/v2/sports/football/nfl/schedule?year=2025&seasontype=1'),
+        Uri.parse(
+          'https://site.api.espn.com/apis/site/v2/sports/football/nfl/schedule'
+          '?year=${SeasonConfig.currentSeasonYear()}&seasontype=1',
+        ),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',

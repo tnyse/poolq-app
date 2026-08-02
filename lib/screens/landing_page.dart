@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
 import 'package:poolqapp/screens/auth/login_screen.dart';
 import 'package:poolqapp/screens/auth/register_screen.dart';
 import 'package:poolqapp/constants/app_theme.dart';
@@ -236,33 +235,17 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                             icon: Icons.play_arrow,
                             type: AuthButtonType.primary,
                             onPressed: () {
-                              Navigator.pushNamed(context, '/home');
-                            },
-                          ),
-                          
-                          const SizedBox(height: 16),
-                          
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Admin access
-                          TextButton(
-                            onPressed: () {
+                              // Require auth — do not open Home unauthenticated.
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const AdminLogin()),
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
                               );
                             },
-                            child: Text(
-                              'Admin Access',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.white60,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
                           ),
                           
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 32),
                           
                           // Version info
                           Text(

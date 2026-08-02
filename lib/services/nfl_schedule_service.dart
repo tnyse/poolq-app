@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:poolqapp/constants/season_config.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 import 'nfl_game_service.dart';
 import 'schedule_cache_service.dart';
 import 'local_schedule_service.dart';
@@ -153,52 +155,73 @@ class NFLScheduleService {
     return [];
   }
 
-  // Enable API methods for testing preseason availability
+  int get _seasonYear {
+    final config = AppConfigService();
+    return config.isLoaded
+        ? config.currentSeason
+        : SeasonConfig.currentSeasonYear();
+  }
+
+  // Prefer appConfig active week; fall back to ESPN / season defaults.
   Future<Map<String, dynamic>?> getCurrentWeek() async {
-    debugPrint('NFLScheduleService: Getting current week from API');
+    debugPrint('NFLScheduleService: Getting current week');
     try {
-      // Use regular season data (seasontype=2) for real 2025 NFL season
-      final response = await http.get(
-        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=2')),
-        headers: _getHeaders(),
-      ).timeout(Duration(seconds: 10));
-      
+      final config = AppConfigService();
+      if (config.isLoaded && config.activeWeek.isNotEmpty) {
+        final week = config.activeWeek;
+        final mode = SeasonConfig.modeFromWeek(week);
+        return {
+          'week': week,
+          'weekNumber':
+              int.tryParse(week.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1,
+          'season_type': SeasonConfig.seasonTypeFromWeek(week),
+          'season': config.currentSeason,
+          'seasonName': mode,
+          'year': config.currentSeason,
+          'mode': mode,
+        };
+      }
+
+      final year = _seasonYear;
+      final defaultWeek = SeasonConfig.defaultWeekName();
+      final seasonType = SeasonConfig.seasonTypeFromWeek(defaultWeek);
+      final response = await http
+          .get(
+            Uri.parse(_getApiUrl(
+                '$_espnScheduleUrl?year=$year&seasontype=$seasonType')),
+            headers: _getHeaders(),
+          )
+          .timeout(Duration(seconds: 10));
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        debugPrint('NFLScheduleService: API response received for current week');
-        
-        // Extract current week from API response
         final events = data['events'] as List?;
         if (events != null && events.isNotEmpty) {
           final firstEvent = events.first;
-          final weekInfo = firstEvent['season']?['week'];
-          final weekNumber = weekInfo?['number'] ?? 1;
-          
+          final weekNumber = firstEvent['season']?['week']?['number'] ?? 1;
+          final mode = SeasonConfig.modeFromWeek(defaultWeek);
           return {
-            'week': 'REG$weekNumber',
+            'week': '$mode$weekNumber',
             'weekNumber': weekNumber,
-            'season_type': 2, // regular season
-            'season': 2025,
-            'seasonName': 'REG',
-            'year': 2025,
-            'mode': 'REG'
+            'season_type': seasonType,
+            'season': year,
+            'seasonName': mode,
+            'year': year,
+            'mode': mode,
           };
         }
-        
-        // Fallback if no events found
-        return {
-          'week': 'REG2',
-          'weekNumber': 2,
-          'season_type': 2,
-          'season': 2025,
-          'seasonName': 'REG',
-          'year': 2025,
-          'mode': 'REG'
-        };
-      } else {
-        debugPrint('NFLScheduleService: API error: ${response.statusCode}');
-        return null;
       }
+
+      final mode = SeasonConfig.modeFromWeek(defaultWeek);
+      return {
+        'week': defaultWeek,
+        'weekNumber': 1,
+        'season_type': seasonType,
+        'season': year,
+        'seasonName': mode,
+        'year': year,
+        'mode': mode,
+      };
     } catch (e) {
       debugPrint('NFLScheduleService: API error in getCurrentWeek: $e');
       return null;
@@ -216,7 +239,8 @@ class NFLScheduleService {
       final seasonType = weekName.startsWith('PRE') ? 1 : 2; // 1=preseason, 2=regular
       
       final response = await http.get(
-        Uri.parse(_getApiUrl('$_espnScheduleUrl?year=2025&seasontype=$seasonType&week=$week')),
+        Uri.parse(_getApiUrl(
+            '$_espnScheduleUrl?year=$_seasonYear&seasontype=$seasonType&week=$week')),
         headers: _getHeaders(),
       ).timeout(Duration(seconds: 10));
       
@@ -234,7 +258,8 @@ class NFLScheduleService {
     }
   }
   
-  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int season = 2025, int seasonType = 2}) async {
+  Future<List<Map<String, dynamic>>> getScheduleForWeek(int week, {int? season, int seasonType = 2}) async {
+    season ??= SeasonConfig.currentSeasonYear();
     debugPrint('NFLScheduleService: getScheduleForWeek week=$week, seasonType=$seasonType');
     try {
       final response = await http.get(

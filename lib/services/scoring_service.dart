@@ -90,7 +90,7 @@ class ScoringService {
       final picksQuery = await _firestore
           .collection('pickrecord')
           .where('week', isEqualTo: weekName)
-          .where('paymentStatus', isEqualTo: 'verified')
+          .where('paymentStatus', whereIn: ['verified', 'auto_verified'])
           .get();
 
       if (picksQuery.docs.isEmpty) {
@@ -150,7 +150,7 @@ class ScoringService {
       final query = await _firestore
           .collection('pickrecord')
           .where('week', isEqualTo: weekName)
-          .where('paymentStatus', isEqualTo: 'verified')
+          .where('paymentStatus', whereIn: ['verified', 'auto_verified'])
           .orderBy('score', descending: true)
           .orderBy('tiebreakerDiff', descending: false)
           .limit(limit)

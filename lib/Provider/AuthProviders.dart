@@ -151,12 +151,12 @@ class AuthProviders with ChangeNotifier {
     }
   }
 
-  // Method used by the new screens - TESTING MODE: BYPASS ALL AUTH
+  // Method used by the new screens — real Firebase auth.
+  // Optional debug bypass: --dart-define=BYPASS_AUTH=true (debug builds only).
   Future<bool> loginUser(String email, String password) async {
-    try {
-      debugPrint('🚀 TESTING MODE: Bypassing all authentication');
-      
-      // Create a mock demo user for testing
+    const bypassAuth = bool.fromEnvironment('BYPASS_AUTH', defaultValue: false);
+    if (kDebugMode && bypassAuth) {
+      debugPrint('DEBUG: BYPASS_AUTH enabled — mock login only');
       _user = UserModel(
         userId: 'test_user',
         email: email.trim().isEmpty ? 'test@poolq.com' : email.trim(),
@@ -175,14 +175,48 @@ class AuthProviders with ChangeNotifier {
           'poolsPlayed': 0,
         },
       );
-      
-      // Simulate successful login
       notifyListeners();
       return true;
-    } catch (e) {
-      debugPrint('Testing login error: $e');
-      // Even if there's an error, return true for testing
+    }
+
+    try {
+      final credential = await auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      await _saveCredentials(email.trim(), password);
+
+      final firebaseUser = credential.user;
+      if (firebaseUser != null) {
+        final doc =
+            await _firestore.collection('users').doc(firebaseUser.uid).get();
+        if (doc.exists) {
+          _user = UserModel.fromFirestore(doc);
+        } else {
+          _user = UserModel(
+            userId: firebaseUser.uid,
+            email: firebaseUser.email ?? email.trim(),
+            displayName: firebaseUser.displayName ?? 'Player',
+            phone: firebaseUser.phoneNumber ?? '',
+            avatar: firebaseUser.photoURL ?? '',
+            isActive: true,
+            userType: 'player',
+            joinDate: DateTime.now(),
+            invitationCode: '',
+            invitedBy: '',
+            preferences: {},
+            statistics: const {},
+          );
+        }
+      }
+      notifyListeners();
       return true;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('loginUser FirebaseAuthException: ${e.code}');
+      rethrow;
+    } catch (e) {
+      debugPrint('loginUser error: $e');
+      rethrow;
     }
   }
 
