@@ -151,6 +151,23 @@ class AuthProviders with ChangeNotifier {
     }
   }
 
+  UserModel _fallbackUser(User firebaseUser, String email) {
+    return UserModel(
+      userId: firebaseUser.uid,
+      email: firebaseUser.email ?? email,
+      displayName: firebaseUser.displayName ?? 'Player',
+      phone: firebaseUser.phoneNumber ?? '',
+      avatar: firebaseUser.photoURL ?? '',
+      isActive: true,
+      userType: 'player',
+      joinDate: DateTime.now(),
+      invitationCode: '',
+      invitedBy: '',
+      preferences: {},
+      statistics: const {},
+    );
+  }
+
   // Method used by the new screens — real Firebase auth.
   // Optional debug bypass: --dart-define=BYPASS_AUTH=true (debug builds only).
   Future<bool> loginUser(String email, String password) async {
@@ -188,25 +205,18 @@ class AuthProviders with ChangeNotifier {
 
       final firebaseUser = credential.user;
       if (firebaseUser != null) {
-        final doc =
-            await _firestore.collection('users').doc(firebaseUser.uid).get();
-        if (doc.exists) {
-          _user = UserModel.fromFirestore(doc);
-        } else {
-          _user = UserModel(
-            userId: firebaseUser.uid,
-            email: firebaseUser.email ?? email.trim(),
-            displayName: firebaseUser.displayName ?? 'Player',
-            phone: firebaseUser.phoneNumber ?? '',
-            avatar: firebaseUser.photoURL ?? '',
-            isActive: true,
-            userType: 'player',
-            joinDate: DateTime.now(),
-            invitationCode: '',
-            invitedBy: '',
-            preferences: {},
-            statistics: const {},
-          );
+        try {
+          final doc =
+              await _firestore.collection('users').doc(firebaseUser.uid).get();
+          if (doc.exists) {
+            _user = UserModel.fromFirestore(doc);
+          } else {
+            _user = _fallbackUser(firebaseUser, email.trim());
+          }
+        } catch (e) {
+          // Firestore rules may block profile read — Auth still succeeded.
+          debugPrint('loginUser: profile load failed ($e), using Auth fallback');
+          _user = _fallbackUser(firebaseUser, email.trim());
         }
       }
       notifyListeners();

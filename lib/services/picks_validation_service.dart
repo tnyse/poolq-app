@@ -32,6 +32,26 @@ class PicksValidationService {
     return false;
   }
 
+  /// Build gameId → picked team from a flat list of team abbreviations.
+  static Map<String, String> mapFromAbbreviationPicks(
+    List<Map<String, dynamic>> games,
+    List<String> abbreviationPicks,
+  ) {
+    final picks = abbreviationPicks.map((p) => p.trim()).toSet();
+    final mapped = <String, String>{};
+    for (final game in games) {
+      final home = game['abbreviation']?.toString().trim() ?? '';
+      final away = game['abbreviation2']?.toString().trim() ?? '';
+      final gameId = '${home}_vs_${away}_${game['date']}';
+      if (home.isNotEmpty && picks.contains(home)) {
+        mapped[gameId] = home;
+      } else if (away.isNotEmpty && picks.contains(away)) {
+        mapped[gameId] = away;
+      }
+    }
+    return mapped;
+  }
+
   /// Validate picks and return detailed result
   PicksValidationResult _validatePicks(
     List<Map<String, dynamic>> games,
@@ -41,22 +61,28 @@ class PicksValidationService {
     List<String> missingGames = [];
     List<String> completedGames = [];
     
-    // Check each game for picks
+    // Check each game for picks (by gameId map OR by team abbreviation values)
+    final pickedTeams = userPicks.values.map((v) => v.trim()).toSet();
     for (int i = 0; i < games.length; i++) {
       final game = games[i];
-      final homeTeam = game['abbreviation'] ?? '';
-      final awayTeam = game['abbreviation2'] ?? '';
+      final homeTeam = game['abbreviation']?.toString().trim() ?? '';
+      final awayTeam = game['abbreviation2']?.toString().trim() ?? '';
       final gameId = '${homeTeam}_vs_${awayTeam}_${game['date']}';
+      final label = '$awayTeam @ $homeTeam';
+
+      final hasPick = userPicks.containsKey(gameId) ||
+          pickedTeams.contains(homeTeam) ||
+          pickedTeams.contains(awayTeam);
       
-      if (userPicks.containsKey(gameId)) {
-        completedGames.add('${awayTeam} @ ${homeTeam}');
+      if (hasPick) {
+        completedGames.add(label);
       } else {
-        missingGames.add('Game ${i + 1}: ${awayTeam} @ ${homeTeam}');
+        missingGames.add('Game ${i + 1}: $label');
       }
     }
     
     // Check tiebreaker
-    final hasTiebreaker = tiebreakerValue.isNotEmpty;
+    final hasTiebreaker = tiebreakerValue.trim().isNotEmpty;
     
     return PicksValidationResult(
       isValid: missingGames.isEmpty && hasTiebreaker,
@@ -207,37 +233,32 @@ class PicksValidationService {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: validationResult.missingGames.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.error,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  validationResult.missingGames[index],
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppTheme.error,
-                                  ),
-                                ),
-                              ),
-                            ],
+                  // Column (not ListView) — AlertDialog + scroll view can't
+                  // measure ListView/viewport intrinsic height.
+                  ...validationResult.missingGames.map(
+                    (gameLabel) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: AppTheme.error,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
                           ),
-                        );
-                      },
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              gameLabel,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

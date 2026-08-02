@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+
+    // App config — public read (loaded at startup before auth); admins update
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Invitation codes — validate on register (read); admin manages writes in Console for PRE
+    match /invites/{inviteId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Picks — one doc per uid_week; owner write, signed-in read, admin verify
+    match /pickrecord/{pickId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+      allow update: if isSignedIn() && (
+        request.resource.data.uid == request.auth.uid || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /payment_tracking/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    match /admin_notifications/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Legacy / ancillary collections used by current UI
+    match /Pick/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /paymentMethod/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /leaderboard_record/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /game_results/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /disqualified_entries/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /user_notifications/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

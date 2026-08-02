@@ -169,11 +169,12 @@ class _HomePageState extends State<HomePage> {
         debugPrint('HomePage: Demo mode - using Stream.empty() for pick stream');
         _pickrecord = Stream.empty();
       } else {
-        // Real user - use Firebase stream
+        // Real user — query pickrecord by uid + week (matches PaymentService docs)
+        final weekName = dataProvider.game?['name'] ?? 'PRE1';
         _pickrecord = FirebaseFirestore.instance
-            .collection("Pick")
-            .where("week", isEqualTo: dataProvider.game!['name'])
-            .where("user", isEqualTo: user.email)
+            .collection('pickrecord')
+            .where('uid', isEqualTo: user.uid)
+            .where('week', isEqualTo: weekName)
             .snapshots();
       }
     }
@@ -302,7 +303,23 @@ class _HomePageState extends State<HomePage> {
           
           if (snapshot.hasError) {
             debugPrint('HomePage: StreamBuilder error: ${snapshot.error}');
-            return const Center(child: Text('Something went wrong'));
+            // Don't block the app — show main tabs even if picks stream fails.
+            return PageView(
+              controller: _controller,
+              onPageChanged: (index) {
+                if (mounted) {
+                  dataProvider.setValue(index);
+                }
+              },
+              children: [
+                HomePageWidget(
+                  controller: _controller,
+                  isEmpty: true,
+                ),
+                const LeaderboardWidget(),
+                const UserProfile(),
+              ],
+            );
           }
 
           // For demo mode, always show the content regardless of stream state

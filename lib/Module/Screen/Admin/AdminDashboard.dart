@@ -296,6 +296,15 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
+        actions: [
+          IconButton(
+            tooltip: 'Players & Payments',
+            icon: const Icon(Icons.people),
+            onPressed: () {
+              Navigator.pushNamed(context, '/admin-players');
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

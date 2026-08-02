@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:poolqapp/services/local_schedule_service.dart';
 
 class GameEnforcementService {
   static final GameEnforcementService _instance = GameEnforcementService._internal();
@@ -8,6 +10,28 @@ class GameEnforcementService {
   GameEnforcementService._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LocalScheduleService _localSchedule = LocalScheduleService();
+
+  /// First game kickoff for [weekName], or null if unknown.
+  Future<DateTime?> getFirstKickoff(String weekName) =>
+      _localSchedule.getFirstKickoff(weekName);
+
+  /// True if picks may still be submitted/edited (before first kickoff).
+  Future<bool> isPickingAllowed(String weekName) async {
+    final kickoff = await getFirstKickoff(weekName);
+    if (kickoff == null) {
+      debugPrint(
+        'GameEnforcementService: no kickoff for $weekName — allowing picks',
+      );
+      return true;
+    }
+    final allowed = DateTime.now().toUtc().isBefore(kickoff.toUtc());
+    debugPrint(
+      'GameEnforcementService: isPickingAllowed($weekName)=$allowed '
+      'kickoff=${kickoff.toUtc()}',
+    );
+    return allowed;
+  }
 
   /// Check and disqualify unpaid entrants for weeks where games have started
   Future<void> enforcePaymentDeadlines() async {
@@ -74,9 +98,9 @@ class GameEnforcementService {
   /// Check local schedule file for game start times
   Future<bool?> _checkLocalSchedule(String week) async {
     try {
-      // This would need to load the local JSON file
-      // For now, return null to indicate we should check ESPN
-      return null;
+      final kickoff = await _localSchedule.getFirstKickoff(week);
+      if (kickoff == null) return null;
+      return !DateTime.now().toUtc().isBefore(kickoff.toUtc());
     } catch (e) {
       print('Error checking local schedule: $e');
       return null;

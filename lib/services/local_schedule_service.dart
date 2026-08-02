@@ -46,6 +46,46 @@ class LocalScheduleService {
     }
   }
 
+  /// Earliest kickoff (UTC) for a week from raw schedule JSON.
+  Future<DateTime?> getFirstKickoff(String weekName) async {
+    try {
+      final jsonString = await _loadScheduleJson();
+      final scheduleData = json.decode(jsonString);
+      final weekGames = scheduleData['weeks']?[weekName];
+      if (weekGames is! List || weekGames.isEmpty) return null;
+
+      DateTime? earliest;
+      for (final game in weekGames) {
+        final dateStr = game['date']?.toString();
+        if (dateStr == null || dateStr.isEmpty) continue;
+        final kickoff = DateTime.tryParse(dateStr);
+        if (kickoff == null) continue;
+        if (earliest == null || kickoff.isBefore(earliest)) {
+          earliest = kickoff;
+        }
+      }
+      return earliest;
+    } catch (e) {
+      debugPrint('LocalScheduleService: getFirstKickoff error: $e');
+      return null;
+    }
+  }
+
+  /// Available week keys in the bundled schedule (sorted).
+  Future<List<String>> listWeeks() async {
+    try {
+      final jsonString = await _loadScheduleJson();
+      final scheduleData = json.decode(jsonString);
+      final weeks = scheduleData['weeks'];
+      if (weeks is! Map) return const ['PRE1'];
+      final keys = weeks.keys.map((k) => k.toString()).toList();
+      keys.sort();
+      return keys;
+    } catch (_) {
+      return const ['PRE1', 'PRE2', 'PRE3'];
+    }
+  }
+
   /// Get current week information
   Future<Map<String, dynamic>?> getCurrentWeek() async {
     try {

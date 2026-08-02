@@ -11,6 +11,7 @@ import 'package:poolqapp/Module/Screen/Home/rule.dart';
 import '../../../services/nfl_schedule_service.dart';
 import '../../../services/game_state_service.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/services/app_config_service.dart';
 import 'package:poolqapp/services/picks_validation_service.dart';
 
 
@@ -116,15 +117,12 @@ class _PlayWidgetState extends State<PlayWidget> {
       return _buildModernPicksScreen(context, dataProvider);
     }
 
+    final weekName = dataProvider.game?['name']?.toString() ?? '';
+    final showPreBanner = weekName.startsWith('PRE') &&
+        (AppConfigService().preseasonFree ||
+            AppConfigService().isPreseasonFreeWeek);
+
     return Scaffold(
-        // bottomNavigationBar: Container(
-        //     color: Colors.white,
-        //     child: kIsWeb?AdmobBanner(
-        //       adUnitId: Provider.of<DataProvider>(context, listen: false)
-        //           .getBannerAdUnitId().toString(),
-        //       adSize: AdmobBannerSize.BANNER,
-        //       listener: (AdmobAdEvent event, Map<String, dynamic> ?args) {},
-        //     ):Container()),
         key: scaffoldKey,
         backgroundColor: Colors.white,
         body: Container(
@@ -141,6 +139,24 @@ class _PlayWidgetState extends State<PlayWidget> {
                   fit: BoxFit.cover,
                 ),
               ),
+              if (showPreBanner)
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 8,
+                  left: 12,
+                  right: 12,
+                  child: Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(10),
+                    color: AppTheme.primaryBlue,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      child: Text(
+                        'Preseason — picks are free to enter. Play and learn how the pool works!',
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ),
               Container(
                 width: MediaQuery.of(context).size.width,
                 height: 150,
@@ -859,22 +875,22 @@ class _PlayWidgetState extends State<PlayWidget> {
                                   // Use enhanced validation service for better UX
                                   final validationService = PicksValidationService();
                                   
-                                  // Convert playerPicks list to map format for validation
-                                  Map<String, String> userPicksMap = {};
-                                  if (dataProvider.playerPicks != null) {
-                                    for (String pick in dataProvider.playerPicks!) {
-                                      if (pick.contains(':')) {
-                                        List<String> parts = pick.split(':');
-                                        if (parts.length == 2) {
-                                          userPicksMap[parts[0]] = parts[1];
-                                        }
-                                      }
-                                    }
-                                  }
+                                  // playerPicks is a flat list of team abbreviations
+                                  final gamesForValidation =
+                                      List<Map<String, dynamic>>.from(
+                                    data!.whereType<Map>().map(
+                                          (g) => Map<String, dynamic>.from(g),
+                                        ),
+                                  );
+                                  final userPicksMap =
+                                      PicksValidationService.mapFromAbbreviationPicks(
+                                    gamesForValidation,
+                                    dataProvider.playerPicks ?? const [],
+                                  );
                                   
                                   await validationService.validateAndShowAlert(
                                     context: context,
-                                    games: List<Map<String, dynamic>>.from(data!),
+                                    games: gamesForValidation,
                                     userPicks: userPicksMap,
                                     tiebreakerValue: tieBreakerController.text,
                                     onFixPicks: () {
@@ -917,48 +933,41 @@ class _PlayWidgetState extends State<PlayWidget> {
 
   bool _validateAllGamesPicked() {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
-    // Debug logging
-    print('Validating picks: ${dataProvider.playerPicks}');
-    print('Total picks: ${dataProvider.playerPicks!.length}');
-    print('Expected games: ${data!.length}');
-    
-    if (dataProvider.playerPicks == null || dataProvider.playerPicks!.isEmpty) {
-      print('No picks found');
+    final picks = (dataProvider.playerPicks ?? [])
+        .map((p) => p.toString().trim())
+        .toSet();
+
+    print('Validating picks: $picks');
+    print('Total picks: ${picks.length}');
+    print('Expected games: ${data?.length}');
+
+    if (data == null || data!.isEmpty || picks.isEmpty) {
+      print('No picks or games found');
       return false;
     }
-    
-    // Get all valid team names from the actual game data
-    Set<String> allValidTeams = {};
-    for (var game in data!) {
-      // Add both abbreviations and full team names from the game data
-      if (game['abbreviation'] != null) allValidTeams.add(game['abbreviation'].toString().trim());
-      if (game['abbreviation2'] != null) allValidTeams.add(game['abbreviation2'].toString().trim());
-      if (game['home'] != null) allValidTeams.add(game['home'].toString().trim());
-      if (game['away'] != null) allValidTeams.add(game['away'].toString().trim());
-    }
-    
-    print('All valid teams from game data: ${allValidTeams.toList()}');
-    
-    // Remove duplicates and clean up the picks list
-    Set<String> uniquePicks = {};
-    for (String pick in dataProvider.playerPicks!) {
-      String cleanPick = pick.trim();
-      // Only add if this team is actually in the valid teams
-      if (allValidTeams.contains(cleanPick)) {
-        uniquePicks.add(cleanPick);
+
+    // One pick per game: home OR away abbreviation must be in picks
+    int pickedGames = 0;
+    final missing = <String>[];
+    for (final raw in data!) {
+      if (raw is! Map) continue;
+      final home = raw['abbreviation']?.toString().trim() ?? '';
+      final away = raw['abbreviation2']?.toString().trim() ?? '';
+      final hasPick =
+          (home.isNotEmpty && picks.contains(home)) ||
+          (away.isNotEmpty && picks.contains(away));
+      if (hasPick) {
+        pickedGames++;
+      } else {
+        missing.add('$away @ $home');
       }
     }
-    
-    print('Valid unique picks: ${uniquePicks.toList()}');
-    print('Unique picks count: ${uniquePicks.length}');
-    print('Games to pick: ${data!.length}');
-    
-    // Check if we have exactly one pick per game
-    bool isValid = uniquePicks.length == data!.length;
-    
+
+    final gameCount = data!.whereType<Map>().length;
+    final isValid = pickedGames == gameCount && missing.isEmpty;
+    print('Picked games: $pickedGames / $gameCount');
+    if (missing.isNotEmpty) print('Missing: $missing');
     print('Validation result: $isValid');
-    
     return isValid;
   }
 

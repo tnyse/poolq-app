@@ -54,4 +54,16 @@ class AppConfigService {
 
   bool get isPreseasonFreeWeek =>
       preseasonFree && activeWeek.startsWith('PRE');
+
+  /// Persist active week (admin). Updates local cache on success.
+  Future<void> setActiveWeek(String weekName) async {
+    await _firestore.collection('config').doc('appConfig').set({
+      'activeWeek': weekName,
+      'currentSeason': currentSeason,
+      'preseasonFree': preseasonFree,
+      'paymentDeadlineHours': paymentDeadlineHours,
+    }, SetOptions(merge: true));
+    activeWeek = weekName;
+    debugPrint('AppConfigService: activeWeek set to $weekName');
+  }
 }

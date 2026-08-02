@@ -13,6 +13,7 @@ import '../../../Model/pick_model.dart';
 import '../../../screens/results_announcement_page.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/services/app_config_service.dart';
+import 'package:poolqapp/services/game_enforcement_service.dart';
 import 'package:poolqapp/services/payment_service.dart';
 import '../../../widgets/payment/payment_prompt_modal.dart';
 
@@ -177,12 +178,16 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                     builder: (BuildContext context,
                         AsyncSnapshot<DocumentSnapshot> snapshot2) {
                       if (snapshot2.hasError) {
-                        return Center(child: Text('Something went wrong'));
+                        debugPrint(
+                          'PlayerPicksWidget: paymentMethod stream error: ${snapshot2.error}',
+                        );
+                        // Continue — payment method doc is optional for review UI.
                       }
 
+                      // Only block on first wait; missing paymentMethod doc is OK.
                       if (snapshot2.connectionState ==
-                              ConnectionState.waiting ||
-                          snapshot2.data == null) {
+                              ConnectionState.waiting &&
+                          !snapshot2.hasData) {
                         return Center(
                             child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -198,7 +203,6 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                       Color(0xFF063a73)),
                                   strokeWidth: 2,
                                   backgroundColor: Colors.white,
-                                  //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
                                 )),
                             SizedBox(
                               height: 10,
@@ -394,16 +398,21 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                 children: [
                                   // Picks list
                                   ...((dataProvider?.playerPicks ?? []).asMap().entries.map((e) {
-                                    final abbr = e.value;
-                                    // Try to find the full team name from the schedule data
+                                    final abbr = e.value?.toString() ?? '';
+                                    // dataProvider.data is often date labels, not games —
+                                    // only read Map rows that look like schedule games.
                                     String teamName = '';
-                                    if (dataProvider?.data != null) {
-                                      for (var game in dataProvider!.data!) {
-                                        if (game['abbreviation'] == abbr) {
-                                          teamName = game['home'] ?? '';
+                                    final rows = dataProvider?.data;
+                                    if (rows != null) {
+                                      for (final row in rows) {
+                                        if (row is! Map) continue;
+                                        final game = Map<String, dynamic>.from(row as Map);
+                                        if (game['abbreviation']?.toString() == abbr) {
+                                          teamName = game['home']?.toString() ?? '';
                                           break;
-                                        } else if (game['abbreviation2'] == abbr) {
-                                          teamName = game['away'] ?? '';
+                                        }
+                                        if (game['abbreviation2']?.toString() == abbr) {
+                                          teamName = game['away']?.toString() ?? '';
                                           break;
                                         }
                                       }
@@ -532,6 +541,24 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
           ),
         );
         return;
+      }
+
+      final weekForGate = dataProvider.game?['name']?.toString() ?? '';
+      if (weekForGate.isNotEmpty) {
+        final allowed =
+            await GameEnforcementService().isPickingAllowed(weekForGate);
+        if (!allowed) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Picks are locked — $weekForGate games have already started.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
       }
       
       // Check if tiebreaker is provided
@@ -1177,25 +1204,22 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
 
   Future<void> _showPaymentPrompt(BuildContext context) async {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    final weekName = dataProvider.game?['name'] ?? 'REG1';
-    
-    // Get first game kickoff time (simplified - using a mock date)
-    final mockKickoffTime = DateTime.now().add(Duration(days: 2, hours: 13)); // Sunday 1 PM
-    
+    final weekName = dataProvider.game?['name'] ?? 'PRE1';
+    final kickoff =
+        await GameEnforcementService().getFirstKickoff(weekName);
+
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return PaymentPromptModal(
           weekName: weekName,
-          kickoffTime: mockKickoffTime,
+          kickoffTime: kickoff,
           onPaymentComplete: () {
-            // Payment completed - continue with submission
-            print('Payment completed for $weekName');
+            debugPrint('Payment completed for $weekName');
           },
           onSkipPayment: () {
-            // Skip payment (demo mode)
-            print('Payment skipped for $weekName (demo mode)');
+            debugPrint('Payment skipped for $weekName');
           },
         );
       },

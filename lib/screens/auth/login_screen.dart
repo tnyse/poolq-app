@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:poolqapp/services/navigation_service.dart';
@@ -140,6 +141,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       if (mounted) {
         _navigationService.navigateAndRemoveUntil(context, HomePage());
       }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message ?? e.code;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');

@@ -49,13 +49,19 @@ class DataProvider with ChangeNotifier {
   }
 
   removeFromPlayerPicks(value) {
-    playerPicks!.remove(value);
+    final team = value?.toString().trim() ?? '';
+    if (team.isEmpty || playerPicks == null) return;
+    playerPicks!.removeWhere((p) => p.toString().trim() == team);
     notifyListeners();
   }
 
   addToPlayerPicks(value) {
-    playerPicks!.add(value);
-    playerPicks = playerPicks;
+    final team = value?.toString().trim() ?? '';
+    if (team.isEmpty) return;
+    playerPicks ??= [];
+    if (!playerPicks!.contains(team)) {
+      playerPicks!.add(team);
+    }
     notifyListeners();
   }
 
