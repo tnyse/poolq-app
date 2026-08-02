@@ -1,0 +1,30 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "game_results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "weekName", "order": "ASCENDING" },
+        { "fieldPath": "gameDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pickrecord",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "week", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" },
+        { "fieldPath": "tiebreakerDiff", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pickrecord",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "week", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
