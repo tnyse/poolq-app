@@ -19,6 +19,9 @@ import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/firebase_options.dart';
 import 'package:poolqapp/screens/auth/login_screen.dart';
 import 'package:poolqapp/screens/landing_page.dart';
+import 'screens/admin/admin_players_page.dart';
+import 'package:poolqapp/screens/front_page.dart';
+import 'package:poolqapp/constants/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,14 +88,12 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'PoolQ',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          useMaterial3: true,
-        ),
+        theme: AppTheme.lightTheme,
         home: const LandingPage(),
         routes: {
           '/home': (context) => HomePage(),
+          '/front': (context) => const FrontPage(),
+        '/admin-players': (context) => const AdminPlayersPage(),
           '/login': (context) => const LoginScreen(),
           '/register': (context) => RegisterScreen(),
           '/admin': (context) => const AdminLogin(),

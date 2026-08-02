@@ -10,6 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
 import '../../../services/nfl_schedule_service.dart';
 import '../../../services/game_state_service.dart';
+import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/services/picks_validation_service.dart';
 
 
 class PlayWidget extends StatefulWidget {
@@ -24,6 +26,7 @@ class _PlayWidgetState extends State<PlayWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
   List? data;
+  bool _useMultipageUI = false; // Flag to enable new multipage UI
 
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
@@ -41,18 +44,13 @@ class _PlayWidgetState extends State<PlayWidget> {
         dataProvider.game!["name"]
       );
       if (games.isNotEmpty) {
-        // CRITICAL: Hide scores during picking phase
-        List<Map<String, dynamic>> sanitizedGames = _gameStateService.sanitizeGamesList(
-          games,
-          screenContext: 'play',
-          isPickingPhase: true,
-        );
+        // Use raw games data directly (same as classic view)
         
         setState(() {
-          data = sanitizedGames;
+          data = games;
         });
         print("Successfully loaded [32m${games.length}[0m games from local file");
-        return sanitizedGames;
+        return games;
       } else {
         throw Exception('No games data available from local file');
       }
@@ -112,6 +110,11 @@ class _PlayWidgetState extends State<PlayWidget> {
     // context.watch<FFAppState>();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: true);
+
+    // Use new multipage UI if enabled
+    if (_useMultipageUI) {
+      return _buildModernPicksScreen(context, dataProvider);
+    }
 
     return Scaffold(
         // bottomNavigationBar: Container(
@@ -853,20 +856,30 @@ class _PlayWidgetState extends State<PlayWidget> {
                                   // if (_shouldSetState) setState(() {});
                                   // return;
                                 } else if (!_validateAllGamesPicked()) {
-                                  await showDialog(
+                                  // Use enhanced validation service for better UX
+                                  final validationService = PicksValidationService();
+                                  
+                                  // Convert playerPicks list to map format for validation
+                                  Map<String, String> userPicksMap = {};
+                                  if (dataProvider.playerPicks != null) {
+                                    for (String pick in dataProvider.playerPicks!) {
+                                      if (pick.contains(':')) {
+                                        List<String> parts = pick.split(':');
+                                        if (parts.length == 2) {
+                                          userPicksMap[parts[0]] = parts[1];
+                                        }
+                                      }
+                                    }
+                                  }
+                                  
+                                  await validationService.validateAndShowAlert(
                                     context: context,
-                                    builder: (alertDialogContext) {
-                                      return AlertDialog(
-                                        content: Text(
-                                            'some games have not been picked'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text('Ok'),
-                                          ),
-                                        ],
-                                      );
+                                    games: List<Map<String, dynamic>>.from(data!),
+                                    userPicks: userPicksMap,
+                                    tiebreakerValue: tieBreakerController.text,
+                                    onFixPicks: () {
+                                      // Scroll to top to help user find missing picks
+                                      // Could enhance this further by highlighting missing games
                                     },
                                   );
                                 } else {
@@ -947,5 +960,188 @@ class _PlayWidgetState extends State<PlayWidget> {
     print('Validation result: $isValid');
     
     return isValid;
+  }
+
+  /// Classic picks screen with multipage UI and original styling
+  Widget _buildModernPicksScreen(BuildContext context, DataProvider dataProvider) {
+    return Scaffold(
+      key: scaffoldKey,
+      backgroundColor: Colors.white,
+      body: data == null
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.blue),
+            )
+          : data!.isEmpty
+              ? _buildEmptyState()
+              : Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height * 1,
+                  child: Stack(
+                    children: [
+                      // Original background image
+                      Align(
+                        alignment: AlignmentDirectional(0, 0),
+                        child: Image.asset(
+                          'assets/images/assets.aboutamazon.jpg',
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.height * 1,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      // Header with original styling
+                      Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: Color(0x43EEEEEE),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsetsDirectional.fromSTEB(0, 12, 0, 0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(20, 20, 120, 0),
+                                    child: Image.asset(
+                                      'assets/images/poolq12.png',
+                                      width: 67,
+                                      height: 90,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        print('Error loading logo: $error');
+                                        return Container(
+                                          width: 67,
+                                          height: 90,
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(Icons.sports_football, color: Colors.white, size: 40),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  // Back button
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
+                                    child: IconButton(
+                                      icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                                      onPressed: () => Navigator.of(context).pop(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Multipage content with original styling
+                      Positioned(
+                        top: 150,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Classic UI Mode Active',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.sports_football,
+              size: 64,
+              color: AppTheme.onSurfaceVariant.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Games Available',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: AppTheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'There are no games scheduled for this week.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppTheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handlePicksSubmission() async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    
+    // Use classic validation logic
+    if (tieBreakerController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a tiebreaker score'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    if (!_validateAllGamesPicked()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please make picks for all games'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // Proceed with submission using classic logic
+    dataProvider.tiebreaker = int.parse(tieBreakerController.text);
+    dataProvider.amount = await dataProvider.countGames(
+      dataProvider.playerPicks!.toList(),
+    );
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlayerPicksWidget(),
+      ),
+    );
   }
 }

@@ -17,6 +17,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/picked.dart';
 import 'Play.dart';
 import '../../../services/nfl_schedule_service.dart';
+import '../../../services/leaderboard_privacy_service.dart';
+import '../../../widgets/player/player_picks_modal.dart';
+import '../../../services/player_eligibility_service.dart';
 // import 'package:poolqapp/Widget/reuse.dart';
 // import 'package:google_fonts/google_fonts.dart';
 //import 'package:admob_flutter/admob_flutter.dart';
@@ -30,7 +33,7 @@ class LeaderboardWidget extends StatefulWidget {
 
 class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   // late LeaderboardModel _model;
-  User? user = FirebaseAuth.instance.currentUser;
+  User? user;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final _unfocusNode = FocusNode();
   // final Stream<QuerySnapshot> _leaderboard_recordStream =
@@ -41,6 +44,8 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   List? normal_data;
   var particularData;
   bool? played;
+  final LeaderboardPrivacyService _privacyService = LeaderboardPrivacyService();
+  final PlayerEligibilityService _eligibilityService = PlayerEligibilityService();
 
   Future<void> _showPaymentModal(BuildContext context) async {
     await showDialog(
@@ -60,6 +65,15 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
               SelectableText('PayPal: poolq.payments@gmail.com'),
               SelectableText('Zelle: poolq.payments@gmail.com'),
               SelectableText('Cash App: \$PoolQPayments'),
+              SizedBox(height: 12),
+              Text(
+                'Your picks will be submitted but will be ineligible if payment is not received before kickoff',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -77,7 +91,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                   ),
                 );
               },
-              child: const Text('Continue to Entry'),
+              child: const Text('Confirm'),
             ),
           ],
         );
@@ -189,19 +203,23 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     
     // Check if we're in demo mode
     print('LeaderboardWidget: Checking demo mode - user = ${user?.email ?? "null"}');
+    print('LeaderboardWidget: user == null: ${user == null}');
+    print('LeaderboardWidget: user?.email == demo@poolq.com: ${user?.email == 'demo@poolq.com'}');
     if (user == null || user?.email == 'demo@poolq.com') {
       print('LeaderboardWidget: Demo mode detected, using hardcoded demo data instead of Firestore');
       
+      // Define weekName outside try block so it's accessible in catch block
+      final weekName = "${dataProvider.game!["mode"]}${selectedValue}";
+      
       try {
         // Use hardcoded demo leaderboard data to avoid Firestore permission issues
-        final weekName = "${dataProvider.game!["mode"]}${selectedValue}";
         
         print('LeaderboardWidget: Creating hardcoded demo leaderboard for week $weekName');
         
         List<Map<String, dynamic>> demoLeaderboard = [];
         
         // Determine if this week is completed (has final scores) or in progress
-        final isWeekCompleted = weekName == 'REG1'; // REG1 has completed games with scores
+        final isWeekCompleted = false; // No weeks are completed yet - scores should be hidden
         final isCurrentWeek = weekName == 'REG1'; // REG1 is the current picking week
         
         // Add single demo user entry (the actual user) - only ONE entry
@@ -215,15 +233,16 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           "rank": isWeekCompleted ? 5 : 1, // Rank based on completion status
           "week": weekName,
           "hasSubmittedPicks": !isCurrentWeek,
+          "paymentStatus": "verified", // Demo user is always verified
         };
         demoLeaderboard.add(currentDemoUser);
         
         // Add AI players with proper Week 1 2025 picks and scores
         final samplePlayers = [
-          {"uid": "demo_mike", "displayName": "Mike Johnson", "score": isWeekCompleted ? 12 : 0, "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"], "tiebreaker": 24},
-          {"uid": "demo_jessica", "displayName": "Jessica Chen", "score": isWeekCompleted ? 11 : 0, "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], "tiebreaker": 17},
-          {"uid": "demo_alex", "displayName": "Alex Rodriguez", "score": isWeekCompleted ? 10 : 0, "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"], "tiebreaker": 19},
-          {"uid": "demo_emma", "displayName": "Emma Thompson", "score": isWeekCompleted ? 9 : 0, "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], "tiebreaker": 22},
+          {"uid": "demo_mike", "displayName": "Mike Johnson", "score": isWeekCompleted ? 12 : 0, "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"], "tiebreaker": 24, "paymentStatus": "verified"},
+          {"uid": "demo_jessica", "displayName": "Jessica Chen", "score": isWeekCompleted ? 11 : 0, "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], "tiebreaker": 17, "paymentStatus": "pending"},
+          {"uid": "demo_alex", "displayName": "Alex Rodriguez", "score": isWeekCompleted ? 10 : 0, "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"], "tiebreaker": 19, "paymentStatus": "verified"},
+          {"uid": "demo_emma", "displayName": "Emma Thompson", "score": isWeekCompleted ? 9 : 0, "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"], "tiebreaker": 22, "paymentStatus": "unpaid"},
         ];
         
         for (int i = 0; i < samplePlayers.length; i++) {
@@ -237,6 +256,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             "tiebreaker": player["tiebreaker"],
             "rank": i + 2, // Start from rank 2 since current user is rank 1
             "week": weekName,
+            "paymentStatus": player["paymentStatus"],
           });
         }
         
@@ -253,13 +273,13 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
         });
         
         print('Successfully loaded ${demoLeaderboard.length} demo leaderboard entries (no Firestore query in demo mode)');
+        print('Demo leaderboard entries: ${demoLeaderboard.map((e) => e['displayName']).toList()}');
         return demoLeaderboard;
       } catch (e) {
         print('Error fetching demo entries, using fallback: $e');
         
         // Fallback: Use same logic as above to avoid duplicates
-        final fallbackWeekName = "${dataProvider.game!["mode"]}${selectedValue}";
-        final isWeekCompletedFallback = fallbackWeekName == 'REG1';
+        final isWeekCompletedFallback = false; // No weeks are completed yet - scores should be hidden
         List<Map<String, dynamic>> fallbackLeaderboard = [
           {
             "uid": "demo_user_current",
@@ -269,7 +289,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             "picks": isWeekCompletedFallback ? ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"] : [],
             "tiebreaker": isWeekCompletedFallback ? 50 : null,
             "rank": isWeekCompletedFallback ? 5 : 1,
-            "week": fallbackWeekName,
+            "week": weekName,
             "hasSubmittedPicks": isWeekCompletedFallback,
           },
           {
@@ -280,7 +300,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"],
             "tiebreaker": 24,
             "rank": isWeekCompletedFallback ? 1 : 2,
-            "week": fallbackWeekName,
+            "week": weekName,
           },
           {
             "uid": "demo_jessica",
@@ -290,7 +310,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"],
             "tiebreaker": 17,
             "rank": isWeekCompletedFallback ? 2 : 3,
-            "week": fallbackWeekName,
+            "week": weekName,
           },
           {
             "uid": "demo_alex",
@@ -300,7 +320,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             "picks": ["PHI", "KC", "TB", "PIT", "MIA", "CAR", "NYG", "NO", "CLE", "NE", "SEA", "TEN", "DET", "HOU", "BAL"],
             "tiebreaker": 19,
             "rank": isWeekCompletedFallback ? 3 : 4,
-            "week": fallbackWeekName,
+            "week": weekName,
           },
           {
             "uid": "demo_emma",
@@ -310,7 +330,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             "picks": ["DAL", "LAC", "ATL", "NYJ", "IND", "JAX", "WAS", "ARI", "CIN", "SF", "LV", "DEN", "GB", "LAR", "BUF"],
             "tiebreaker": 22,
             "rank": isWeekCompletedFallback ? 4 : 5,
-            "week": fallbackWeekName,
+            "week": weekName,
           },
         ];
         
@@ -375,6 +395,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   @override
   void initState() {
     super.initState();
+    user = FirebaseAuth.instance.currentUser;
     print('🌟🌟🌟🌟🌟 LEADERBOARD WIDGET INITSTATE CALLED! 🌟🌟🌟🌟🌟');
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
@@ -638,7 +659,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                     print('Error checking local storage: $e');
                                   }
                                 }
-                                final label = hasEntry ? 'Edit Picks' : 'Play Now';
+                                final label = hasEntry ? 'Edit Picks' : 'Confirm';
                                 return ElevatedButton(
                                   onPressed: () async {
                                     if (!hasEntry) {
@@ -1008,7 +1029,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                         0,
                                                                         2),
                                                             child: Text(
-                                                              'Score  ${'${data![index]['score']}'}'
+                                                              _privacyService.getScoreDisplayText(
+                                                                data![index],
+                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
+                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
+                                                              )
                                                                   .toUpperCase(),
                                                               textAlign:
                                                                   TextAlign.end,
@@ -1038,57 +1063,46 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                         onTap: () {
                                           final rowUserId = data![index]["uid"];
                                           final playerName = data![index]["displayName"];
+                                          final currentUserHasSubmitted = _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>());
+                                          
                                           print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: ROW CLICKED - User clicked on player at index $index');
                                           print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: rowUserId=$rowUserId, currentUser=${user?.uid ?? 'demo_user'}');
                                           print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: Player name: $playerName');
                                           
-                                          // Show alert dialog to confirm click detection
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Text('🎯 Click Detected!'),
-                                                content: Text('You successfully clicked on "$playerName"! \n\nThe click handler is working correctly. \n\nWould you like to view their picks?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Close dialog
-                                                      
-                                                      // Then navigate based on original logic
-                                                      if (rowUserId == (user?.uid ?? 'demo_user')) {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) => EditPlayWidget(),
-                                                          ),
-                                                        );
-                                                      } else {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) => PickedWidget(
-                                                              userId: rowUserId,
-                                                              selectedValue: selectedValue,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }
-                                                    },
-                                                    child: Text('Yes, View Picks'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Just close dialog
-                                                    },
-                                                    child: Text('Cancel'),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
+                                          // Check if user can view this player's picks
+                                          if (!_privacyService.canViewPlayerPicks(rowUserId, currentUserHasSubmitted)) {
+                                            _privacyService.showRestrictedAccessDialog(context);
+                                            return;
+                                          }
+                                          
+                                          // Show player picks modal instead of navigating to separate page
+                                          if (rowUserId == (user?.uid ?? 'demo_user')) {
+                                            // For current user, navigate to edit page
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => EditPlayWidget(),
+                                              ),
+                                            );
+                                          } else {
+                                            // For other players, show picks modal
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return PlayerPicksModal(
+                                                  playerData: data![index],
+                                                  games: data2?.cast<Map<String, dynamic>>() ?? [],
+                                                  weekName: "${dataProvider.game!["mode"]}${selectedValue}",
+                                                  hidePrivateInfo: !currentUserHasSubmitted,
+                                                );
+                                              },
+                                            );
+                                          }
                                         },
-                                        child: Column(
-                                          children: [
+                                        child: _eligibilityService.applyEligibilityStyle(
+                                          isEligible: _eligibilityService.isPlayerEligible(data![index]),
+                                          child: Column(
+                                            children: [
                                             Padding(
                                               padding: EdgeInsetsDirectional
                                                   .fromSTEB(10, 0, 10, 10),
@@ -1276,7 +1290,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                         0,
                                                                         2),
                                                             child: Text(
-                                                              'Score  ${'${data![index]['score']}'}'
+                                                              _privacyService.getScoreDisplayText(
+                                                                data![index],
+                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
+                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
+                                                              )
                                                                   .toUpperCase(),
                                                               textAlign:
                                                                   TextAlign.end,
@@ -1300,6 +1318,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                               ),
                                             ),
                                           ],
+                                        ),
                                         ),
                                       );
                               },
@@ -1601,7 +1620,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                         0,
                                                                         2),
                                                             child: Text(
-                                                              'Score  ${'${data![index]['score']}'}'
+                                                              _privacyService.getScoreDisplayText(
+                                                                data![index],
+                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
+                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
+                                                              )
                                                                   .toUpperCase(),
                                                               textAlign:
                                                                   TextAlign.end,
@@ -2033,7 +2056,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                                                                             0,
                                                                             2),
                                                                 child: Text(
-                                                                  'Score  ${'${data![index]['score']}'}'
+                                                                  _privacyService.getScoreDisplayText(
+                                                                data![index],
+                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
+                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
+                                                              )
                                                                       .toUpperCase(),
                                                                   textAlign:
                                                                       TextAlign

@@ -12,6 +12,7 @@ import '../../../Model/pick_model.dart';
 import '../../../screens/results_announcement_page.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/services/payment_service.dart';
+import '../../../widgets/payment/payment_prompt_modal.dart';
 
 class PlayerPicksWidget extends StatefulWidget {
   const PlayerPicksWidget({
@@ -518,22 +519,42 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
     );
   }
 
-  Widget _buildImage(String? abbr, {double size = 40}) {
-    if (abbr == null || abbr.isEmpty) {
-      return Icon(
-        Icons.sports_football,
-        size: size,
-        color: primary,
-      );
-    }
-    return TeamLogo(
-      abbr: abbr,
-      size: size,
-    );
-  }
-
   Future<void> _savePicksAndProceedToPayment(BuildContext context, DataProvider? dataProvider) async {
     try {
+      // Validate picks before submission
+      if (dataProvider == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Data provider not available'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Check if tiebreaker is provided
+      if (dataProvider.tiebreaker == null || dataProvider.tiebreaker == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a tiebreaker score'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Check if all games are picked
+      final userPicks = dataProvider.playerPicks?.cast<String>() ?? [];
+      if (userPicks.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please make picks for all games'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
       // Show loading
       showDialog(
         context: context,
@@ -563,6 +584,32 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       // Check if dataProvider is null
       if (dataProvider == null) {
         throw Exception('Data provider is null');
+      }
+      
+      // Validation: Check if all games are picked and tiebreaker is provided
+      final submissionPicks = dataProvider.playerPicks ?? [];
+      final tiebreaker = dataProvider.tiebreaker?.toString() ?? "";
+      
+      if (submissionPicks.isEmpty) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please make picks for all games before submitting.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      if (tiebreaker.isEmpty || tiebreaker == "0") {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please enter a tiebreaker score before submitting.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
       }
 
       // Save picks with pending payment status
@@ -673,7 +720,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Your Picks for Week PRE1:',
+                        'Your Picks for Week ${dataProvider?.game?["name"]?.toString().replaceAll("REG", "").replaceAll("PRE", "") ?? "1"}:',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -709,39 +756,40 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                 
                 SizedBox(height: 20),
                 
-                // Demo mode notice
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.orange, size: 24),
-                      SizedBox(height: 8),
-                      Text(
-                        'Demo Mode',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                // Demo mode notice (only show for demo users)
+                if (user?.email == 'demo@poolq.com' || user == null)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.orange, size: 24),
+                        SizedBox(height: 8),
+                        Text(
+                          'Demo Mode',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'This is a demo account. Your picks will be saved to a local file.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.orange.shade700,
+                        SizedBox(height: 4),
+                        Text(
+                          'This is a demo account. Your picks will be saved locally for testing.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.orange.shade700,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 
                 SizedBox(height: 20),
                 
@@ -777,6 +825,34 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
 
   Future<void> _submitDemoPicks(BuildContext context) async {
     try {
+      // Validate picks before submission
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      
+      // Check if tiebreaker is provided
+      if (dataProvider?.tiebreaker == null || dataProvider?.tiebreaker == 0) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a tiebreaker score'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Check if all games are picked
+      final demoPicks = dataProvider?.playerPicks?.cast<String>() ?? [];
+      if (demoPicks.isEmpty) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please make picks for all games'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
       // Show loading dialog
       showDialog(
         context: context,
@@ -803,10 +879,33 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       // Get user and pick data
       final weekName = dataProvider?.game?['name'] ?? "REG1";
       final tiebreaker = dataProvider?.tiebreaker?.toString() ?? "0";
-      final picks = dataProvider?.playerPicks?.cast<String>() ?? [];
+      final demoSubmissionPicks = dataProvider?.playerPicks?.cast<String>() ?? [];
+      
+      // Validation: Check if all games are picked and tiebreaker is provided
+      if (demoSubmissionPicks.isEmpty) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please make picks for all games before submitting.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      if (tiebreaker == "0" || tiebreaker.isEmpty) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please enter a tiebreaker score before submitting.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       
       print('🎯 Starting 5-Player Simulation for $weekName');
-      print('User picks: ${picks.length} picks, tiebreaker: $tiebreaker');
+      print('User picks: ${demoSubmissionPicks.length} picks, tiebreaker: $tiebreaker');
 
       // Create user's pick model
       final userPick = PickModel(
@@ -814,7 +913,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
         userId: user?.uid ?? 'demo_user',
         displayName: user?.displayName ?? 'You',
         weekName: weekName,
-        picks: picks,
+        picks: demoSubmissionPicks,
         tiebreaker: int.tryParse(tiebreaker) ?? 0,
         submittedAt: DateTime.now(),
         paymentStatus: 'verified',
@@ -828,7 +927,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       final paymentService = PaymentService();
       try {
         await paymentService.savePicksAndCreatePaymentEntry(
-          picks: picks,
+          picks: demoSubmissionPicks,
           tiebreaker: tiebreaker,
           weekName: weekName,
         );
@@ -925,9 +1024,17 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       }
       
       await calculateScore(context);
-      Navigator.pop(context);
-      Navigator.pop(context);
-      Navigator.pop(context);
+      
+      // Show payment prompt first (skip for demo users)
+      if (user?.email != 'demo@poolq.com' && user != null) {
+        await _showPaymentPrompt(context);
+      }
+      
+      // Show confirmation modal before navigating
+      await _showEntryConfirmationModal(context);
+      
+      // Navigate to leaderboard
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -937,5 +1044,141 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
         ),
       );
     }
+  }
+
+  Future<void> _showEntryConfirmationModal(BuildContext context) async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final weekNumber = dataProvider.game?['name']?.toString().replaceAll('REG', '').replaceAll('PRE', '') ?? '1';
+    
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF4CAF50),
+                  Color(0xFF45A049),
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    size: 50,
+                    color: Colors.white,
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Title
+                Text(
+                  'Good Luck!',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  'Your picks for Week $weekNumber have been submitted successfully!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                Text(
+                  'May the best picks win! 🏆',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.8),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Close button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Color(0xFF4CAF50),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: Text(
+                      'View Leaderboard',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showPaymentPrompt(BuildContext context) async {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final weekName = dataProvider.game?['name'] ?? 'REG1';
+    
+    // Get first game kickoff time (simplified - using a mock date)
+    final mockKickoffTime = DateTime.now().add(Duration(days: 2, hours: 13)); // Sunday 1 PM
+    
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return PaymentPromptModal(
+          weekName: weekName,
+          kickoffTime: mockKickoffTime,
+          onPaymentComplete: () {
+            // Payment completed - continue with submission
+            print('Payment completed for $weekName');
+          },
+          onSkipPayment: () {
+            // Skip payment (demo mode)
+            print('Payment skipped for $weekName (demo mode)');
+          },
+        );
+      },
+    );
   }
 }

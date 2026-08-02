@@ -259,6 +259,25 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Color(0xFF063a73),
         foregroundColor: Colors.white,
         actions: [
+          Container(
+            margin: EdgeInsets.only(right: 8),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/front');
+              },
+              icon: Icon(Icons.article_outlined, size: 18),
+              label: Text('NFL News'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Color(0xFF063a73),
+                elevation: 2,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: Icon(Icons.info_outline),
             onPressed: () {
