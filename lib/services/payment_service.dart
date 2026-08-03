@@ -15,15 +15,35 @@ class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Single source of truth for payment handles (all UIs must use these).
-  static const String PAYPAL_EMAIL = 'poolq.payments@gmail.com';
-  static const String ZELLE_EMAIL = 'poolq.payments@gmail.com';
-  static const String CASHAPP_HANDLE = '\$PoolQPayments';
-  static const String VENMO_URL = 'https://venmo.com/u/PoolQPayments';
+  // Fallback constants when config not loaded yet.
+  static const String PAYPAL_EMAIL = AppConfigService.defaultPayPal;
+  static const String ZELLE_EMAIL = AppConfigService.defaultZelle;
+  static const String CASHAPP_HANDLE = AppConfigService.defaultCashApp;
+  static const String VENMO_URL = AppConfigService.defaultVenmo;
   static const double ENTRY_FEE = 10.0;
 
   // Admin notification email
   static const String ADMIN_EMAIL = 'admin@poolq.com';
+
+  String get zelleDestination {
+    final c = AppConfigService();
+    return c.isLoaded ? c.zelleDestination : ZELLE_EMAIL;
+  }
+
+  String get paypalDestination {
+    final c = AppConfigService();
+    return c.isLoaded ? c.paypalDestination : PAYPAL_EMAIL;
+  }
+
+  String get venmoDestination {
+    final c = AppConfigService();
+    return c.isLoaded ? c.venmoDestination : VENMO_URL;
+  }
+
+  String get cashAppDestination {
+    final c = AppConfigService();
+    return c.isLoaded ? c.cashAppDestination : CASHAPP_HANDLE;
+  }
 
   /// Deterministic pick document id — one entry per user per week.
   static String pickDocumentId(String uid, String weekName) => '${uid}_$weekName';
@@ -133,28 +153,33 @@ class PaymentService {
     await batch.commit();
   }
 
-  /// Get payment methods for display
+  /// Get payment methods for display (destinations from appConfig when loaded).
   Map<String, dynamic> getPaymentMethods() {
     return {
+      'zelle': {
+        'name': 'Zelle',
+        'identifier': zelleDestination,
+        'instructions':
+            'Send \$${ENTRY_FEE.toStringAsFixed(2)} to $zelleDestination via Zelle\nUse "PoolQ Entry - [Your Name]" as the memo',
+        'isDefault': true,
+      },
       'venmo': {
         'name': 'Venmo',
-        'identifier': VENMO_URL,
-        'instructions': 'Send \$${ENTRY_FEE.toStringAsFixed(2)} via Venmo link and include your name in the note.'
+        'identifier': venmoDestination,
+        'instructions':
+            'Send \$${ENTRY_FEE.toStringAsFixed(2)} via Venmo and include your name in the note.',
       },
       'paypal': {
         'name': 'PayPal',
-        'identifier': PAYPAL_EMAIL,
-        'instructions': 'Send \$${ENTRY_FEE.toStringAsFixed(2)} to $PAYPAL_EMAIL\nUse "PoolQ Entry - [Your Name]" as the note',
-      },
-      'zelle': {
-        'name': 'Zelle',
-        'identifier': ZELLE_EMAIL,
-        'instructions': 'Send \$${ENTRY_FEE.toStringAsFixed(2)} to $ZELLE_EMAIL\nUse "PoolQ Entry - [Your Name]" as the note',
+        'identifier': paypalDestination,
+        'instructions':
+            'Send \$${ENTRY_FEE.toStringAsFixed(2)} to $paypalDestination\nUse "PoolQ Entry - [Your Name]" as the note',
       },
       'cashapp': {
         'name': 'Cash App',
-        'identifier': CASHAPP_HANDLE,
-        'instructions': 'Send \$${ENTRY_FEE.toStringAsFixed(2)} to $CASHAPP_HANDLE\nUse "PoolQ Entry - [Your Name]" as the note',
+        'identifier': cashAppDestination,
+        'instructions':
+            'Send \$${ENTRY_FEE.toStringAsFixed(2)} to $cashAppDestination\nUse "PoolQ Entry - [Your Name]" as the note',
       },
     };
   }
@@ -173,16 +198,17 @@ class PaymentService {
     String textToCopy = '';
     switch (paymentMethod.toLowerCase()) {
       case 'venmo':
-        textToCopy = VENMO_URL;
+        textToCopy = venmoDestination;
         break;
       case 'paypal':
-        textToCopy = PAYPAL_EMAIL;
+        textToCopy = paypalDestination;
         break;
       case 'cashapp':
-        textToCopy = CASHAPP_HANDLE;
+      case 'cash app':
+        textToCopy = cashAppDestination;
         break;
       case 'zelle':
-        textToCopy = ZELLE_EMAIL;
+        textToCopy = zelleDestination;
         break;
     }
 
@@ -212,9 +238,10 @@ class PaymentService {
         'timestamp': FieldValue.serverTimestamp(),
         'read': false,
         'paymentMethods': {
-          'paypal': PAYPAL_EMAIL,
-          'zelle': ZELLE_EMAIL,
-          'cashapp': CASHAPP_HANDLE,
+          'paypal': paypalDestination,
+          'zelle': zelleDestination,
+          'cashapp': cashAppDestination,
+          'venmo': venmoDestination,
         }
       });
       

@@ -110,7 +110,7 @@ class PaymentPromptModal extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             
-            // Payment methods
+            // Payment methods — Zelle first (default)
             Text(
               'Choose Payment Method:',
               style: theme.textTheme.titleSmall?.copyWith(
@@ -120,9 +120,17 @@ class PaymentPromptModal extends StatelessWidget {
             
             const SizedBox(height: 16),
             
-            // Payment buttons
             Column(
               children: [
+                _buildPaymentButton(
+                  context,
+                  'Zelle',
+                  Icons.account_balance,
+                  const Color(0xFF6D1ED4),
+                  () => _handlePayment(context, 'Zelle'),
+                  isDefault: true,
+                ),
+                const SizedBox(height: 8),
                 _buildPaymentButton(
                   context,
                   'Venmo',
@@ -176,16 +184,17 @@ class PaymentPromptModal extends StatelessWidget {
     String method,
     IconData icon,
     Color color,
-    VoidCallback onTap,
-  ) {
+    VoidCallback onTap, {
+    bool isDefault = false,
+  }) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 20),
         label: Text(
-          'Pay with $method',
-          style: TextStyle(
+          isDefault ? 'Pay with $method (Recommended)' : 'Pay with $method',
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -193,9 +202,13 @@ class PaymentPromptModal extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          elevation: isDefault ? 4 : 1,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
+            side: isDefault
+                ? const BorderSide(color: Colors.white, width: 2)
+                : BorderSide.none,
           ),
         ),
       ),
@@ -260,20 +273,21 @@ class PaymentPromptModal extends StatelessWidget {
   }
 
   String _getPaymentInfo(String method) {
-    final methods = PaymentService().getPaymentMethods();
+    final payment = PaymentService();
+    final methods = payment.getPaymentMethods();
     switch (method) {
       case 'Venmo':
         return methods['venmo']?['identifier'] as String? ??
-            PaymentService.VENMO_URL;
+            payment.venmoDestination;
       case 'Cash App':
         return methods['cashapp']?['identifier'] as String? ??
-            PaymentService.CASHAPP_HANDLE;
+            payment.cashAppDestination;
       case 'PayPal':
         return methods['paypal']?['identifier'] as String? ??
-            PaymentService.PAYPAL_EMAIL;
+            payment.paypalDestination;
       case 'Zelle':
         return methods['zelle']?['identifier'] as String? ??
-            PaymentService.ZELLE_EMAIL;
+            payment.zelleDestination;
       default:
         return 'Contact admin for payment info';
     }

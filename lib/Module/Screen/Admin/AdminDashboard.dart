@@ -6,6 +6,7 @@ import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Admin/PaymentVerificationScreen.dart';
+import 'package:poolqapp/screens/admin/admin_payment_settings.dart';
 // import '../../../Model/invitation_model.dart';
 // import '../../../services/nfl_schedule_service.dart';
 import '../../../Widget/reuse.dart';
@@ -34,7 +35,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     _loadGameData();
   }
   
@@ -307,6 +308,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
             Tab(text: 'Game Scores', icon: Icon(Icons.sports_football)),
             Tab(text: 'Winners', icon: Icon(Icons.emoji_events)),
@@ -314,6 +316,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
             Tab(text: 'Notifications', icon: Icon(Icons.notifications)),
             Tab(text: 'Statistics', icon: Icon(Icons.analytics)),
             Tab(text: 'Invitation Codes', icon: Icon(Icons.code)),
+            Tab(text: 'Payments', icon: Icon(Icons.payments_outlined)),
           ],
         ),
       ),
@@ -327,6 +330,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           _buildNotificationsTab(),
           AdminStats(),
           _buildInvitationCodesTab(),
+          const AdminPaymentSettings(),
         ],
       ),
     );
