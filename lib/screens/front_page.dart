@@ -110,8 +110,8 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to load NFL data: $e';
+        setState(() {
+        _errorMessage = 'Unable to load schedule data. Please try again.';
         _isLoading = false;
       });
     }
@@ -349,7 +349,7 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 12),
           Text(
-            '🏆 ${_weeklyWinner!['displayName']} leads with ${_weeklyWinner!['score']} correct picks!',
+            '${_weeklyWinner!['displayName']} leads with ${_weeklyWinner!['score']} correct picks!',
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w500,
             ),
@@ -476,12 +476,12 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
 
   Widget _buildGameResultCard(Map<String, dynamic> game) {
     final theme = Theme.of(context);
-    final homeTeam = game['homeTeam'];
-    final awayTeam = game['awayTeam'];
-    final homeScore = game['homeScore'] ?? 0;
-    final awayScore = game['awayScore'] ?? 0;
-    final winner = homeScore > awayScore ? homeTeam['abbreviation'] : awayTeam['abbreviation'];
-    
+    final homeAbbr = _teamAbbr(game, home: true);
+    final awayAbbr = _teamAbbr(game, home: false);
+    final homeScore = game['homeScore'] ?? int.tryParse('${game['score']}') ?? 0;
+    final awayScore = game['awayScore'] ?? int.tryParse('${game['score2']}') ?? 0;
+    final winner = homeScore > awayScore ? homeAbbr : awayAbbr;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -495,15 +495,14 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          // Away team
           Expanded(
             child: Column(
               children: [
                 Text(
-                  awayTeam['abbreviation'],
+                  awayAbbr,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: winner == awayTeam['abbreviation'] ? FontWeight.bold : FontWeight.normal,
-                    color: winner == awayTeam['abbreviation'] ? AppTheme.success : AppTheme.onSurface,
+                    fontWeight: winner == awayAbbr ? FontWeight.bold : FontWeight.normal,
+                    color: winner == awayAbbr ? AppTheme.success : AppTheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -511,14 +510,12 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
                   '$awayScore',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: winner == awayTeam['abbreviation'] ? AppTheme.success : AppTheme.onSurfaceVariant,
+                    color: winner == awayAbbr ? AppTheme.success : AppTheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
           ),
-          
-          // VS separator
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -539,16 +536,14 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          
-          // Home team
           Expanded(
             child: Column(
               children: [
                 Text(
-                  homeTeam['abbreviation'],
+                  homeAbbr,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: winner == homeTeam['abbreviation'] ? FontWeight.bold : FontWeight.normal,
-                    color: winner == homeTeam['abbreviation'] ? AppTheme.success : AppTheme.onSurface,
+                    fontWeight: winner == homeAbbr ? FontWeight.bold : FontWeight.normal,
+                    color: winner == homeAbbr ? AppTheme.success : AppTheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -556,7 +551,7 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
                   '$homeScore',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: winner == homeTeam['abbreviation'] ? AppTheme.success : AppTheme.onSurfaceVariant,
+                    color: winner == homeAbbr ? AppTheme.success : AppTheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -569,12 +564,18 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
 
   Widget _buildUpcomingGameCard(Map<String, dynamic> game) {
     final theme = Theme.of(context);
-    final homeTeam = game['homeTeam'];
-    final awayTeam = game['awayTeam'];
-    final gameDate = DateTime.parse(game['date']);
-    final formattedDate = '${gameDate.month}/${gameDate.day}';
-    final formattedTime = '${gameDate.hour}:${gameDate.minute.toString().padLeft(2, '0')}';
-    
+    final homeAbbr = _teamAbbr(game, home: true);
+    final awayAbbr = _teamAbbr(game, home: false);
+    final gameDate = _parseGameDate(game);
+    final formattedDate = gameDate != null
+        ? '${gameDate.month}/${gameDate.day}'
+        : (game['date']?.toString() ?? '');
+    final formattedTime = (game['time']?.toString().isNotEmpty == true)
+        ? game['time'].toString()
+        : (gameDate != null
+            ? '${gameDate.hour}:${gameDate.minute.toString().padLeft(2, '0')}'
+            : '');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -588,12 +589,11 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          // Away team
           Expanded(
             child: Column(
               children: [
                 Text(
-                  awayTeam['abbreviation'],
+                  awayAbbr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -608,8 +608,6 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          
-          // Game info
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -636,13 +634,11 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          
-          // Home team
           Expanded(
             child: Column(
               children: [
                 Text(
-                  homeTeam['abbreviation'],
+                  homeAbbr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -660,6 +656,29 @@ class _FrontPageState extends State<FrontPage> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  String _teamAbbr(Map<String, dynamic> game, {required bool home}) {
+    final nested = game[home ? 'homeTeam' : 'awayTeam'];
+    if (nested is Map && nested['abbreviation'] != null) {
+      return nested['abbreviation'].toString();
+    }
+    final flat = game[home ? 'abbreviation' : 'abbreviation2'];
+    return flat?.toString() ?? 'TBD';
+  }
+
+  DateTime? _parseGameDate(Map<String, dynamic> game) {
+    for (final key in ['dateIso', 'date']) {
+      final raw = game[key]?.toString();
+      if (raw == null || raw.isEmpty) continue;
+      // ESPN-style timestamps sometimes omit seconds: 2026-08-13T23:00Z
+      final normalized = raw.contains(RegExp(r'T\d{2}:\d{2}Z$'))
+          ? raw.replaceFirst(RegExp(r'Z$'), ':00Z')
+          : raw;
+      final parsed = DateTime.tryParse(normalized) ?? DateTime.tryParse(raw);
+      if (parsed != null) return parsed.toLocal();
+    }
+    return null;
   }
 
   Widget _buildCallToActionSection() {

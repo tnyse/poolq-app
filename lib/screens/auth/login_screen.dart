@@ -338,76 +338,33 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           type: AuthButtonType.primary,
                         ),
                         
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         
-                        // Divider
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: AppTheme.outline,
+                            Text(
+                              'Don\'t have an account?',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.onSurfaceVariant,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                            TextButton(
+                              onPressed: () {
+                                _navigationService.navigateToReplacement(
+                                  context,
+                                  RegisterScreen(),
+                                );
+                              },
                               child: Text(
-                                'or',
+                                'Sign Up',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.onSurfaceVariant,
+                                  color: AppTheme.primaryBlue,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: AppTheme.outline,
                               ),
                             ),
                           ],
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Sign up link with enhanced styling
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceVariant,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppTheme.outline,
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Don\'t have an account?',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () {
-                                  _navigationService.navigateToReplacement(
-                                    context,
-                                    RegisterScreen(),
-                                  );
-                                },
-                                child: Text(
-                                  'Sign Up',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppTheme.primaryBlue,
-                                    fontWeight: FontWeight.w600,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                         
                         const SizedBox(height: 24),

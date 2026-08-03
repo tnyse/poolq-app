@@ -124,6 +124,18 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
           appBar: AppBar(
             backgroundColor: primary,
             automaticallyImplyLeading: true,
+            title: Consumer<DataProvider>(
+              builder: (context, dp, _) {
+                final weekLabel = dp.game?['name']
+                    ?.toString()
+                    .replaceAll('REG', '')
+                    .replaceAll('PRE', '') ?? '';
+                return Text(
+                  weekLabel.isNotEmpty ? 'Week $weekLabel Picks' : 'Your Picks',
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                );
+              },
+            ),
             actions: [],
             centerTitle: true,
             elevation: 4,
@@ -244,7 +256,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                         padding: EdgeInsetsDirectional.fromSTEB(
                                             20, 20, 0, 0),
                                         child: Text(
-                                          'Your Picks - Week ',
+                                          'Your Picks',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: 'Poppins',
@@ -255,13 +267,21 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                       Padding(
                                         padding: EdgeInsetsDirectional.fromSTEB(
                                             5, 20, 0, 0),
-                                        child: Text(
-                                          '1',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 30,
-                                          ),
+                                        child: Consumer<DataProvider>(
+                                          builder: (context, dp, _) {
+                                            final weekLabel = dp.game?['name']
+                                                ?.toString()
+                                                .replaceAll('REG', '')
+                                                .replaceAll('PRE', '') ?? '1';
+                                            return Text(
+                                              '– Week $weekLabel',
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 18,
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     ],
@@ -365,7 +385,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                         'Review Your Picks',
                                         style: TextStyle(
                                           fontFamily: 'Lexend Deca',
-                                          color: Color(0xFF4B39EF),
+                                          color: Color(0xFF063a73),
                                           fontSize: 24,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -461,15 +481,14 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       0, 40, 0, 0),
                                   child: SizedBox(
-                                    width: 130,
-                                    height: 40,
-                                    child: TextButton(
+                                    width: double.infinity,
+                                    height: 52,
+                                    child: ElevatedButton(
                                       onPressed: () async {
                                         print('Submit button pressed. Edit mode: ${widget.edit}');
                                         print('Snapshot docs count: ${snapshot.data!.docs.length}');
                                         
                                         if (widget.edit == true) {
-                                          // Handle edit mode
                                           print('Going to edit mode');
                                           if (dataProvider != null) {
                                             await _saveExistingPicksEdit(context, dataProvider);
@@ -479,7 +498,6 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                           customSnackbar(context,
                                               'You have already submitted picks for week ${dataProvider?.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}');
                                         } else {
-                                          // Save picks and proceed to payment
                                           print('Going to save picks and proceed to payment');
                                           if (dataProvider != null) {
                                             await _savePicksAndProceedToPayment(context, dataProvider);
@@ -488,34 +506,22 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                           }
                                         }
                                       },
-                                      child: Text(
-                                        "${widget.edit == true ? "save" : "submit"}",
-                                        style: TextStyle(color: Colors.white),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primary,
+                                        foregroundColor: Colors.white,
+                                        textStyle: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        elevation: 2,
                                       ),
-                                      style: ButtonStyle(
-                                          padding: MaterialStateProperty.all(
-                                              EdgeInsetsDirectional.fromSTEB(
-                                                  0, 0, 0, 0)),
-                                          // iconPadding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                                          backgroundColor:
-                                              MaterialStateProperty.all(
-                                                  primary),
-                                          textStyle: MaterialStateProperty.all(
-                                              TextStyle(
-                                            fontFamily: 'Poppins',
-                                            color: Colors.white,
-                                          )),
-                                          elevation:
-                                              MaterialStateProperty.all(2),
-                                          shape: MaterialStateProperty.all(
-                                              RoundedRectangleBorder(
-                                            side: BorderSide(
-                                              color: Colors.transparent,
-                                              width: 1,
-                                            ),
-                                            borderRadius:
-                                                BorderRadius.circular(30),
-                                          ))),
+                                      child: Text(
+                                        "${widget.edit == true ? "Save Picks" : "Submit Picks"}",
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -741,7 +747,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                   'Review Your Picks',
                   style: TextStyle(
                     fontFamily: 'Lexend Deca',
-                    color: Color(0xFF4B39EF),
+                    color: Color(0xFF063a73),
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
                   ),

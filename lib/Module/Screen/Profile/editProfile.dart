@@ -1,17 +1,12 @@
 import 'dart:io';
-import 'dart:convert';
-import '../../../Widget/reuse.dart';
 import 'package:flutter/material.dart';
-import 'package:fl_toast/fl_toast.dart';
 import 'package:provider/provider.dart';
-import "package:http/http.dart" as http;
-import '../../../Provider/homeProvider.dart';
-import '../../../Provider/AuthProviders.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-//import 'package:admob_flutter/admob_flutter.dart';
+import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/Provider/AuthProviders.dart';
+import 'package:poolqapp/Widget/reuse.dart';
 
 class EditProfile extends StatefulWidget {
   @override
@@ -19,332 +14,209 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<EditProfile> {
-  String name = "";
-  String email = "";
+  File? _image;
+  final _picker = ImagePicker();
 
-  List<String>? items = ["Bike", "Car", "Truck"];
-  String? values = "Bike";
-  File? image;
-  final picker = ImagePicker();
-
-  Future getImage() async {
-    AuthProviders network = Provider.of<AuthProviders>(context, listen: false);
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  Future<void> _pickImage() async {
+    final authProvider = Provider.of<AuthProviders>(context, listen: false);
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
 
     setState(() {
-      image = File(pickedFile!.path);
+      _image = File(pickedFile.path);
     });
-
-    network.uploadImage(imagePath: image!.path, context: context);
+    authProvider.uploadImage(imagePath: _image!.path, context: context);
   }
 
   @override
   Widget build(BuildContext context) {
-    AuthProviders authProvider =
-        Provider.of<AuthProviders>(context, listen: true);
+    final authProvider = Provider.of<AuthProviders>(context, listen: true);
 
-    Widget scaffold = Scaffold(
-      backgroundColor: Colors.white,
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        title: const Text('Edit Profile'),
+        backgroundColor: AppTheme.surface,
+        foregroundColor: AppTheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
       body: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20.0, right: 20, top: 40),
-                child: Row(
-                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back,
-                          size: 26, color: Color(0xFF063a73)),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    Spacer(),
-                    Text("")
-                  ],
-                ),
-              ),
-            ),
-            Center(
-              child: Stack(
-                children: [
-                  image != null
-                      ? Center(
-                          child: CircleAvatar(
-                              radius: 47,
-                              backgroundColor: Color(0xFFE5E7EB),
-                              foregroundColor: Color(0xFFE5E7EB),
-                              backgroundImage: FileImage(
-                                File(image!.path),
-                              )),
-                        )
-                      : Center(
-                          child: CircleAvatar(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.white,
-                            radius: 47,
-                            backgroundImage: authProvider.image.toString() == ""
-                                ? AssetImage("assets/images/user.png")
-                                : NetworkImage(authProvider.image.toString())
-                                    as ImageProvider,
-                          ),
-                        ),
-                  Positioned(
-                      left: MediaQuery.of(context).size.width * 0.55,
-                      top: 60,
-                      child: InkWell(
-                        onTap: () {
-                          getImage();
-                        },
-                        child: Container(
-                            height: 27,
-                            width: 27,
-                            decoration: BoxDecoration(
-                              color: Colors.black38,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                                child: Icon(
-                              Icons.camera_alt_outlined,
-                              size: 20,
-                              color: Colors.white,
-                            ))),
-                      ))
-                ],
-              ),
-            ),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 50.0),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Container(
-                        width: MediaQuery.of(context).size.width * 0.9,
-                        margin: EdgeInsets.symmetric(
-                          horizontal: 2,
-                        ),
-                        height: 55,
-                        child: TextFormField(
-                          // controller: surname,
-                          onChanged: (value) {},
-                          style: TextStyle(color: Colors.black),
-                          cursorColor: Colors.black,
-                          enabled: false,
-                          decoration: InputDecoration(
-                            fillColor: Color(0xFFF3F4F6),
-                            filled: true,
-                            prefixIcon: Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 8.0, right: 8),
-                              child: Icon(PhosphorIcons.user,
-                                  color: Color(0xFF063a73)),
-                            ),
-                            labelStyle: TextStyle(color: Colors.black38),
-                            labelText: authProvider.username,
-                            disabledBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(
-                                    color: Color(0xFFF3F4F6), width: 1.1),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            focusedBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(
-                                    color: Color(0xFFF3F4F6), width: 1.1),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            border: OutlineInputBorder(
-                                borderSide: const BorderSide(
-                                    color: Color(0xFFF3F4F6), width: 1.1),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 20.0),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            color: Color(0xFF063a73),
-                          ),
-                          onPressed: () {
-                            _editDetails();
-                          },
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
+            Center(child: _buildAvatarStack(authProvider)),
+            const SizedBox(height: 32),
+            _buildNameField(authProvider),
           ],
         ),
       ),
     );
-
-    return scaffold;
   }
 
-  _editDetails() {
-    var authProvider = Provider.of<AuthProviders>(context, listen: false);
-    final _controller = TextEditingController();
-    final _controller2 = TextEditingController();
-    _controller.text = authProvider.username;
-    _controller2.text = authProvider.email;
-
-    showModalBottomSheet(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(14),
-            topLeft: Radius.circular(14),
-          ),
+  Widget _buildAvatarStack(AuthProviders authProvider) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        CircleAvatar(
+          radius: 52,
+          backgroundColor: const Color(0x1A063a73), // primaryBlue 10% opacity
+          backgroundImage: _image != null
+              ? FileImage(_image!) as ImageProvider
+              : (authProvider.image.toString().isNotEmpty
+                  ? NetworkImage(authProvider.image.toString())
+                  : const AssetImage('assets/images/user.png') as ImageProvider),
         ),
-        context: context,
-        isScrollControlled: true,
-        builder: (builder) {
-          return ClipRRect(
-            borderRadius: BorderRadius.only(
-                topRight: Radius.circular(14), topLeft: Radius.circular(14)),
-            child: AnimatedPadding(
-              padding: MediaQuery.of(context).viewInsets,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.decelerate,
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(14),
-                    topLeft: Radius.circular(14)),
-                child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(14),
-                          topLeft: Radius.circular(14)),
-                    ),
-                    height: 240.0,
-                    padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                    child: ListView(
-                      children: [
-                        Text(
-                          "Edit",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 18),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Container(
-                          height: 50,
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.only(left: 12),
-                          decoration: BoxDecoration(
-                              color: Color(0xFFFFFFFF),
-                              border: Border.all(color: Color(0xFFF1F1FD)),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(7))),
-                          child: TextField(
-                            // keyboardType: TextInputType.phone,
-                            controller: _controller,
-
-                            decoration: InputDecoration.collapsed(
-                              hintText: 'Name',
-                              hintStyle: TextStyle(
-                                  fontSize: 16, color: Colors.black38),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Container(
-                                height: 34,
-                                margin: EdgeInsets.only(right: 10),
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Color(0xFFE9E9E9), width: 1),
-                                    borderRadius: BorderRadius.circular(5)),
-                                child: TextButton(
-                                  // disabledColor: Color(0x909B049B),
-                                  onPressed: () => Navigator.pop(context),
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(5)),
-                                    padding: EdgeInsets.all(0.0),
-                                  ),
-                                  child: Ink(
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5)),
-                                    child: Container(
-                                      constraints: BoxConstraints(
-                                          maxWidth: 100, minHeight: 34.0),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        "Cancel",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                height: 34,
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Color(0xFFE9E9E9), width: 1),
-                                    borderRadius: BorderRadius.circular(5)),
-                                child: TextButton(
-                                  onPressed: () async {
-                                    Navigator.pop(context);
-                                    circularCustom(context);
-                                    User? user =
-                                        FirebaseAuth.instance.currentUser;
-                                    await user!
-                                        .updateDisplayName(_controller.text);
-                                    authProvider.username = _controller.text;
-                                    Navigator.pop(context);
-                                  },
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(5)),
-                                    padding: EdgeInsets.all(0.0),
-                                  ),
-                                  child: Ink(
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5)),
-                                    child: Container(
-                                      constraints: BoxConstraints(
-                                          maxWidth: 100, minHeight: 34.0),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        "Save",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ])
-                      ],
-                    )),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                size: 18,
+                color: Colors.white,
               ),
             ),
-          );
-        });
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameField(AuthProviders authProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Display Name',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: AppTheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                enabled: false,
+                style: const TextStyle(color: AppTheme.onSurface),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(
+                    PhosphorIcons.user,
+                    color: AppTheme.primaryBlue,
+                    size: 20,
+                  ),
+                  labelText: authProvider.username,
+                  labelStyle: const TextStyle(color: AppTheme.onSurfaceVariant),
+                  filled: true,
+                  fillColor: AppTheme.surfaceVariant,
+                  disabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: AppTheme.outline),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryBlue),
+              tooltip: 'Edit name',
+              onPressed: _showEditNameSheet,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _showEditNameSheet() {
+    final authProvider = Provider.of<AuthProviders>(context, listen: false);
+    final nameController = TextEditingController(text: authProvider.username);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => AnimatedPadding(
+        padding: MediaQuery.of(context).viewInsets,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Edit Display Name',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Display name',
+                  hintStyle: const TextStyle(color: AppTheme.onSurfaceVariant),
+                  filled: true,
+                  fillColor: AppTheme.surfaceVariant,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: AppTheme.primaryBlue, width: 2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: AppTheme.primaryButtonStyle,
+                    onPressed: () async {
+                      Navigator.pop(sheetContext);
+                      circularCustom(context);
+                      final nav = Navigator.of(context);
+                      final user = FirebaseAuth.instance.currentUser;
+                      await user?.updateDisplayName(nameController.text);
+                      authProvider.username = nameController.text;
+                      nav.pop();
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

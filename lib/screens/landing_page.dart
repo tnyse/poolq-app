@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:poolqapp/screens/auth/login_screen.dart';
 import 'package:poolqapp/screens/auth/register_screen.dart';
-import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/widgets/auth/auth_button.dart';
 
 class LandingPage extends StatefulWidget {
@@ -101,25 +100,13 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // PoolQ Logo with enhanced styling
                           Hero(
                             tag: 'poolq_logo',
-                            child: Container(
-                              width: 240,
-                              height: 140,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Image.asset(
-                                'assets/images/poolq12.png',
-                                fit: BoxFit.contain,
-                              ),
+                            child: Image.asset(
+                              'assets/images/poolq12.png',
+                              width: 300,
+                              height: 180,
+                              fit: BoxFit.contain,
                             ),
                           ),
                           
@@ -193,53 +180,6 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                                       child: child,
                                     );
                                   },
-                                ),
-                              );
-                            },
-                          ),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Divider with text
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 1,
-                                  color: Colors.white30,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  'or',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Container(
-                                  height: 1,
-                                  color: Colors.white30,
-                                ),
-                              ),
-                            ],
-                          ),
-                          
-                          const SizedBox(height: 24),
-                          
-                          _buildActionButton(
-                            context: context,
-                            text: 'Let\'s Play!',
-                            icon: Icons.play_arrow,
-                            type: AuthButtonType.primary,
-                            onPressed: () {
-                              // Require auth — do not open Home unauthenticated.
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
                                 ),
                               );
                             },

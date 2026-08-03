@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
-import 'package:poolqapp/Module/Screen/Home/LeaderbpardWidget.dart';
-import 'package:poolqapp/Module/Screen/Home/rule.dart';
-import 'package:poolqapp/constants.dart';
+import 'package:poolqapp/constants/app_theme.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({Key? key}) : super(key: key);
@@ -18,7 +16,7 @@ class AppDrawer extends StatelessWidget {
         children: [
           UserAccountsDrawerHeader(
             decoration: BoxDecoration(
-              color: primary,
+              color: AppTheme.primaryBlue,
             ),
             accountName: Text(
               user?.displayName ?? 'Guest',

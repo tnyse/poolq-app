@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminDashboard.dart';
 
 class AdminLogin extends StatefulWidget {
@@ -79,7 +80,7 @@ class _AdminLoginState extends State<AdminLogin> {
                       const Icon(
                         Icons.admin_panel_settings,
                         size: 80,
-                        color: Colors.blue,
+                        color: AppTheme.primaryBlue,
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -174,16 +175,6 @@ class _AdminLoginState extends State<AdminLogin> {
                               ),
                       ),
                       const SizedBox(height: 20),
-                      const Divider(),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'For testing use: admin / admin123',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
                     ],
                   ),
                 ),

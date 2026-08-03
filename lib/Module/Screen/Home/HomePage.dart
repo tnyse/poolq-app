@@ -1,5 +1,4 @@
 import 'LeaderbpardWidget.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/landingPage.dart';
 import 'package:poolqapp/Module/Screen/Profile/UserProfile.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/screens/front_page.dart';
 
 // import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -196,7 +197,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
               CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
               ),
               SizedBox(height: 16),
               Text('Loading...'),
@@ -213,11 +214,12 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 16),
               Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton(
+                style: AppTheme.primaryButtonStyle,
                 onPressed: () {
                   setState(() {
                     _error = null;
@@ -260,36 +262,15 @@ class _HomePageState extends State<HomePage> {
             ],
           ],
         ),
-        backgroundColor: Color(0xFF063a73),
+        backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
         actions: [
-          Container(
-            margin: EdgeInsets.only(right: 8),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(context, '/front');
-              },
-              icon: Icon(Icons.article_outlined, size: 18),
-              label: Text('NFL News'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Color(0xFF063a73),
-                elevation: 2,
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          ),
           IconButton(
-            icon: Icon(Icons.info_outline),
+            icon: const Icon(Icons.article_outlined),
+            tooltip: 'NFL News',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('You are in demo mode. All features are available for testing.'),
-                  duration: Duration(seconds: 3),
-                ),
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FrontPage()),
               );
             },
           ),
@@ -351,25 +332,19 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: ColorScheme.fromSwatch()
-                          .copyWith(secondary: const Color(0xFF063a73)),
-                    ),
-                    child: const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
-                      strokeWidth: 2,
-                      backgroundColor: Colors.white,
-                    ),
+                children: const [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                    strokeWidth: 2,
+                    backgroundColor: Colors.white,
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
+                  SizedBox(height: 10),
+                  Text(
                     'Loading',
                     style: TextStyle(
                       color: Color(0xFF333333),
                       fontSize: 18,
-                      fontWeight: FontWeight.w600
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -404,7 +379,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       height: 60,
       decoration: const BoxDecoration(
-        color: Color(0xFF063A73),
+        color: AppTheme.primaryBlue,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

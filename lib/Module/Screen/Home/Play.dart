@@ -151,7 +151,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       child: Text(
-                        'Preseason — picks are free to enter. Play and learn how the pool works!',
+                        'Preseason � picks are free to enter. Play and learn how the pool works!',
                         style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
                     ),
@@ -176,7 +176,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                           children: [
                             Padding(
                               padding: EdgeInsetsDirectional.fromSTEB(
-                                  20, 20, 120, 0),
+                                  20, 20, 20, 0),
                               child: Image.asset(
                                 'assets/images/poolq12.png',
                                 width: 67,
@@ -756,7 +756,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                   width: MediaQuery.of(context).size.width,
                   height: 75,
                   decoration: BoxDecoration(
-                    color: Color(0xDD92EF7B),
+                    color: AppTheme.primaryBlue,
                   ),
                   child: Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
@@ -792,38 +792,40 @@ class _PlayWidgetState extends State<PlayWidget> {
                               child: TextFormField(
                                 controller: tieBreakerController,
                                 obscureText: false,
+                                style: const TextStyle(color: Colors.white),
                                 decoration: InputDecoration(
                                   hintText: 'Tie Breaker',
+                                  hintStyle: const TextStyle(color: Colors.white70),
                                   enabledBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
-                                      color: Colors.white,
-                                      width: 0.5,
+                                      color: Colors.white54,
+                                      width: 1,
                                     ),
-                                    borderRadius: BorderRadius.circular(5),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: Colors.white,
-                                      width: 0.5,
+                                      width: 1.5,
                                     ),
-                                    borderRadius: BorderRadius.circular(5),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   errorBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: Colors.white,
                                       width: 0.5,
                                     ),
-                                    borderRadius: BorderRadius.circular(5),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   focusedErrorBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: Colors.white,
                                       width: 0.5,
                                     ),
-                                    borderRadius: BorderRadius.circular(5),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   filled: true,
-                                  fillColor: Color(0xC8DADADA),
+                                  fillColor: Colors.white.withOpacity(0.15),
                                   contentPadding:
                                       EdgeInsetsDirectional.fromSTEB(
                                           10, 0, 0, 0),

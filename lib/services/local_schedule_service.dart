@@ -146,12 +146,20 @@ class LocalScheduleService {
       // Handle new format with homeTeam/awayTeam objects
       var homeTeam = game['homeTeam'] ?? {};
       var awayTeam = game['awayTeam'] ?? {};
+      final rawDate = game['date']?.toString() ?? '';
       
       // Convert ISO date to app's expected format
-      String formattedDate = _formatDateForApp(game['date'] ?? '');
+      String formattedDate = _formatDateForApp(rawDate);
       
       var normalizedGame = {
+        // Keep ISO for DateTime.parse callers (FrontPage, kickoff, etc.)
+        'dateIso': rawDate,
         'date': formattedDate,
+        'homeTeam': homeTeam,
+        'awayTeam': awayTeam,
+        'homeScore': game['homeScore'] ?? 0,
+        'awayScore': game['awayScore'] ?? 0,
+        'completed': game['completed'] == true,
         'fullname': homeTeam['name'] ?? '',
         'fullname2': awayTeam['name'] ?? '',
         'abbreviation': homeTeam['abbreviation'] ?? '',
@@ -161,7 +169,7 @@ class LocalScheduleService {
         'score': game['homeScore']?.toString() ?? '0',
         'score2': game['awayScore']?.toString() ?? '0',
         'status': game['status'] ?? 'scheduled',
-        'time': _formatTimeForApp(game['date'] ?? ''),
+        'time': _formatTimeForApp(rawDate),
         'venue': game['venue'] ?? '',
         'broadcast': game['broadcast'] ?? '',
         'favorite': '', // Not provided in new format
