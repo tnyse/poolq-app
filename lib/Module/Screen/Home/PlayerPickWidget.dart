@@ -442,7 +442,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
-                                          TeamLogo(abbr: abbr, size: 32),
+                                          TeamLogo(abbr: abbr, size: 72),
                                           SizedBox(width: 12),
                                           Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,

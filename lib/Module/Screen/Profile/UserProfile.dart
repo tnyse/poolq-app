@@ -262,25 +262,6 @@ class _ActionButtons extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.primaryBlue,
-            side: const BorderSide(color: AppTheme.primaryBlue),
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AdminLogin()),
-            );
-          },
-          icon: const Icon(Icons.admin_panel_settings_outlined),
-          label: const Text('Admin Login'),
-        ),
-        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -314,6 +295,30 @@ class _ActionButtons extends StatelessWidget {
             onPressed: () => _confirmDeleteAccount(context),
             icon: const Icon(Icons.delete_outline),
             label: const Text('Delete Account'),
+          ),
+        ),
+        const SizedBox(height: 28),
+        Center(
+          child: TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminLogin()),
+              );
+            },
+            child: Text(
+              'Admin Login',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+            ),
           ),
         ),
       ],

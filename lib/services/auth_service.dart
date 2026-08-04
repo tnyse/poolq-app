@@ -147,8 +147,16 @@ class AuthService {
         },
         statistics: {
           'totalWinnings': 0,
-          'winRate': 0,
+          'winRate': 0.0,
+          'pickPct': 0.0,
+          'podiumRate': 0.0,
           'poolsPlayed': 0,
+          'crowns': 0,
+          'runnerUps': 0,
+          'thirds': 0,
+          'correctPicks': 0,
+          'totalPicks': 0,
+          'isReigningChampion': false,
         },
       );
 

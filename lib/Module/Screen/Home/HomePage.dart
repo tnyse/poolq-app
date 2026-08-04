@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'LeaderbpardWidget.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -11,6 +13,8 @@ import 'package:poolqapp/Module/Screen/Profile/UserProfile.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/screens/invite_friends_page.dart';
+import 'package:poolqapp/services/game_enforcement_service.dart';
+import 'package:poolqapp/services/payment_reminder_service.dart';
 
 // import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -53,8 +57,31 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    PaymentReminderService().stopMonitoring();
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _startPaymentReminders() async {
+    if (!mounted) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.email == 'demo@poolq.com') return;
+
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final week = dataProvider.game?['name']?.toString();
+    if (week == null || week.isEmpty) return;
+
+    try {
+      final kickoff = await GameEnforcementService().getFirstKickoff(week);
+      if (kickoff == null || !mounted) return;
+      await PaymentReminderService().startMonitoring(
+        context: context,
+        weekName: week,
+        kickoff: kickoff,
+      );
+    } catch (e) {
+      debugPrint('HomePage: payment reminders failed to start: $e');
+    }
   }
 
     Future<void> _initializeData(User? user) async {
@@ -106,6 +133,7 @@ class _HomePageState extends State<HomePage> {
           _isInitialized = true;
           _isLoading = false;
         });
+        unawaited(_startPaymentReminders());
       }
       
     } catch (e, stack) {
@@ -249,6 +277,7 @@ class _HomePageState extends State<HomePage> {
 
     debugPrint('HomePage: Showing main scaffold');
     return Scaffold(
+      backgroundColor: AppTheme.primaryBlue,
       appBar: AppBar(
         title: Row(
           children: [

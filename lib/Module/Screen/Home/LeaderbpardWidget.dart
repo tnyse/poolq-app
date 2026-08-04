@@ -15,8 +15,10 @@ import '../../../services/nfl_schedule_service.dart';
 import '../../../services/leaderboard_privacy_service.dart';
 import '../../../services/payment_service.dart';
 import '../../../services/app_config_service.dart';
+import '../../../services/week_results_service.dart';
 import '../../../constants/payment_status.dart';
 import '../../../widgets/player/player_picks_modal.dart';
+import '../../../widgets/leaderboard/leaderboard_podium.dart';
 import '../../../utils/avatar_url.dart';
 
 class LeaderboardWidget extends StatefulWidget {
@@ -43,6 +45,9 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   bool _entriesLocked = false;
   String _activeWeekName = 'PRE1';
   final LeaderboardPrivacyService _privacyService = LeaderboardPrivacyService();
+  final WeekResultsService _weekResults = WeekResultsService();
+  Set<String> _reigningChampionUids = {};
+  int _gamesPlayedForWeek = 0;
 
   /// Expected pot (entrants × entry fee) | sum of confirmed payment fees.
   Widget _buildPotBadge() {
@@ -126,41 +131,79 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
       entriesLocked: _entriesLocked,
       isCurrentUser: isMe,
     );
-    final bg = isMe ? const Color(0xFF063a73) : const Color(0xFF3474E0);
+    final rawScore = player['score'];
+    final scoreNum = rawScore is num ? rawScore.toInt() : null;
+    final winPct = (_entriesLocked || isMe) &&
+            scoreNum != null &&
+            _gamesPlayedForWeek > 0
+        ? ((scoreNum / _gamesPlayedForWeek) * 100).round()
+        : null;
+    final isChampion = _reigningChampionUids.contains(uid);
+    final bg = (isMe ? const Color(0xFF063a73) : const Color(0xFF3474E0))
+        .withOpacity(0.78);
 
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(10, 0, 10, 10),
       child: Material(
-        color: bg,
-        elevation: 1,
+        color: Colors.transparent,
+        elevation: 0,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () => _handlePlayerTap(Map<String, dynamic>.from(player)),
-          child: SizedBox(
+          child: Ink(
             height: 75,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isChampion
+                    ? const Color(0xFFFFD54F)
+                    : Colors.white.withOpacity(0.18),
+                width: isChampion ? 1.5 : 1,
+              ),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Row(
                 children: [
                   Padding(
                     padding: const EdgeInsetsDirectional.fromSTEB(15, 1, 1, 1),
-                    child: ClipOval(
-                      child: SizedBox(
-                        height: 50,
-                        width: 50,
-                        child: Image(
-                          image: resolveAvatarImage(
-                            photoUrl: photoURL,
-                            email: email,
-                            size: 100,
+                    child: SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            top: 4,
+                            left: 2,
+                            child: ClipOval(
+                              child: SizedBox(
+                                height: 50,
+                                width: 50,
+                                child: Image(
+                                  image: resolveAvatarImage(
+                                    photoUrl: photoURL,
+                                    email: email,
+                                    size: 100,
+                                  ),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    'assets/images/user.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            'assets/images/user.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                          if (isChampion)
+                            const Positioned(
+                              top: -4,
+                              right: -2,
+                              child: Text('👑', style: TextStyle(fontSize: 16)),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -223,20 +266,22 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                     ),
                   ),
                   Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Colors.white, size: 35),
                       Text(
-                        scoreText.toUpperCase(),
+                        winPct != null
+                            ? '$scoreNum · $winPct%'
+                            : scoreText.toUpperCase(),
                         style: const TextStyle(
                           fontFamily: 'Lexend Deca',
                           color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white70, size: 28),
                     ],
                   ),
                 ],
@@ -566,6 +611,8 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           entriesLocked: entriesLocked,
         );
 
+        final rankedForPodium = List<Map<String, dynamic>>.from(rows);
+
         // Pin current user to top for easy access to "my picks".
         Map<String, dynamic>? mine;
         final uid = user?.uid;
@@ -577,13 +624,28 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           }
         }
 
+        final champs = await _weekResults.getReigningChampionUids();
+        final weekResult = await _weekResults.getWeekResult(weekName);
+        var gamesPlayed = (weekResult?['gamesPlayed'] as num?)?.toInt() ?? 0;
+        if (gamesPlayed <= 0 && data2 is List && data2!.isNotEmpty) {
+          gamesPlayed = data2!.length;
+        }
+        if (gamesPlayed <= 0) {
+          final maxScore = rankedForPodium
+              .map((e) => (e['score'] as num?)?.toInt() ?? 0)
+              .fold<int>(0, (a, b) => a > b ? a : b);
+          gamesPlayed = maxScore;
+        }
+
         if (!mounted) return rows;
         setState(() {
           data = rows;
-          normal_data = [...rows];
+          normal_data = rankedForPodium;
           played = rows.isNotEmpty;
           particularData = mine ?? (rows.isNotEmpty ? rows.first : 'null');
           _loadingLeaderboard = false;
+          _reigningChampionUids = champs;
+          _gamesPlayedForWeek = gamesPlayed;
         });
         return rows;
       } catch (e) {
@@ -1152,12 +1214,60 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.only(top: 8, bottom: 24),
-                      itemCount: data!.length,
+                      itemCount: () {
+                        final ranked = (normal_data ?? data)!;
+                        final showPodium = _entriesLocked &&
+                            ranked.any((e) =>
+                                e is Map && (e['score'] as num?) != null);
+                        final restCount = showPodium
+                            ? (data!.length > 3 ? data!.length - 3 : 0)
+                            : data!.length;
+                        return (showPodium ? 1 : 0) + restCount;
+                      }(),
                       itemBuilder: (BuildContext context, int index) {
-                        final row = Map<String, dynamic>.from(
-                          data![index] as Map,
+                        final ranked = List<Map<String, dynamic>>.from(
+                          (normal_data ?? data)!
+                              .whereType<Map>()
+                              .map((e) => Map<String, dynamic>.from(e)),
                         );
-                        return _buildPlayerTile(row, index);
+                        final showPodium = _entriesLocked &&
+                            ranked.any((e) => (e['score'] as num?) != null);
+                        final podiumPlayers = ranked.take(3).toList();
+
+                        if (showPodium && index == 0) {
+                          return LeaderboardPodium(
+                            top3: podiumPlayers,
+                            reigningChampionUids: _reigningChampionUids,
+                            gamesPlayed: _gamesPlayedForWeek > 0
+                                ? _gamesPlayedForWeek
+                                : null,
+                            subtitle: '$_activeWeekName TOP 3',
+                            onTap: (p) => _handlePlayerTap(p),
+                          );
+                        }
+
+                        // List remaining players (or full list if no podium).
+                        final listSource = showPodium
+                            ? data!
+                                .whereType<Map>()
+                                .map((e) => Map<String, dynamic>.from(e))
+                                .where((e) {
+                                  final uid = '${e['uid']}';
+                                  return !podiumPlayers
+                                      .any((p) => '${p['uid']}' == uid);
+                                })
+                                .toList()
+                            : data!
+                                .whereType<Map>()
+                                .map((e) => Map<String, dynamic>.from(e))
+                                .toList();
+                        final rowIndex = showPodium ? index - 1 : index;
+                        if (rowIndex < 0 || rowIndex >= listSource.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final row = listSource[rowIndex];
+                        final displayIndex = showPodium ? rowIndex + 3 : rowIndex;
+                        return _buildPlayerTile(row, displayIndex);
                       },
                     ),
                   )

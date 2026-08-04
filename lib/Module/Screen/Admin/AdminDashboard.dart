@@ -7,6 +7,7 @@ import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Admin/PaymentVerificationScreen.dart';
 import 'package:poolqapp/screens/admin/admin_payment_settings.dart';
+import 'package:poolqapp/services/week_results_service.dart';
 // import '../../../Model/invitation_model.dart';
 // import '../../../services/nfl_schedule_service.dart';
 import '../../../Widget/reuse.dart';
@@ -734,7 +735,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           Center(
             child: ElevatedButton.icon(
               onPressed: () {
-                // Save winners
+                // Save winners (team winners for admin UI — local only)
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Winners saved successfully!')),
                 );
@@ -743,6 +744,41 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               label: const Text('Save Winners'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Declaring results for $_selectedWeek…'),
+                  ),
+                );
+                final result =
+                    await WeekResultsService().declareWeek(_selectedWeek);
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      result == null
+                          ? 'Declare failed — need scored pickrecords for $_selectedWeek'
+                          : 'Declared $_selectedWeek — '
+                              '${(result['winners'] as List?)?.length ?? 0} winner(s), '
+                              'top ${(result['top3'] as List?)?.length ?? 0}',
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.emoji_events),
+              label: const Text('Declare Week Results'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF063a73),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
             ),
           ),

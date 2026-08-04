@@ -63,6 +63,13 @@ class SeasonConfig {
     return entryWeekSequence[idx + 1];
   }
 
+  /// Previous week before [weekName], or null if at start of sequence.
+  static String? previousWeekName(String weekName) {
+    final idx = entryWeekSequence.indexOf(weekName.toUpperCase());
+    if (idx <= 0) return null;
+    return entryWeekSequence[idx - 1];
+  }
+
   static String assetPathForYear(int year) =>
       'assets/data/nfl_schedule_$year.json';
 }

@@ -203,90 +203,90 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                   fit: BoxFit.cover,
                 ),
               ),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Color(0x43EEEEEE),
-                ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top,
+                left: 0,
+                right: 0,
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 12, 0, 0),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
-                              child: IconButton(
-                                icon: Icon(Icons.arrow_back_ios_new),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ),
-                            Spacer(),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(20, 20, 0, 0),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Welcome \nto week '.toUpperCase(),
-                                    textAlign: TextAlign.end,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 20,
-                                      height: 0.9,
-                                    ),
-                                  ),
-                                  if (dataProvider.game != null && dataProvider.game!["name"].startsWith('PRE'))
-                                    Text(
-                                      'PRESEASON'.toUpperCase(),
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                        color: Colors.orange,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(5, 20, 15, 0),
-                              child: Text(
-                                '${dataProvider.game != null ? dataProvider.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "") : "1"}',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 30,
-                                ),
-                              ),
-                            ),
-                          ],
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new,
+                                color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Spacer(),
+                        ],
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            'assets/images/poolq12.png',
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Welcome to week '.toUpperCase(),
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '${dataProvider.game != null ? dataProvider.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "") : "1"}',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (dataProvider.game != null &&
+                          dataProvider.game!["name"]
+                              .toString()
+                              .startsWith('PRE'))
+                        const Text(
+                          'PRESEASON',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: Color(0xFFFF8F00),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
               Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 90, 0, 0),
+                padding: EdgeInsetsDirectional.fromSTEB(
+                    0, MediaQuery.of(context).padding.top + 140, 0, 0),
                 child: Container(
                   width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(
-                    color: Color(0x85C5C5C5),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
                   ),
                   child: Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(1, 20, 1, 1),
+                    padding: EdgeInsetsDirectional.fromSTEB(1, 12, 1, 1),
                     child: Builder(
                       // future: getGame(),
                       builder: (context) {
@@ -412,21 +412,28 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                     .formatStringDate(element["date"])
                                     .toString(),
                                 groupSeparatorBuilder: (String value) =>
-                                    ClipRRect(
-                                  borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(20),
-                                      topLeft: Radius.circular(20)),
+                                    Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(10, 4, 10, 8),
                                   child: Container(
-                                    width: 200,
-                                    color: Colors.white,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4.0),
-                                      child: Text(
-                                        formateDate(value),
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold),
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF063a73)
+                                          .withOpacity(0.55),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                          color:
+                                              Colors.white.withOpacity(0.18)),
+                                    ),
+                                    child: Text(
+                                      formateDate(value),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -442,16 +449,22 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                     children: [
                                       Padding(
                                         padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 20),
+                                            10, 0, 10, 12),
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: Color(0x96E87D)
-                                                .withOpacity(0.8),
+                                            color: const Color(0xFF3474E0)
+                                                .withOpacity(0.78),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Colors.white
+                                                  .withOpacity(0.18),
+                                            ),
                                           ),
                                           child: Padding(
                                             padding:
                                                 EdgeInsetsDirectional.fromSTEB(
-                                                    0, 5, 0, 5),
+                                                    8, 8, 8, 8),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.max,
                                               mainAxisAlignment:
@@ -479,8 +492,10 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                             style: TextStyle(
                                                               fontFamily:
                                                                   'Poppins',
-                                                              color: Color(
-                                                                  0xFF27512F),
+                                                              color: Colors
+                                                                  .white
+                                                                  .withOpacity(
+                                                                      0.85),
                                                               fontSize: 10,
                                                               fontWeight:
                                                                   FontWeight
@@ -493,6 +508,8 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                             style: TextStyle(
                                                               fontFamily:
                                                                   'Poppins',
+                                                              color:
+                                                                  Colors.white,
                                                               fontSize: 10,
                                                             ),
                                                           ),
@@ -507,7 +524,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                         children: [
                                                           TeamLogo(
                                                             abbr: _getTeamAbbreviationWithFallback(gameItem, true),
-                                                            size: 40,
+                                                            size: 80,
                                                           ),
                                                           TextButton(
                                                             onPressed:
@@ -582,17 +599,12 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                         .playerPicks!
                                                                         .contains(gameItem[
                                                                             "abbreviation"])
-                                                                    ? Colors.green
-                                                                    : Color(0x733474E0),
+                                                                    ? const Color(0xFF063a73).withOpacity(0.95)
+                                                                    : Colors.white.withOpacity(0.22),
                                                                 borderRadius: BorderRadius.circular(25),
                                                                 border: Border.all(
-                                                                  color: dataProvider
-                                                                          .playerPicks!
-                                                                          .contains(gameItem[
-                                                                              "abbreviation"])
-                                                                      ? Colors.greenAccent
-                                                                      : Colors.white,
-                                                                  width: 2,
+                                                                  color: Colors.white.withOpacity(0.25),
+                                                                  width: 1,
                                                                 ),
                                                               ),
                                                               child: Row(
@@ -639,9 +651,11 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                             0),
                                                                 child: Text(
                                                                   'AT',
-                                                                  // style: FlutterFlowTheme
-                                                                  //     .of(context)
-                                                                  //     .bodyMedium,
+                                                                  style: TextStyle(
+                                                                    color: Colors.white,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 12,
+                                                                  ),
                                                                 ),
                                                               ),
                                                               Padding(
@@ -659,7 +673,8 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                           FontWeight
                                                                               .bold,
                                                                       fontSize:
-                                                                          11),
+                                                                          11,
+                                                                      color: Colors.white70),
                                                                 ),
                                                               ),
                                                             ],
@@ -765,17 +780,12 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                                           .playerPicks!
                                                                           .contains(gameItem[
                                                                               "abbreviation2"])
-                                                                      ? Colors.green
-                                                                      : Color(0x733474E0),
+                                                                      ? const Color(0xFF063a73).withOpacity(0.95)
+                                                                      : Colors.white.withOpacity(0.22),
                                                                   borderRadius: BorderRadius.circular(25),
                                                                   border: Border.all(
-                                                                    color: dataProvider
-                                                                            .playerPicks!
-                                                                            .contains(gameItem[
-                                                                                "abbreviation2"])
-                                                                        ? Colors.greenAccent
-                                                                        : Colors.white,
-                                                                    width: 2,
+                                                                    color: Colors.white.withOpacity(0.25),
+                                                                    width: 1,
                                                                   ),
                                                                 ),
                                                                 child: Row(
@@ -808,7 +818,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                                               ),
                                                           TeamLogo(
                                                             abbr: _getTeamAbbreviationWithFallback(gameItem, false),
-                                                            size: 40,
+                                                            size: 80,
                                                           ),
                                                         ],
                                                       ),
@@ -1169,7 +1179,7 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
     bool hasTeam2 = dataProvider.playerPicks!.contains(gameItem["abbreviation2"]);
     
     if (hasTeam1 || hasTeam2) {
-      return Colors.green;
+      return const Color(0xFF69F0AE);
     } else {
       return Colors.white;
     }

@@ -293,93 +293,78 @@ class _PlayWidgetState extends State<PlayWidget> {
                 ),
               Container(
                 width: MediaQuery.of(context).size.width,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Color(0x43EEEEEE),
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top +
+                      (showPreBanner ? 56 : 12) +
+                      (_hasExistingEntry ? 56 : 0),
+                  bottom: 8,
                 ),
-                child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 12, 0, 0),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.28),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.asset(
+                        'assets/images/app_icon.png',
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/images/poolq12.png',
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                  20, 20, 20, 0),
-                              child: Image.asset(
-                                'assets/images/poolq12.png',
-                                width: 67,
-                                height: 90,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  print('Error loading logo: $error');
-                                  return Container(
-                                    width: 67,
-                                    height: 90,
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'PQ',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(20, 20, 0, 0),
-                              child: Text(
-                                'Welcome \nto week '.toUpperCase(),
-                                textAlign: TextAlign.end,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 20,
-                                  height: 0.9,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(5, 20, 0, 0),
-                              child: Text(
-                                '${dataProvider.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 30,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Welcome to week '.toUpperCase(),
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          '${dataProvider.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}',
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
               Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(0, 120, 0, 0),
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  0,
+                  MediaQuery.of(context).padding.top +
+                      (showPreBanner ? 56 : 12) +
+                      (_hasExistingEntry ? 56 : 0) +
+                      100,
+                  0,
+                  0,
+                ),
                 child: Container(
                   width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(
-                    color: Color(0x85C5C5C5),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
                   ),
                   child: Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(1, 20, 1, 1),
+                    padding: EdgeInsetsDirectional.fromSTEB(1, 12, 1, 1),
                     child: Builder(
                       // future: getGame(),
                       builder: (context) {
@@ -408,21 +393,26 @@ class _PlayWidgetState extends State<PlayWidget> {
                                     .formatStringDate(element["date"])
                                     .toString(),
                                 groupSeparatorBuilder: (String value) =>
-                                    ClipRRect(
-                                  borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(20),
-                                      topLeft: Radius.circular(20)),
+                                    Padding(
+                                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
                                   child: Container(
-                                    width: 200,
-                                    color: Colors.white,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4.0),
-                                      child: Text(
-                                        formateDate(value),
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold),
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF063a73)
+                                          .withOpacity(0.55),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                          color: Colors.white.withOpacity(0.18)),
+                                    ),
+                                    child: Text(
+                                      formateDate(value),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -438,16 +428,22 @@ class _PlayWidgetState extends State<PlayWidget> {
                                     children: [
                                       Padding(
                                         padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 20),
+                                            10, 0, 10, 12),
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: Color(0x96E87D)
-                                                .withOpacity(0.8),
+                                            color: const Color(0xFF3474E0)
+                                                .withOpacity(0.78),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Colors.white
+                                                  .withOpacity(0.18),
+                                            ),
                                           ),
                                           child: Padding(
                                             padding:
                                                 EdgeInsetsDirectional.fromSTEB(
-                                                    0, 5, 0, 5),
+                                                    8, 8, 8, 8),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.max,
                                               mainAxisAlignment:
@@ -475,8 +471,10 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                             style: TextStyle(
                                                               fontFamily:
                                                                   'Poppins',
-                                                              color: Color(
-                                                                  0xFF27512F),
+                                                              color: Colors
+                                                                  .white
+                                                                  .withOpacity(
+                                                                      0.85),
                                                               fontSize: 10,
                                                               fontWeight:
                                                                   FontWeight
@@ -489,6 +487,8 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                             style: TextStyle(
                                                               fontFamily:
                                                                   'Poppins',
+                                                              color:
+                                                                  Colors.white,
                                                               fontSize: 10,
                                                             ),
                                                           ),
@@ -507,7 +507,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                               children: [
                                                                 TeamLogo(
                                                                   abbr: gameItem["abbreviation2"] ?? '',
-                                                                  size: 40,
+                                                                  size: 80,
                                                                 ),
                                                                 SizedBox(height: 8),
                                                                 Text(
@@ -516,6 +516,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                   style: TextStyle(
                                                                     fontSize: 12,
                                                                     fontWeight: FontWeight.w500,
+                                                                    color: Colors.white,
                                                                   ),
                                                                 ),
                                                                 SizedBox(height: 4),
@@ -614,8 +615,11 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                           EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
                                                                       backgroundColor:
                                                                           MaterialStateProperty
-                                                                              .all(Color(
-                                                                                  0x733474E0)),
+                                                                              .all(
+                                                                        dataProvider.playerPicks!.contains(gameItem["abbreviation2"])
+                                                                            ? const Color(0xFF063a73).withOpacity(0.95)
+                                                                            : Colors.white.withOpacity(0.22),
+                                                                      ),
                                                                       foregroundColor:
                                                                           MaterialStateProperty
                                                                               .all(Color(
@@ -638,8 +642,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                               RoundedRectangleBorder(
                                                                         side:
                                                                             BorderSide(
-                                                                          color: Colors
-                                                                              .transparent,
+                                                                          color: Colors.white.withOpacity(0.25),
                                                                           width: 1,
                                                                         ),
                                                                         borderRadius:
@@ -664,6 +667,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                   style: TextStyle(
                                                                     fontWeight: FontWeight.bold,
                                                                     fontSize: 12,
+                                                                    color: Colors.white,
                                                                   ),
                                                                 ),
                                                                 SizedBox(height: 4),
@@ -675,7 +679,8 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                           FontWeight
                                                                               .bold,
                                                                       fontSize:
-                                                                          10),
+                                                                          10,
+                                                                      color: Colors.white70),
                                                                 ),
                                                               ],
                                                             ),
@@ -686,7 +691,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                               children: [
                                                                 TeamLogo(
                                                                   abbr: gameItem["abbreviation"] ?? '',
-                                                                  size: 40,
+                                                                  size: 80,
                                                                 ),
                                                                 SizedBox(height: 8),
                                                                 Text(
@@ -695,6 +700,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                   style: TextStyle(
                                                                     fontSize: 12,
                                                                     fontWeight: FontWeight.w500,
+                                                                    color: Colors.white,
                                                                   ),
                                                                 ),
                                                                 SizedBox(height: 4),
@@ -753,11 +759,11 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                           ),
                                                                         );
                                                                       }
-                                                                                                                                              // Remove both teams first to ensure clean selection
-                                                                        dataProvider.removeFromPlayerPicks(gameItem["abbreviation"]);
-                                                                        dataProvider.removeFromPlayerPicks(gameItem["abbreviation2"]);
-                                                                        // Then add the selected team
-                                                                        dataProvider.addToPlayerPicks(gameItem["abbreviation"]);
+                                                                      // Remove both teams first to ensure clean selection
+                                                                      dataProvider.removeFromPlayerPicks(gameItem["abbreviation"]);
+                                                                      dataProvider.removeFromPlayerPicks(gameItem["abbreviation2"]);
+                                                                      // Then add the selected team
+                                                                      dataProvider.addToPlayerPicks(gameItem["abbreviation"]);
                                                                     },
                                                                     child: Row(
                                                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -793,8 +799,11 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                           EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
                                                                       backgroundColor:
                                                                           MaterialStateProperty
-                                                                              .all(Color(
-                                                                                  0x733474E0)),
+                                                                              .all(
+                                                                        dataProvider.playerPicks!.contains(gameItem["abbreviation"])
+                                                                            ? const Color(0xFF063a73).withOpacity(0.95)
+                                                                            : Colors.white.withOpacity(0.22),
+                                                                      ),
                                                                       foregroundColor:
                                                                           MaterialStateProperty
                                                                               .all(Color(
@@ -817,8 +826,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                               RoundedRectangleBorder(
                                                                         side:
                                                                             BorderSide(
-                                                                          color: Colors
-                                                                              .transparent,
+                                                                          color: Colors.white.withOpacity(0.25),
                                                                           width: 1,
                                                                         ),
                                                                         borderRadius:
@@ -852,8 +860,8 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                            fontSize: 12,
                                                            color: (dataProvider.playerPicks!.contains(gameItem["abbreviation"]) || 
                                                                   dataProvider.playerPicks!.contains(gameItem["abbreviation2"])) 
-                                                                  ? Color(0xFF27512F) 
-                                                                  : Colors.black,
+                                                                  ? const Color(0xFF69F0AE)
+                                                                  : Colors.white,
                                                          ),
                                                        ),
                                                     ],
