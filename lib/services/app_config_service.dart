@@ -97,7 +97,8 @@ class AppConfigService {
   }
 
   bool get isPreseasonFreeWeek =>
-      preseasonFree && activeWeek.startsWith('PRE');
+      preseasonFree &&
+      (activeWeek.startsWith('PRE') || activeWeek.startsWith('MOCK'));
 
   Map<String, String> get paymentHandles => {
         'zelle': zelleDestination,

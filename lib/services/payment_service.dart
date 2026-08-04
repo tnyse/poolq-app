@@ -105,7 +105,8 @@ class PaymentService {
       if (!config.isLoaded) {
         await config.load();
       }
-      final autoVerify = config.preseasonFree && weekName.startsWith('PRE');
+      final autoVerify = config.preseasonFree &&
+          (weekName.startsWith('PRE') || weekName.startsWith('MOCK'));
       final status =
           autoVerify ? PaymentStatus.autoVerified : PaymentStatus.pending;
 

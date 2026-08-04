@@ -189,9 +189,10 @@ class _PlayWidgetState extends State<PlayWidget> {
     }
 
     final weekName = dataProvider.game?['name']?.toString() ?? '';
-    final showPreBanner = weekName.startsWith('PRE') &&
-        (AppConfigService().preseasonFree ||
-            AppConfigService().isPreseasonFreeWeek);
+    final showPreBanner =
+        (weekName.startsWith('PRE') || weekName.startsWith('MOCK')) &&
+            (AppConfigService().preseasonFree ||
+                AppConfigService().isPreseasonFreeWeek);
 
     return Scaffold(
         key: scaffoldKey,

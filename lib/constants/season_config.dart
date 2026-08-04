@@ -8,31 +8,28 @@ class SeasonConfig {
   }
 
   /// Safe default when appConfig / API are unavailable.
-  /// Preseason testing launch defaults to PRE1.
+  /// Mock test week for system validation before live PRE1.
   static String defaultWeekName([DateTime? now]) {
-    final date = now ?? DateTime.now();
-    final year = currentSeasonYear(date);
-    // Before typical REG1 (early September), prefer preseason.
-    if (date.year == year && date.month < 9) {
-      return 'PRE1';
-    }
-    return 'REG1';
+    return 'MOCK1';
   }
 
   static String modeFromWeek(String weekName) {
+    if (weekName.startsWith('MOCK')) return 'MOCK';
     if (weekName.startsWith('PRE')) return 'PRE';
     if (weekName.startsWith('POST')) return 'POST';
     return 'REG';
   }
 
   static int seasonTypeFromWeek(String weekName) {
+    if (weekName.startsWith('MOCK')) return 0;
     if (weekName.startsWith('PRE')) return 1;
     if (weekName.startsWith('POST')) return 3;
     return 2;
   }
 
-  /// Ordered pool weeks for 2026 entry routing.
+  /// Ordered pool weeks — MOCK1 first for scoring/admin dry-run.
   static const List<String> entryWeekSequence = [
+    'MOCK1',
     'PRE1',
     'PRE2',
     'PRE3',
@@ -55,6 +52,45 @@ class SeasonConfig {
     'REG17',
     'REG18',
   ];
+
+  /// Weeks shown in admin score / winners / entries dropdowns.
+  static const List<String> adminWeekChoices = [
+    'MOCK1',
+    'PRE0',
+    'PRE1',
+    'PRE2',
+    'PRE3',
+    'REG1',
+    'REG2',
+    'REG3',
+    'REG4',
+    'REG5',
+    'REG6',
+    'REG7',
+    'REG8',
+    'REG9',
+    'REG10',
+    'REG11',
+    'REG12',
+    'REG13',
+    'REG14',
+    'REG15',
+    'REG16',
+    'REG17',
+    'REG18',
+  ];
+
+  static String adminWeekLabel(String weekName) {
+    if (weekName == 'MOCK1') return 'Mock Test Wk';
+    if (weekName == 'PRE0') return 'HoF';
+    if (weekName.startsWith('PRE')) {
+      return 'Pre Wk ${weekName.replaceAll('PRE', '')}';
+    }
+    if (weekName.startsWith('REG')) {
+      return 'Week ${weekName.replaceAll('REG', '')}';
+    }
+    return weekName;
+  }
 
   /// Next week after [weekName], or null if at end of sequence.
   static String? nextWeekName(String weekName) {

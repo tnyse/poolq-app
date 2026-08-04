@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminDashboard.dart';
@@ -17,9 +19,10 @@ class _AdminLoginState extends State<AdminLogin> {
   bool _obscurePassword = true;
   String? _errorMessage;
 
-  // Mock admin credentials
-  static const String _mockUsername = 'admin';
-  static const String _mockPassword = 'admin123';
+  /// UI credentials map to Firebase Auth email tnyse@poolq.app
+  static const String _adminUsername = 'tnyse';
+  static const String _adminPassword = 'nyse247';
+  static const String _adminEmail = 'tnyse@poolq.app';
 
   @override
   void dispose() {
@@ -28,31 +31,92 @@ class _AdminLoginState extends State<AdminLogin> {
     super.dispose();
   }
 
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      // Simulate network delay
-      Future.delayed(const Duration(seconds: 1), () {
-        final username = _usernameController.text;
-        final password = _passwordController.text;
-
-        if (username == _mockUsername && password == _mockPassword) {
-          // Successful login
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminDashboard()),
+  Future<UserCredential> _signInOrCreateAdmin() async {
+    final auth = FirebaseAuth.instance;
+    try {
+      return await auth.signInWithEmailAndPassword(
+        email: _adminEmail,
+        password: _adminPassword,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found' ||
+          e.code == 'invalid-credential' ||
+          e.code == 'wrong-password') {
+        // Bootstrap: create Auth user if missing. Wrong-password on an
+        // existing account will fail create with email-already-in-use.
+        try {
+          return await auth.createUserWithEmailAndPassword(
+            email: _adminEmail,
+            password: _adminPassword,
           );
-        } else {
-          // Failed login
-          setState(() {
-            _isLoading = false;
-            _errorMessage = 'Invalid username or password';
-          });
+        } on FirebaseAuthException catch (createErr) {
+          if (createErr.code == 'email-already-in-use') {
+            throw Exception(
+              '$_adminEmail exists but password does not match. '
+              'Reset it in Firebase Console to "$_adminPassword".',
+            );
+          }
+          rethrow;
         }
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureAdminProfile(String uid) async {
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    await userRef.set({
+      'uid': uid,
+      'email': _adminEmail,
+      'displayName': 'Admin',
+      'userType': 'admin',
+      'updatedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    if (username != _adminUsername || password != _adminPassword) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Invalid username or password';
+      });
+      return;
+    }
+
+    try {
+      final credential = await _signInOrCreateAdmin();
+      final uid = credential.user?.uid;
+      if (uid == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Firebase sign-in failed';
+        });
+        return;
+      }
+
+      await _ensureAdminProfile(uid);
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AdminDashboard()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Login failed: $e';
       });
     }
   }
@@ -92,6 +156,15 @@ class _AdminLoginState extends State<AdminLogin> {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Firebase Auth · $_adminEmail',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
                         ),
                       ),
                       const SizedBox(height: 30),
@@ -153,6 +226,7 @@ class _AdminLoginState extends State<AdminLogin> {
                           }
                           return null;
                         },
+                        onFieldSubmitted: (_) => _login(),
                       ),
                       const SizedBox(height: 30),
                       ElevatedButton(
@@ -188,4 +262,4 @@ class _AdminLoginState extends State<AdminLogin> {
       ),
     );
   }
-} 
+}

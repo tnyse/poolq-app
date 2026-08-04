@@ -539,10 +539,11 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       // Close loading dialog
       Navigator.pop(context);
 
-      // PRE free / auto-verify: skip payment screen
+      // PRE/MOCK free / auto-verify: skip payment screen
       final config = AppConfigService();
       if (!config.isLoaded) await config.load();
-      if (config.preseasonFree && weekName.startsWith('PRE')) {
+      if (config.preseasonFree &&
+          (weekName.startsWith('PRE') || weekName.startsWith('MOCK'))) {
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -550,8 +551,12 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
           (route) => false,
         );
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You\'re in! Preseason entry is free.'),
+          SnackBar(
+            content: Text(
+              weekName.startsWith('MOCK')
+                  ? 'You\'re in! Mock week entry is free.'
+                  : 'You\'re in! Preseason entry is free.',
+            ),
             backgroundColor: Colors.green,
           ),
         );

@@ -18,7 +18,7 @@ class ScoringService {
       debugPrint('Calculating score for pick: ${pick.pickId}');
       
       // Get game results for the week
-      final gameResults = await _getGameResultsForWeek(pick.weekName);
+      final gameResults = await getGameResultsForWeek(pick.weekName);
       if (gameResults.isEmpty) {
         debugPrint('No game results found for week: ${pick.weekName}');
         return {
@@ -186,7 +186,7 @@ class ScoringService {
   /// Validate if picks are complete for a week
   Future<bool> validatePicks(List<String> picks, String weekName) async {
     try {
-      final gameResults = await _getGameResultsForWeek(weekName);
+      final gameResults = await getGameResultsForWeek(weekName);
 
       // Fallback: if no Firestore results (e.g., demo/web/offline), use local schedule file
       if (gameResults.isEmpty) {
@@ -250,7 +250,7 @@ class ScoringService {
   }
 
   /// Get game results for a specific week
-  Future<List<GameResultModel>> _getGameResultsForWeek(String weekName) async {
+  Future<List<GameResultModel>> getGameResultsForWeek(String weekName) async {
     try {
       final query = await _firestore
           .collection('game_results')
@@ -269,10 +269,83 @@ class ScoringService {
     }
   }
 
+  /// Upsert final scores for admin Game Scores tab (doc id = schedule game id).
+  Future<int> saveGameResults(List<GameResultModel> results) async {
+    if (results.isEmpty) return 0;
+    final batch = _firestore.batch();
+    final now = DateTime.now().toUtc();
+    var count = 0;
+
+    for (final result in results) {
+      if (result.gameId.isEmpty) {
+        debugPrint('ScoringService.saveGameResults: skip empty gameId');
+        continue;
+      }
+      final ref = _firestore.collection('game_results').doc(result.gameId);
+      final data = result.toMap();
+      data['espnId'] = result.gameId;
+      data['lastUpdated'] = Timestamp.fromDate(now);
+      batch.set(ref, data, SetOptions(merge: true));
+      count++;
+    }
+
+    await batch.commit();
+    debugPrint('ScoringService: saved $count game_results');
+    return count;
+  }
+
+  /// Map admin UI game maps (score/score2) into [GameResultModel]s marked final.
+  List<GameResultModel> gameResultsFromAdminGames({
+    required String weekName,
+    required List<Map<String, dynamic>> games,
+  }) {
+    final out = <GameResultModel>[];
+    for (final game in games) {
+      final id = (game['id'] ?? '').toString();
+      if (id.isEmpty) continue;
+
+      final homeScore = int.tryParse((game['score'] ?? '').toString()) ?? 0;
+      final awayScore = int.tryParse((game['score2'] ?? '').toString()) ?? 0;
+      final homeAbbr = (game['abbreviation'] ?? '').toString();
+      final awayAbbr = (game['abbreviation2'] ?? '').toString();
+      String? winner;
+      if (homeScore != awayScore) {
+        winner = homeScore > awayScore ? homeAbbr : awayAbbr;
+      }
+
+      DateTime gameDate = DateTime.now().toUtc();
+      final iso = (game['dateIso'] ?? '').toString();
+      if (iso.isNotEmpty) {
+        try {
+          gameDate = DateTime.parse(iso).toUtc();
+        } catch (_) {}
+      }
+
+      out.add(
+        GameResultModel(
+          gameId: id,
+          weekName: weekName,
+          homeTeam: (game['fullname'] ?? '').toString(),
+          awayTeam: (game['fullname2'] ?? '').toString(),
+          homeTeamAbbr: homeAbbr,
+          awayTeamAbbr: awayAbbr,
+          homeScore: homeScore,
+          awayScore: awayScore,
+          winner: winner,
+          gameDate: gameDate,
+          status: 'final',
+          lastUpdated: DateTime.now().toUtc(),
+          source: 'manual',
+        ),
+      );
+    }
+    return out;
+  }
+
   /// Check if a week is complete (all games finished)
   Future<bool> isWeekComplete(String weekName) async {
     try {
-      final gameResults = await _getGameResultsForWeek(weekName);
+      final gameResults = await getGameResultsForWeek(weekName);
       if (gameResults.isEmpty) return false;
       
       return gameResults.every((game) => game.isFinal);

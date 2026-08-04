@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:poolqapp/constants/season_config.dart';
 import 'package:poolqapp/services/nfl_schedule_service.dart';
 
 class NFLGameService {
@@ -11,14 +12,26 @@ class NFLGameService {
   NFLGameService._internal();
   
   // Loads real NFL games for a given week from the local schedule file
-  Future<List<Map<String, dynamic>>> getGamesForWeek(String weekName, {int year = 2025}) async {
+  Future<List<Map<String, dynamic>>> getGamesForWeek(
+    String weekName, {
+    int? year,
+  }) async {
     final scheduleService = NFLScheduleService();
-    return await scheduleService.getScheduleForWeekWithLocalFallback(weekName, year: year);
+    return await scheduleService.getScheduleForWeekWithLocalFallback(
+      weekName,
+      year: year ?? SeasonConfig.currentSeasonYear(),
+    );
   }
   
   // Loads winners for a given week from the real schedule (where status is 'completed' and score > score2)
-  Future<List<String>> getWinnersForWeek(String weekName, {int year = 2025}) async {
-    final games = await getGamesForWeek(weekName, year: year);
+  Future<List<String>> getWinnersForWeek(
+    String weekName, {
+    int? year,
+  }) async {
+    final games = await getGamesForWeek(
+      weekName,
+      year: year ?? SeasonConfig.currentSeasonYear(),
+    );
     List<String> winners = [];
     for (final game in games) {
       if (game['status'] == 'completed') {

@@ -1,0 +1,86 @@
+{
+  "week": "MOCK1",
+  "note": "Simulated finals for admin declare / scoring tests. Not shown to players until seeded into game_results.",
+  "games": [
+    {
+      "id": "mock1-01",
+      "shortName": "DAL @ PHI",
+      "homeTeamAbbr": "PHI",
+      "awayTeamAbbr": "DAL",
+      "homeScore": 27,
+      "awayScore": 20,
+      "winner": "PHI",
+      "total": 47
+    },
+    {
+      "id": "mock1-02",
+      "shortName": "KC @ BUF",
+      "homeTeamAbbr": "BUF",
+      "awayTeamAbbr": "KC",
+      "homeScore": 21,
+      "awayScore": 24,
+      "winner": "KC",
+      "total": 45
+    },
+    {
+      "id": "mock1-03",
+      "shortName": "SF @ SEA",
+      "homeTeamAbbr": "SEA",
+      "awayTeamAbbr": "SF",
+      "homeScore": 14,
+      "awayScore": 17,
+      "winner": "SF",
+      "total": 31
+    },
+    {
+      "id": "mock1-04",
+      "shortName": "BAL @ CIN",
+      "homeTeamAbbr": "CIN",
+      "awayTeamAbbr": "BAL",
+      "homeScore": 24,
+      "awayScore": 28,
+      "winner": "BAL",
+      "total": 52
+    },
+    {
+      "id": "mock1-05",
+      "shortName": "DET @ GB",
+      "homeTeamAbbr": "GB",
+      "awayTeamAbbr": "DET",
+      "homeScore": 28,
+      "awayScore": 31,
+      "winner": "DET",
+      "total": 59
+    },
+    {
+      "id": "mock1-06",
+      "shortName": "MIA @ NYJ",
+      "homeTeamAbbr": "NYJ",
+      "awayTeamAbbr": "MIA",
+      "homeScore": 21,
+      "awayScore": 14,
+      "winner": "NYJ",
+      "total": 35
+    },
+    {
+      "id": "mock1-07",
+      "shortName": "LAR @ CHI",
+      "homeTeamAbbr": "CHI",
+      "awayTeamAbbr": "LAR",
+      "homeScore": 17,
+      "awayScore": 24,
+      "winner": "LAR",
+      "total": 41
+    },
+    {
+      "id": "mock1-08",
+      "shortName": "DEN @ LAC",
+      "homeTeamAbbr": "LAC",
+      "awayTeamAbbr": "DEN",
+      "homeScore": 23,
+      "awayScore": 20,
+      "winner": "LAC",
+      "total": 43
+    }
+  ]
+}

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
 // import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/services/nfl_game_service.dart';
+import 'package:poolqapp/services/scoring_service.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/constants/season_config.dart';
 import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,13 +27,14 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   final NFLGameService _gameService = NFLGameService();
   List<Map<String, dynamic>> _games = [];
   List<String> _winners = [];
-  String _selectedWeek = "REG1";
+  String _selectedWeek = "MOCK1";
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   final _maxUsesController = TextEditingController();
   bool _isReusable = true;
   bool _isLoading = false;
   bool _scoresPublic = false;
+  bool _savingScores = false;
   String _entriesStatusFilter = 'All';
   
   @override
@@ -44,6 +47,30 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   void _loadGameData() async {
     final games = await _gameService.getGamesForWeek(_selectedWeek);
     final winners = await _gameService.getWinnersForWeek(_selectedWeek);
+
+    // Overlay any scores already saved in Firestore
+    try {
+      final saved = await ScoringService().getGameResultsForWeek(_selectedWeek);
+      final byId = {for (final r in saved) r.gameId: r};
+      for (final game in games) {
+        final id = (game['id'] ?? '').toString();
+        final result = byId[id];
+        if (result == null) continue;
+        if (result.homeScore != null) {
+          game['score'] = result.homeScore.toString();
+        }
+        if (result.awayScore != null) {
+          game['score2'] = result.awayScore.toString();
+        }
+        if (result.status.isNotEmpty) {
+          game['status'] = result.status;
+        }
+      }
+    } catch (e) {
+      debugPrint('AdminDashboard: could not load game_results: $e');
+    }
+
+    if (!mounted) return;
     setState(() {
       _games = games;
       _winners = winners;
@@ -55,6 +82,55 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     });
   }
 
+  Future<void> _saveGameScoresToFirestore() async {
+    if (_games.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No games loaded for this week')),
+      );
+      return;
+    }
+
+    setState(() => _savingScores = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final scoring = ScoringService();
+      final results = scoring.gameResultsFromAdminGames(
+        weekName: _selectedWeek,
+        games: _games,
+      );
+      final count = await scoring.saveGameResults(results);
+      if (!mounted) return;
+      setState(() {
+        _savingScores = false;
+        for (final g in _games) {
+          g['status'] = 'final';
+        }
+        _scoresPublic = _games.isNotEmpty;
+      });
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Saved $count final scores for $_selectedWeek to Firestore',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _savingScores = false);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Save failed: $e\n'
+            'Sign in as a Firebase user with userType=admin.',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -62,6 +138,16 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     _maxUsesController.dispose();
     super.dispose();
   }
+
+  List<DropdownMenuItem<String>> get _weekDropdownItems =>
+      SeasonConfig.adminWeekChoices
+          .map(
+            (w) => DropdownMenuItem(
+              value: w,
+              child: Text(SeasonConfig.adminWeekLabel(w)),
+            ),
+          )
+          .toList();
 
   Future<void> _createInvitationCode() async {
     if (!_formKey.currentState!.validate()) {
@@ -298,9 +384,42 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/images/app_icon.png',
+                width: 28,
+                height: 28,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/images/poolq12.png',
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Admin Dashboard',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -356,16 +475,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               const SizedBox(width: 10),
               DropdownButton<String>(
                 value: _selectedWeek,
-                items: [
-                  ...List.generate(4, (i) => DropdownMenuItem(
-                        value: 'PRE${i + 1}',
-                        child: Text('Pre Wk ${i + 1}'),
-                      )),
-                  ...List.generate(18, (i) => DropdownMenuItem(
-                        value: 'REG${i + 1}',
-                        child: Text('Week ${i + 1}'),
-                      )),
-                ],
+                items: _weekDropdownItems,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
@@ -387,6 +497,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
         ),
         Expanded(
           child: ListView.builder(
+            key: ValueKey('game-scores-$_selectedWeek'),
             itemCount: _games.length,
             itemBuilder: (context, index) {
               final game = _games[index];
@@ -540,6 +651,35 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
             },
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _savingScores ? null : _saveGameScoresToFirestore,
+              icon: _savingScores
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.cloud_upload),
+              label: Text(
+                _savingScores
+                    ? 'Saving to Firestore…'
+                    : 'Save Scores to Firestore',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -669,16 +809,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               const SizedBox(width: 10),
               DropdownButton<String>(
                 value: _selectedWeek,
-                items: [
-                  ...List.generate(4, (i) => DropdownMenuItem(
-                        value: 'PRE${i + 1}',
-                        child: Text('Pre Wk ${i + 1}'),
-                      )),
-                  ...List.generate(18, (i) => DropdownMenuItem(
-                        value: 'REG${i + 1}',
-                        child: Text('Week ${i + 1}'),
-                      )),
-                ],
+                items: _weekDropdownItems,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
@@ -743,13 +874,17 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
           Center(
             child: ElevatedButton.icon(
               onPressed: () {
-                // Save winners (team winners for admin UI — local only)
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Winners saved successfully!')),
+                  const SnackBar(
+                    content: Text(
+                      'Team winners are local only. Use “Declare Week Results” to score entries.',
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
                 );
               },
-              icon: const Icon(Icons.save),
-              label: const Text('Save Winners'),
+              icon: const Icon(Icons.info_outline),
+              label: const Text('Save Winners (UI only)'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
@@ -806,16 +941,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               const SizedBox(width: 10),
               DropdownButton<String>(
                 value: _selectedWeek,
-                items: [
-                  ...List.generate(4, (i) => DropdownMenuItem(
-                        value: 'PRE${i + 1}',
-                        child: Text('Pre Wk ${i + 1}'),
-                      )),
-                  ...List.generate(18, (i) => DropdownMenuItem(
-                        value: 'REG${i + 1}',
-                        child: Text('Week ${i + 1}'),
-                      )),
-                ],
+                items: _weekDropdownItems,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
