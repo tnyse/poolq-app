@@ -15,6 +15,9 @@ import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/screens/invite_friends_page.dart';
 import 'package:poolqapp/services/game_enforcement_service.dart';
 import 'package:poolqapp/services/payment_reminder_service.dart';
+import 'package:poolqapp/services/payment_service.dart';
+import 'package:poolqapp/services/app_config_service.dart';
+import 'package:poolqapp/constants/season_config.dart';
 
 // import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -29,7 +32,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late PageController _controller;
   User? user = FirebaseAuth.instance.currentUser;
-  Stream<QuerySnapshot?>? _pickrecord;
+  /// Never null — null streams leave StreamBuilder stuck on waiting forever.
+  Stream<DocumentSnapshot?> _pickDoc = Stream.value(null);
   bool _isLoading = true;
   String? _error;
   int _retryCount = 0;
@@ -196,29 +200,61 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _initializePickStream(User? user) async {
-    // Initialize pick record stream - handle demo mode
-    if (mounted) {
-      final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      if (user?.email == 'demo@poolq.com' || user == null) {
-        // Demo mode - use Stream.empty() to avoid hanging
-        debugPrint('HomePage: Demo mode - using Stream.empty() for pick stream');
-        _pickrecord = Stream.empty();
-      } else {
-        // Real user — query pickrecord by uid + week (matches PaymentService docs)
-        final weekName = dataProvider.game?['name'] ?? 'PRE1';
-        _pickrecord = FirebaseFirestore.instance
-            .collection('pickrecord')
-            .where('uid', isEqualTo: user.uid)
-            .where('week', isEqualTo: weekName)
-            .snapshots();
-      }
+    if (!mounted) return;
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    if (user?.email == 'demo@poolq.com' || user == null) {
+      debugPrint('HomePage: Demo mode - no pick doc stream');
+      _pickDoc = Stream.value(null);
+      return;
     }
+
+    final config = AppConfigService();
+    final weekName = dataProvider.game?['name']?.toString().isNotEmpty == true
+        ? dataProvider.game!['name'].toString()
+        : (config.isLoaded
+            ? config.activeWeek
+            : SeasonConfig.defaultWeekName());
+
+    final docId = PaymentService.pickDocumentId(user.uid, weekName);
+    debugPrint('HomePage: pick stream → pickrecord/$docId');
+    // Doc listen needs no composite index and always emits (exists or not).
+    _pickDoc = FirebaseFirestore.instance
+        .collection('pickrecord')
+        .doc(docId)
+        .snapshots()
+        .map((snap) => snap);
     debugPrint('HomePage: _initializePickStream completed');
   }
 
-  bool _hasSubmittedPicks(AsyncSnapshot<QuerySnapshot?> snapshot) {
-    final docs = snapshot.data?.docs;
-    return docs != null && docs.isNotEmpty;
+  bool _hasSubmittedPicks(AsyncSnapshot<DocumentSnapshot?> snapshot) {
+    final doc = snapshot.data;
+    return doc != null && doc.exists;
+  }
+
+  Widget _buildLoadingSplash({String message = 'Loading'}) {
+    return Scaffold(
+      backgroundColor: AppTheme.primaryBlue,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2.5,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -230,20 +266,7 @@ class _HomePageState extends State<HomePage> {
 
     if (_isLoading) {
       debugPrint('HomePage: Showing loading screen');
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
-              ),
-              SizedBox(height: 16),
-              Text('Loading...'),
-            ],
-          ),
-        ),
-      );
+      return _buildLoadingSplash();
     }
 
     if (_error != null) {
@@ -335,83 +358,23 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot?>(
-        stream: _pickrecord,
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot?> snapshot) {
-          debugPrint('HomePage: StreamBuilder state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}');
-          debugPrint('HomePage: User is: ${user?.email ?? "null"}');
-          
+      body: StreamBuilder<DocumentSnapshot?>(
+        stream: _pickDoc,
+        builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot?> snapshot) {
+          debugPrint(
+            'HomePage: StreamBuilder state: ${snapshot.connectionState}, '
+            'hasData: ${snapshot.hasData}, hasError: ${snapshot.hasError}',
+          );
+
+          // Never block the shell on picks stream — empty / error / waiting
+          // all still show tabs (Play Now vs review based on doc existence).
+          final isDemo = user == null || user?.email == 'demo@poolq.com';
+          final isEmpty = isDemo ? true : !_hasSubmittedPicks(snapshot);
+
           if (snapshot.hasError) {
             debugPrint('HomePage: StreamBuilder error: ${snapshot.error}');
-            // Don't block the app — show main tabs even if picks stream fails.
-            return PageView(
-              controller: _controller,
-              onPageChanged: (index) {
-                if (mounted) {
-                  dataProvider.setValue(index);
-                }
-              },
-              children: [
-                HomePageWidget(
-                  controller: _controller,
-                  isEmpty: !_hasSubmittedPicks(snapshot),
-                ),
-                const LeaderboardWidget(),
-                const UserProfile(),
-              ],
-            );
           }
 
-          // For demo mode, always show the content regardless of stream state
-          if (user == null || user?.email == 'demo@poolq.com') {
-            debugPrint('HomePage: Demo mode detected, showing content directly');
-            return PageView(
-              controller: _controller,
-              onPageChanged: (index) {
-                if (mounted) {
-                  dataProvider.setValue(index);
-                }
-              },
-              children: [
-                HomePageWidget(
-                  controller: _controller,
-                  isEmpty: true // Demo mode - always show as empty for fresh start
-                ),
-                const LeaderboardWidget(),
-                const UserProfile()
-              ],
-            );
-          }
-
-          // For real users, show loading while waiting for data
-          if (snapshot.connectionState == ConnectionState.waiting || 
-              (snapshot.connectionState == ConnectionState.done && !snapshot.hasData)) {
-            debugPrint('HomePage: Real user mode - showing loading screen');
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
-                    strokeWidth: 2,
-                    backgroundColor: Colors.white,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Loading',
-                    style: TextStyle(
-                      color: Color(0xFF333333),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          debugPrint('HomePage: Real user mode - showing content with data');
           return PageView(
             controller: _controller,
             onPageChanged: (index) {
@@ -422,13 +385,13 @@ class _HomePageState extends State<HomePage> {
             children: [
               HomePageWidget(
                 controller: _controller,
-                isEmpty: !_hasSubmittedPicks(snapshot),
+                isEmpty: isEmpty,
               ),
               const LeaderboardWidget(),
-              const UserProfile()
+              const UserProfile(),
             ],
           );
-        }
+        },
       ),
       bottomNavigationBar: buildMyNavBar(context, dataProvider),
     );

@@ -21,9 +21,9 @@ class _AuthSessionGateState extends State<AuthSessionGate> {
   Future<void> _warmGameData() async {
     try {
       final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      await dataProvider.getWeek();
+      await dataProvider.getWeek().timeout(const Duration(seconds: 6));
       if (dataProvider.game != null) {
-        await dataProvider.getGame();
+        await dataProvider.getGame().timeout(const Duration(seconds: 8));
       }
     } catch (e) {
       debugPrint('AuthSessionGate: game warm-up failed: $e');
@@ -66,7 +66,7 @@ class _AuthSessionGateState extends State<AuthSessionGate> {
 
 class _SessionSplash extends StatelessWidget {
   final String message;
-  const _SessionSplash({this.message = 'Loading…'});
+  const _SessionSplash({this.message = 'Loading'});
 
   @override
   Widget build(BuildContext context) {
@@ -81,13 +81,25 @@ class _SessionSplash extends StatelessWidget {
               width: 120,
               height: 120,
               fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.sports_football,
+                size: 80,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(color: Colors.white),
+            const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2.5,
+            ),
             const SizedBox(height: 16),
             Text(
               message,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

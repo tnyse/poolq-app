@@ -201,7 +201,7 @@ class _PickedWidgetState extends State<PickedWidget> {
                     ),
                     Text('Loading',
                         style: TextStyle(
-                            color: Color(0xFF333333),
+                            color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w600)),
                   ],
@@ -243,7 +243,7 @@ class _PickedWidgetState extends State<PickedWidget> {
                             ),
                             Text('Loading',
                                 style: TextStyle(
-                                    color: Color(0xFF333333),
+                                    color: Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600)),
                           ],
