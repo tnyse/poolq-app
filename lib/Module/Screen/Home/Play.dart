@@ -1,6 +1,7 @@
 import 'PlayerPickWidget.dart';
 import '../../../Widget/reuse.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:poolqapp/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -401,7 +402,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                         vertical: 6),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF063a73)
-                                          .withOpacity(0.55),
+                                          .withOpacity(0.88),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                           color: Colors.white.withOpacity(0.18)),
@@ -424,20 +425,20 @@ class _PlayWidgetState extends State<PlayWidget> {
                                   return Column(
                                     mainAxisSize: MainAxisSize.max,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Padding(
                                         padding: EdgeInsetsDirectional.fromSTEB(
                                             10, 0, 10, 12),
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF3474E0)
-                                                .withOpacity(0.78),
+                                            color: AppTheme.glassBlue
+                                                .withOpacity(0.92),
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                             border: Border.all(
                                               color: Colors.white
-                                                  .withOpacity(0.18),
+                                                  .withOpacity(0.22),
                                             ),
                                           ),
                                           child: Padding(
@@ -447,7 +448,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                             child: Row(
                                               mainAxisSize: MainAxisSize.max,
                                               mainAxisAlignment:
-                                                  MainAxisAlignment.start,
+                                                  MainAxisAlignment.center,
                                               children: [
                                                 Expanded(
                                                   child: Column(
@@ -457,49 +458,27 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                         CrossAxisAlignment
                                                             .center,
                                                     children: [
-                                                      Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.max,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          Text(
-                                                            'GAME: ',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                                  'Poppins',
-                                                              color: Colors
-                                                                  .white
-                                                                  .withOpacity(
-                                                                      0.85),
-                                                              fontSize: 10,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            (index + 1)
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                                  'Poppins',
-                                                              color:
-                                                                  Colors.white,
-                                                              fontSize: 10,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                      Text(
+                                                        'GAME: ${index + 1}',
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          fontFamily: 'Lexend Deca',
+                                                          color: Colors.white
+                                                              .withOpacity(
+                                                                  0.9),
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
                                                       ),
+                                                      const SizedBox(height: 4),
                                                       Row(
                                                         mainAxisSize:
                                                             MainAxisSize.max,
                                                         mainAxisAlignment:
                                                             MainAxisAlignment
-                                                                .spaceEvenly,
+                                                                .center,
                                                         children: [
                                                           Expanded(
                                                             flex: 2,
@@ -520,10 +499,11 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                   ),
                                                                 ),
                                                                 SizedBox(height: 4),
-                                                                Container(
-                                                                  width: 90,
-                                                                  child: TextButton(
-                                                                    onPressed: () async {
+                                                                TeamPickAbbrButton(
+                                                                  abbr: (gameItem["abbreviation2"] ?? '').toString(),
+                                                                  selected: dataProvider.playerPicks!.contains(gameItem["abbreviation2"]),
+                                                                  checkOnLeading: true,
+                                                                  onPressed: () async {
                                                                       if (dataProvider
                                                                           .playerPicks!
                                                                           .contains(
@@ -580,78 +560,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                       dataProvider.removeFromPlayerPicks(gameItem["abbreviation2"]);
                                                                       // Then add the selected team
                                                                       dataProvider.addToPlayerPicks(gameItem["abbreviation2"]);
-                                                                    },
-                                                                    child: Row(
-                                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                                      mainAxisSize: MainAxisSize.min,
-                                                                      children: [
-                                                                        Text(
-                                                                          gameItem[
-                                                                              "abbreviation2"],
-                                                                          style: TextStyle(
-                                                                              fontWeight:
-                                                                                  FontWeight
-                                                                                      .bold,
-                                                                              color: Colors
-                                                                                  .white),
-                                                                        ),
-                                                                        if (dataProvider
-                                                                                .playerPicks!
-                                                                                .contains(gameItem[
-                                                                                    "abbreviation2"]))
-                                                                          Padding(
-                                                                            padding: EdgeInsets.only(left: 4),
-                                                                            child: Icon(
-                                                                                Icons
-                                                                                    .check,
-                                                                                color: Colors
-                                                                                    .white,
-                                                                                size: 16),
-                                                                          ),
-                                                                      ],
-                                                                    ),
-                                                                    style: ButtonStyle(
-                                                                      padding: MaterialStateProperty.all(
-                                                                          EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
-                                                                      backgroundColor:
-                                                                          MaterialStateProperty
-                                                                              .all(
-                                                                        dataProvider.playerPicks!.contains(gameItem["abbreviation2"])
-                                                                            ? const Color(0xFF063a73).withOpacity(0.95)
-                                                                            : Colors.white.withOpacity(0.22),
-                                                                      ),
-                                                                      foregroundColor:
-                                                                          MaterialStateProperty
-                                                                              .all(Color(
-                                                                                  0xFFFFFFFF)),
-                                                                      textStyle:
-                                                                          MaterialStateProperty
-                                                                              .all(
-                                                                                  TextStyle(
-                                                                        fontFamily:
-                                                                            'Poppins',
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontSize: 12,
-                                                                      )),
-                                                                      elevation:
-                                                                          MaterialStateProperty
-                                                                              .all(2),
-                                                                      shape: MaterialStateProperty
-                                                                          .all(
-                                                                              RoundedRectangleBorder(
-                                                                        side:
-                                                                            BorderSide(
-                                                                          color: Colors.white.withOpacity(0.25),
-                                                                          width: 1,
-                                                                        ),
-                                                                        borderRadius:
-                                                                            BorderRadius
-                                                                                .circular(
-                                                                                    20),
-                                                                      )),
-                                                                    ),
-                                                                  ),
+                                                                  },
                                                                 ),
                                                               ],
                                                             ),
@@ -704,10 +613,10 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                   ),
                                                                 ),
                                                                 SizedBox(height: 4),
-                                                                Container(
-                                                                  width: 90,
-                                                                  child: TextButton(
-                                                                    onPressed: () async {
+                                                                TeamPickAbbrButton(
+                                                                  abbr: (gameItem["abbreviation"] ?? '').toString(),
+                                                                  selected: dataProvider.playerPicks!.contains(gameItem["abbreviation"]),
+                                                                  onPressed: () async {
                                                                       if (dataProvider
                                                                           .playerPicks!
                                                                           .contains(
@@ -764,78 +673,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                                                       dataProvider.removeFromPlayerPicks(gameItem["abbreviation2"]);
                                                                       // Then add the selected team
                                                                       dataProvider.addToPlayerPicks(gameItem["abbreviation"]);
-                                                                    },
-                                                                    child: Row(
-                                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                                      mainAxisSize: MainAxisSize.min,
-                                                                      children: [
-                                                                        Text(
-                                                                          gameItem[
-                                                                              "abbreviation"],
-                                                                          style: TextStyle(
-                                                                              fontWeight:
-                                                                                  FontWeight
-                                                                                      .bold,
-                                                                              color: Colors
-                                                                                  .white),
-                                                                        ),
-                                                                        if (dataProvider
-                                                                                .playerPicks!
-                                                                                .contains(gameItem[
-                                                                                    "abbreviation"]))
-                                                                          Padding(
-                                                                            padding: EdgeInsets.only(left: 4),
-                                                                            child: Icon(
-                                                                                Icons
-                                                                                    .check,
-                                                                                color: Colors
-                                                                                    .white,
-                                                                                size: 16),
-                                                                          ),
-                                                                      ],
-                                                                    ),
-                                                                    style: ButtonStyle(
-                                                                      padding: MaterialStateProperty.all(
-                                                                          EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
-                                                                      backgroundColor:
-                                                                          MaterialStateProperty
-                                                                              .all(
-                                                                        dataProvider.playerPicks!.contains(gameItem["abbreviation"])
-                                                                            ? const Color(0xFF063a73).withOpacity(0.95)
-                                                                            : Colors.white.withOpacity(0.22),
-                                                                      ),
-                                                                      foregroundColor:
-                                                                          MaterialStateProperty
-                                                                              .all(Color(
-                                                                                  0xFFFFFFFF)),
-                                                                      textStyle:
-                                                                          MaterialStateProperty
-                                                                              .all(
-                                                                                  TextStyle(
-                                                                        fontFamily:
-                                                                            'Poppins',
-                                                                        color: Colors
-                                                                            .white,
-                                                                        fontSize: 12,
-                                                                      )),
-                                                                      elevation:
-                                                                          MaterialStateProperty
-                                                                              .all(2),
-                                                                      shape: MaterialStateProperty
-                                                                          .all(
-                                                                              RoundedRectangleBorder(
-                                                                        side:
-                                                                            BorderSide(
-                                                                          color: Colors.white.withOpacity(0.25),
-                                                                          width: 1,
-                                                                        ),
-                                                                        borderRadius:
-                                                                            BorderRadius
-                                                                                .circular(
-                                                                                    20),
-                                                                      )),
-                                                                    ),
-                                                                  ),
+                                                                  },
                                                                 ),
                                                               ],
                                                             ),
@@ -893,12 +731,14 @@ class _PlayWidgetState extends State<PlayWidget> {
                 ),
               ),
               Align(
-                alignment: AlignmentDirectional(0, 0.9),
-                child: Container(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: Container(
                   width: MediaQuery.of(context).size.width,
                   height: 75,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.playActionBar,
                   ),
                   child: Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
@@ -926,17 +766,26 @@ class _PlayWidgetState extends State<PlayWidget> {
                                   height: 50,
                                   width: 50,
                                   child: Image.asset(
-                                      "assets/images/rulebook.png")),
+                                    "assets/images/rulebook.png",
+                                    color: Colors.white,
+                                    colorBlendMode: BlendMode.srcIn,
+                                  )),
                             ),
                             Container(
-                              width: 110,
+                              width: 52,
                               decoration: BoxDecoration(),
                               child: TextFormField(
                                 controller: tieBreakerController,
                                 obscureText: false,
                                 style: const TextStyle(color: Colors.white),
+                                maxLength: 2,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(2),
+                                ],
                                 decoration: InputDecoration(
-                                  hintText: 'Tie Breaker',
+                                  hintText: '##',
+                                  counterText: '',
                                   hintStyle: const TextStyle(color: Colors.white70),
                                   enabledBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
@@ -970,7 +819,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                                   fillColor: Colors.white.withOpacity(0.15),
                                   contentPadding:
                                       EdgeInsetsDirectional.fromSTEB(
-                                          10, 0, 0, 0),
+                                          8, 0, 8, 0),
                                 ),
                                 // style: FlutterFlowTheme.of(context)
                                 //     .bodyMedium
@@ -1108,6 +957,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                       ],
                     ),
                   ),
+                ),
                 ),
               ),
             ],

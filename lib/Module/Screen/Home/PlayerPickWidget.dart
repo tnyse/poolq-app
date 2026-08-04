@@ -15,6 +15,8 @@ import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/services/app_config_service.dart';
 import 'package:poolqapp/services/game_enforcement_service.dart';
 import 'package:poolqapp/services/payment_service.dart';
+import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/utils/avatar_url.dart';
 import '../../../widgets/payment/payment_prompt_modal.dart';
 
 class PlayerPicksWidget extends StatefulWidget {
@@ -122,7 +124,10 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
           key: scaffoldKey,
           backgroundColor: Color(0xFFF5F5F5),
           appBar: AppBar(
-            backgroundColor: primary,
+            backgroundColor: AppTheme.primaryBlue,
+            foregroundColor: Colors.white,
+            iconTheme: const IconThemeData(color: Colors.white),
+            actionsIconTheme: const IconThemeData(color: Colors.white),
             automaticallyImplyLeading: true,
             title: Consumer<DataProvider>(
               builder: (context, dp, _) {
@@ -232,181 +237,63 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Stack(
-                              children: [
-                                Padding(
-                                  padding:
-                                      EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                              child: Column(
+                                children: [
+                                  Center(
+                                    child: Image.asset(
+                                      'assets/images/poolq12.png',
+                                      width: 72,
+                                      height: 96,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
                                     mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 20, 0, 0),
-                                        child: Image.asset(
-                                          'assets/images/poolq12.png',
-                                          width: 67,
-                                          height: 90,
-                                          fit: BoxFit.cover,
+                                      Text(
+                                        'Hello, ${user?.displayName ?? 'Demo User'}',
+                                        style: const TextStyle(
+                                          fontFamily: 'Lexend Deca',
+                                          color: Color(0xFF090F13),
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            20, 20, 0, 0),
-                                        child: Text(
-                                          'Your Picks',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            5, 20, 0, 0),
-                                        child: Consumer<DataProvider>(
-                                          builder: (context, dp, _) {
-                                            final weekLabel = dp.game?['name']
-                                                ?.toString()
-                                                .replaceAll('REG', '')
-                                                .replaceAll('PRE', '') ?? '1';
-                                            return Text(
-                                              '– Week $weekLabel',
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                fontFamily: 'Poppins',
-                                                fontSize: 18,
-                                              ),
-                                            );
-                                          },
+                                      CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor: Colors.white,
+                                        backgroundImage: resolveAvatarImage(
+                                          photoUrl: authProvider.image
+                                                  .toString()
+                                                  .isNotEmpty
+                                              ? authProvider.image.toString()
+                                              : (user?.photoURL ?? ''),
+                                          email: user?.email,
+                                          size: 96,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
-                            ),
-                          Column(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    16, 0, 16, 20),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Hello, ${user?.displayName ?? 'Demo User'}',
+                                  const SizedBox(height: 12),
+                                  const Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Review Your Picks',
                                       style: TextStyle(
                                         fontFamily: 'Lexend Deca',
-                                        color: Color(0xFF090F13),
-                                        fontSize: 20,
+                                        color: Color(0xFF063a73),
+                                        fontSize: 24,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () async {
-                                        scaffoldKey.currentState!.openDrawer();
-                                      },
-                                      child: Container(
-                                        width: 50,
-                                        height: 50,
-                                        clipBehavior: Clip.antiAlias,
-                                        decoration: BoxDecoration(
-                                          border:
-                                              Border.all(color: Colors.black45),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Center(
-                                          child: CircleAvatar(
-                                            foregroundColor: Colors.white,
-                                            backgroundColor: Colors.white,
-                                            radius: 47,
-                                            backgroundImage: authProvider.image
-                                                        .toString() ==
-                                                    ""
-                                                ? AssetImage(
-                                                    "assets/images/user.png")
-                                                : NetworkImage(authProvider
-                                                        .image
-                                                        .toString())
-                                                    as ImageProvider,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // SizedBox(
-                                    //   // borderWidth: 1,
-                                    //   // buttonSize: 60,
-                                    //   child: TextButton(
-                                    //     style: ButtonStyle(
-                                    //       // borderColor: Colors.transparent,
-                                    //       // borderRadius: 30,
-                                    //     ),
-                                    //
-                                    //     child: Icon(
-                                    //       Icons.check,
-                                    //       color: Color(0xFF049304),
-                                    //       size: 30,
-                                    //     ),
-                                    //     onPressed: () async {
-                                    //       await Navigator.push(
-                                    //         context,
-                                    //         MaterialPageRoute(
-                                    //           builder: (context) => LeaderboardWidget(),
-                                    //         ),
-                                    //       );
-                                    //     },
-                                    //   ),
-                                    // ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    16, 0, 16, 0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.fromSTEB(
-                                          2, 0, 0, 0),
-                                      child: Text(
-                                        'Review Your Picks',
-                                        style: TextStyle(
-                                          fontFamily: 'Lexend Deca',
-                                          color: Color(0xFF063a73),
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 0, 0, 20),
-                                child: Text(
-                                  '',
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    // color: Color(0xFFD30909),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
                             Container(
                               width: MediaQuery.of(context).size.width,
                               padding: EdgeInsets.all(16),

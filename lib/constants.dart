@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 // API URLs
 const String mainUrl = 'https://api.poolq.app';
 
-// Primary color for the app
-const Color primary = Color(0xFF26A6B5);
+// Primary color for the app (brand navy — was accidental teal #26A6B5)
+const Color primary = Color(0xFF063a73);
 
 // Secondary colors
 const Color secondary = Color(0xFF1D2B36);

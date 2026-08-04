@@ -137,6 +137,8 @@ class _AdminPlayersPageState extends State<AdminPlayersPage> {
         title: const Text('Players & Payments'),
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
           if (_busy)
             const Padding(

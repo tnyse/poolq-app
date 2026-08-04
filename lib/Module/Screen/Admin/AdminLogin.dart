@@ -62,6 +62,9 @@ class _AdminLoginState extends State<AdminLogin> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Login'),
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Center(
         child: SingleChildScrollView(

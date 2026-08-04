@@ -143,6 +143,8 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
         title: Text('Payment Verification'),
         backgroundColor: primary,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),

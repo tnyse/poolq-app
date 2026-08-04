@@ -318,6 +318,8 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.ios_share),

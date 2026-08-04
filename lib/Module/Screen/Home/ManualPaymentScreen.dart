@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:poolqapp/services/payment_service.dart';
 import 'package:poolqapp/constants.dart';
+import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/constants/payment_bundles.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'HomePage.dart';
@@ -34,10 +35,12 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: primary,
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           'Complete Payment',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.lexendDeca(
             color: Colors.white,
             fontWeight: FontWeight.w600,
           ),

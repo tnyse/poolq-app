@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
 // import 'package:poolqapp/Provider/homeProvider.dart';
 import 'package:poolqapp/services/nfl_game_service.dart';
+import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/Widget/AppDrawer.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminStats.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -298,6 +299,10 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             tooltip: 'Players & Payments',

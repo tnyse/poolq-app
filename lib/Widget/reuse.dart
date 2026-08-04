@@ -91,6 +91,103 @@ class TeamLogo extends StatelessWidget {
   }
 }
 
+/// Hard fixed-width pick chip. Width never changes for 2/3-letter abbrs or selection.
+class TeamPickAbbrButton extends StatelessWidget {
+  final String abbr;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  static const double chipWidth = 96;
+  static const double chipHeight = 36;
+  static const double _letterSlot = 12;
+  static const double _checkSlot = 20;
+
+  const TeamPickAbbrButton({
+    Key? key,
+    required this.abbr,
+    required this.selected,
+    required this.onPressed,
+    bool checkOnLeading = false, // ignored — layout identical for both sides
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cleaned = abbr.toUpperCase().replaceAll(' ', '').trim();
+    final letters = <String>[
+      for (var i = 0; i < cleaned.length && i < 3; i++) cleaned[i],
+    ];
+
+    return Center(
+      child: SizedBox(
+      width: chipWidth,
+      height: chipHeight,
+      child: Material(
+        color: selected
+            ? const Color(0xFF063a73).withOpacity(0.95)
+            : Colors.white.withOpacity(0.22),
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: Colors.white.withOpacity(0.25),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: InkWell(
+          onTap: onPressed,
+          child: SizedBox(
+            width: chipWidth,
+            height: chipHeight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                // Exactly 3 letter cells — empty cells still take space.
+                SizedBox(
+                  width: _letterSlot * 3,
+                  height: chipHeight,
+                  child: Row(
+                    children: List.generate(3, (i) {
+                      final ch = i < letters.length ? letters[i] : '';
+                      return SizedBox(
+                        width: _letterSlot,
+                        child: Center(
+                          child: Text(
+                            ch,
+                            style: const TextStyle(
+                              fontFamily: 'Lexend Deca',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              height: 1,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                // Check slot always present (invisible placeholder when unselected).
+                SizedBox(
+                  width: _checkSlot,
+                  height: chipHeight,
+                  child: Center(
+                    child: selected
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
+                        : const SizedBox(width: 16, height: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+    );
+  }
+}
+
 /// Wrap/grid of picked teams with logos (review + admin pick views).
 class PicksLogoGrid extends StatelessWidget {
   final List<String> picks;

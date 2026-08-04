@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// PoolQ App Theme Configuration
 /// Follows Material Design 3 principles with custom branding
@@ -7,6 +8,10 @@ class AppTheme {
   static const Color primaryBlue = Color(0xFF063a73);
   static const Color primaryBlueLight = Color(0xFF1565C0);
   static const Color primaryBlueDark = Color(0xFF0D47A1);
+  /// Translucent game / leaderboard row fill (glass card).
+  static const Color glassBlue = Color(0xFF3474E0);
+  /// Play / EditPlay bottom action bar — navy, darker than glass rows.
+  static const Color playActionBar = Color(0xFF063a73);
   static const Color accentOrange = Color(0xFFFF8F00);
   static const Color accentOrangeLight = Color(0xFFFFB74D);
   static const Color secondaryOrange = Color(0xFFFF8F00);
@@ -31,8 +36,102 @@ class AppTheme {
   
   /// Main app theme with Material Design 3
   static ThemeData get lightTheme {
+    const baseText = TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 57,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.25,
+        color: onSurface,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 45,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        color: onSurface,
+      ),
+      displaySmall: TextStyle(
+        fontSize: 36,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        color: onSurface,
+      ),
+      headlineLarge: TextStyle(
+        fontSize: 32,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: onSurface,
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: onSurface,
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: onSurface,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0,
+        color: onSurface,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.15,
+        color: onSurface,
+      ),
+      titleSmall: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
+        color: onSurface,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.5,
+        color: onSurface,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.25,
+        color: onSurface,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.4,
+        color: onSurfaceVariant,
+      ),
+      labelLarge: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
+        color: onSurface,
+      ),
+      labelMedium: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: onSurface,
+      ),
+      labelSmall: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.5,
+        color: onSurfaceVariant,
+      ),
+    );
+
     return ThemeData(
       useMaterial3: true,
+      fontFamily: GoogleFonts.lexendDeca().fontFamily,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryBlue,
         primary: primaryBlue,
@@ -41,99 +140,8 @@ class AppTheme {
         error: error,
       ),
       
-      // Typography
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 57,
-          fontWeight: FontWeight.w400,
-          letterSpacing: -0.25,
-          color: onSurface,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 45,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0,
-          color: onSurface,
-        ),
-        displaySmall: TextStyle(
-          fontSize: 36,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0,
-          color: onSurface,
-        ),
-        headlineLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0,
-          color: onSurface,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0,
-          color: onSurface,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0,
-          color: onSurface,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0,
-          color: onSurface,
-        ),
-        titleMedium: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.15,
-          color: onSurface,
-        ),
-        titleSmall: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.1,
-          color: onSurface,
-        ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.5,
-          color: onSurface,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.25,
-          color: onSurface,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.4,
-          color: onSurfaceVariant,
-        ),
-        labelLarge: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.1,
-          color: onSurface,
-        ),
-        labelMedium: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-          color: onSurface,
-        ),
-        labelSmall: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-          color: onSurfaceVariant,
-        ),
-      ),
+      // Typography — Lexend Deca as brand voice
+      textTheme: GoogleFonts.lexendDecaTextTheme(baseText),
       
       // Component Themes
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -254,6 +262,20 @@ class AppTheme {
     );
   }
   
+  /// App bars on brand blue — white icons/title for contrast.
+  static const AppBarTheme primaryAppBarTheme = AppBarTheme(
+    elevation: 4,
+    backgroundColor: primaryBlue,
+    foregroundColor: Colors.white,
+    iconTheme: IconThemeData(color: Colors.white),
+    actionsIconTheme: IconThemeData(color: Colors.white),
+    titleTextStyle: TextStyle(
+      color: Colors.white,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    ),
+  );
+
   /// Custom button styles for specific use cases
   static ButtonStyle get primaryButtonStyle => ElevatedButton.styleFrom(
     backgroundColor: primaryBlue,
