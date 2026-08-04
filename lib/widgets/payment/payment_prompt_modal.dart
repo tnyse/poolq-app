@@ -28,7 +28,7 @@ class PaymentPromptModal extends StatelessWidget {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 12, 12, 24),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
@@ -43,6 +43,17 @@ class PaymentPromptModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                tooltip: 'Pay later',
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onSkipPayment();
+                },
+              ),
+            ),
             // Payment icon
             Container(
               width: 80,
@@ -51,15 +62,15 @@ class PaymentPromptModal extends StatelessWidget {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(40),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.payment,
                 size: 50,
                 color: Colors.white,
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Title
             Text(
               'Payment Required',
@@ -68,9 +79,9 @@ class PaymentPromptModal extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Week info
             Text(
               'Week $weekNumber Entry Fee: \$10.00',
@@ -78,9 +89,9 @@ class PaymentPromptModal extends StatelessWidget {
                 color: Colors.white.withOpacity(0.9),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Deadline warning
             if (isDeadlineApproaching) ...[
               Container(
@@ -92,12 +103,13 @@ class PaymentPromptModal extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                    const Icon(Icons.warning_amber,
+                        color: Colors.orange, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Payment deadline: $timeUntilKickoff',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.orange,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -109,7 +121,7 @@ class PaymentPromptModal extends StatelessWidget {
               ),
               const SizedBox(height: 16),
             ],
-            
+
             // Payment methods — Zelle first (default)
             Text(
               'Choose Payment Method:',
@@ -117,9 +129,9 @@ class PaymentPromptModal extends StatelessWidget {
                 color: Colors.white.withOpacity(0.9),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             Column(
               children: [
                 _buildPaymentButton(
@@ -156,23 +168,30 @@ class PaymentPromptModal extends StatelessWidget {
                 ),
               ],
             ),
-            
-            if (kDebugMode) ...[
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onSkipPayment();
-                },
-                child: Text(
-                  'Skip Payment (Debug)',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
+
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onSkipPayment();
+              },
+              child: Text(
+                'Pay Later',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
+            ),
+            if (kDebugMode)
+              Text(
+                'Debug build',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 11,
+                ),
+              ),
           ],
         ),
       ),

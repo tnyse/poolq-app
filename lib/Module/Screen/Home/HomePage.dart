@@ -322,7 +322,10 @@ class _HomePageState extends State<HomePage> {
         actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.ios_share),
+            icon: const Icon(
+              PhosphorIcons.user_plus,
+              color: Colors.white,
+            ),
             tooltip: 'Invite friends',
             onPressed: () {
               Navigator.of(context).push(

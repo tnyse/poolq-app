@@ -38,6 +38,12 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'Pay later',
+          onPressed: () => _showSkipPaymentDialog(context),
+        ),
         title: Text(
           'Complete Payment',
           style: GoogleFonts.lexendDeca(
@@ -403,7 +409,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
 
               SizedBox(height: 12),
 
-              // Skip for now button with warning
+              // Pay later — picks stay saved until deadline
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -416,7 +422,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                     ),
                   ),
                   child: Text(
-                    'Skip Payment for Now',
+                    'Pay Later',
                     style: GoogleFonts.poppins(
                       color: Colors.orange,
                       fontSize: 16,
@@ -613,7 +619,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                 backgroundColor: Colors.orange,
               ),
               child: Text(
-                'I Understand, Skip',
+                'Pay Later',
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,

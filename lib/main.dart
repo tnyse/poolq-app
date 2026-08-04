@@ -23,6 +23,7 @@ import 'package:poolqapp/screens/invite_friends_page.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/services/app_config_service.dart';
 import 'package:poolqapp/screens/auth/auth_session_gate.dart';
+import 'package:poolqapp/widgets/pwa_install_banner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +102,15 @@ class MyApp extends StatelessWidget {
         title: 'PoolQ',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        builder: (context, child) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              child ?? const SizedBox.shrink(),
+              const PwaInstallBanner(),
+            ],
+          );
+        },
         home: const AuthSessionGate(),
         routes: {
           '/home': (context) => const HomePage(initial: 1),

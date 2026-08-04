@@ -1107,7 +1107,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
 
     return showDialog<void>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return PaymentPromptModal(
           weekName: weekName,

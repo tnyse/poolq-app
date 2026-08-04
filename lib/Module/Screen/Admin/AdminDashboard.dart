@@ -315,6 +315,9 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
           tabs: const [
             Tab(text: 'Game Scores', icon: Icon(Icons.sports_football)),
             Tab(text: 'Winners', icon: Icon(Icons.emoji_events)),

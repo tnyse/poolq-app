@@ -223,20 +223,11 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                           const Spacer(),
                         ],
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Image.asset(
-                          'assets/images/app_icon.png',
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            'assets/images/poolq12.png',
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
+                      Image.asset(
+                        'assets/images/poolq12.png',
+                        width: 100,
+                        height: 72,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 8),
                       Row(

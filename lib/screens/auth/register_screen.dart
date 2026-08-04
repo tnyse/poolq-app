@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:poolqapp/Widget/reuse.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/services/auth_service.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
@@ -25,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _invitationCodeController = TextEditingController();
 
   bool _isLoading = false;
-  String? _errorMessage;
   bool _isInvitationValid = false;
   final _phoneVerificationService = PhoneVerificationService();
   bool _isPhoneVerified = false;
@@ -44,20 +44,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String get _normalizedInviteCode =>
       _invitationCodeController.text.trim();
 
+  void _showError(String message) {
+    if (!mounted) return;
+    showErrorToast(context, message);
+  }
+
   Future<bool> _validateInvitationCode({bool showLoading = true}) async {
     final code = _normalizedInviteCode;
     if (code.isEmpty) {
-      setState(() {
-        _isInvitationValid = false;
-        _errorMessage = 'Please enter an invitation code';
-      });
+      _showError('Please enter an invitation code');
+      setState(() => _isInvitationValid = false);
       return false;
     }
 
     if (showLoading) {
       setState(() {
         _isLoading = true;
-        _errorMessage = null;
       });
     }
 
@@ -66,19 +68,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       setState(() {
         _isInvitationValid = invitation != null;
-        _errorMessage =
-            invitation == null ? 'Invalid or expired invitation code' : null;
         if (invitation != null) {
-          // Keep the canonical code from Firestore for registration.
           _invitationCodeController.text = invitation.code;
         }
       });
+      if (invitation == null) {
+        _showError('Invalid or expired invitation code');
+      }
       return invitation != null;
     } catch (e) {
-      setState(() {
-        _isInvitationValid = false;
-        _errorMessage = 'Error validating invitation code';
-      });
+      setState(() => _isInvitationValid = false);
+      _showError('Error validating invitation code');
       return false;
     } finally {
       if (showLoading) {
@@ -95,9 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (!_phoneVerificationService.isValidPhoneNumber(formattedPhone)) {
-      setState(() {
-        _errorMessage = 'Please enter a valid phone number';
-      });
+      _showError('Please enter a valid phone number');
       return;
     }
 
@@ -119,15 +117,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
+    // Invite code requirement — toast, not inline field error
+    if (_normalizedInviteCode.isEmpty) {
+      _showError('Invitation code is required');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
-      // Validate invite on submit so testers don't need a separate check tap.
       final inviteOk = _isInvitationValid
           ? true
           : await _validateInvitationCode(showLoading: false);
@@ -149,15 +151,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await authProvider.getUserInfo();
         Navigator.pushReplacementNamed(context, '/home');
       } else if (mounted) {
-        setState(() {
-          _errorMessage = 'Account creation failed. Please try again.';
-        });
+        _showError('Account creation failed. Please try again.');
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        });
+        _showError(e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) {
@@ -206,18 +204,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     tooltip: 'Validate code',
                   ),
                   onChanged: (_) {
-                    if (_isInvitationValid || _errorMessage != null) {
+                    if (_isInvitationValid) {
                       setState(() {
                         _isInvitationValid = false;
-                        _errorMessage = null;
                       });
                     }
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter an invitation code';
-                    }
-                    return null;
                   },
                 ),
                 const SizedBox(height: 16),
@@ -311,34 +302,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       : null,
                 ),
                 const SizedBox(height: 24),
-                if (_errorMessage != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.error.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: AppTheme.error.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline,
-                            color: AppTheme.error, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: TextStyle(
-                              color: AppTheme.error,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
                 AuthButton(
                   text: 'Create Account',
                   isLoading: _isLoading,
@@ -374,17 +337,15 @@ class _BrandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryBlue,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            Icons.sports_football,
-            color: Colors.white,
-            size: 36,
+        Hero(
+          tag: 'poolq_logo',
+          child: SizedBox(
+            width: 120,
+            height: 80,
+            child: Image.asset(
+              'assets/images/poolq12.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         const SizedBox(height: 16),

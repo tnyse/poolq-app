@@ -2,11 +2,36 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-customSnackbar(context, String text){
+void showAppToast(
+  BuildContext context,
+  String text, {
+  Color? backgroundColor,
+  Duration duration = const Duration(seconds: 3),
+}) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(text),
+      backgroundColor: backgroundColor,
+      behavior: SnackBarBehavior.floating,
+      duration: duration,
+    ),
+  );
+}
 
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text(text),
-  ));
+void showErrorToast(BuildContext context, String text) {
+  showAppToast(
+    context,
+    text,
+    backgroundColor: const Color(0xFFB3261E),
+    duration: const Duration(seconds: 4),
+  );
+}
+
+/// Legacy alias — prefer [showAppToast] / [showErrorToast].
+void customSnackbar(context, String text) {
+  showAppToast(context, text);
 }
 
 

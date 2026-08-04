@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:poolqapp/Widget/reuse.dart';
 import 'package:poolqapp/services/navigation_service.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
@@ -24,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   final NavigationService _navigationService = NavigationService();
   
   bool _isLoading = false;
-  String _errorMessage = '';
   int _retryCount = 0;
   static const int _maxRetries = 3;
   bool _rememberMe = true;
@@ -118,7 +118,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
     
     try {
@@ -163,22 +162,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         );
       }
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _errorMessage = e.message ?? e.code;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
-      
-      // Show error in snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage),
-            backgroundColor: Colors.red,
-          ),
+        showErrorToast(context, e.message ?? e.code);
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorToast(
+          context,
+          e.toString().replaceAll('Exception: ', ''),
         );
       }
     } finally {
@@ -342,40 +333,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         ),
                         
                         const SizedBox(height: 32),
-                        
-                        // Error message with enhanced styling
-                        if (_errorMessage.isNotEmpty)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 24),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.error.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppTheme.error.withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  color: AppTheme.error,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _errorMessage,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: AppTheme.error,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        
+
                         // Login button with enhanced styling
                         AuthButton(
                           text: 'Sign In',
