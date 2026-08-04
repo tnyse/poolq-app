@@ -41,45 +41,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _validateInvitationCode() async {
-    if (_invitationCodeController.text.isEmpty) {
+  String get _normalizedInviteCode =>
+      _invitationCodeController.text.trim();
+
+  Future<bool> _validateInvitationCode({bool showLoading = true}) async {
+    final code = _normalizedInviteCode;
+    if (code.isEmpty) {
       setState(() {
         _isInvitationValid = false;
         _errorMessage = 'Please enter an invitation code';
       });
-      return;
+      return false;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
-      final invitation = await _authService.validateInvitationCode(
-        _invitationCodeController.text,
-      );
+      final invitation = await _authService.validateInvitationCode(code);
 
       setState(() {
         _isInvitationValid = invitation != null;
         _errorMessage =
             invitation == null ? 'Invalid or expired invitation code' : null;
+        if (invitation != null) {
+          // Keep the canonical code from Firestore for registration.
+          _invitationCodeController.text = invitation.code;
+        }
       });
+      return invitation != null;
     } catch (e) {
       setState(() {
         _isInvitationValid = false;
         _errorMessage = 'Error validating invitation code';
       });
+      return false;
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (showLoading) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _verifyPhoneNumber() async {
-    if (!_formKey.currentState!.validate()) return;
-
     final formattedPhone = _phoneVerificationService.formatPhoneNumber(
       _phoneController.text,
     );
@@ -111,42 +121,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_isInvitationValid) {
-      setState(() {
-        _errorMessage = 'Please enter a valid invitation code';
-      });
-      return;
-    }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
+      // Validate invite on submit so testers don't need a separate check tap.
+      final inviteOk = _isInvitationValid
+          ? true
+          : await _validateInvitationCode(showLoading: false);
+      if (!inviteOk) {
+        return;
+      }
+
       final user = await _authService.registerWithInvitation(
-        email: _emailController.text,
+        email: _emailController.text.trim(),
         password: _passwordController.text,
-        phone:
-            _phoneController.text.isNotEmpty ? _phoneController.text : '',
-        displayName: _displayNameController.text,
-        invitationCode: _invitationCodeController.text,
+        phone: _phoneController.text.trim(),
+        displayName: _displayNameController.text.trim(),
+        invitationCode: _normalizedInviteCode,
       );
 
-      if (user != null) {
+      if (user != null && mounted) {
         final authProvider =
             Provider.of<AuthProviders>(context, listen: false);
         await authProvider.getUserInfo();
         Navigator.pushReplacementNamed(context, '/home');
+      } else if (mounted) {
+        setState(() {
+          _errorMessage = 'Account creation failed. Please try again.';
+        });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -175,6 +193,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _invitationCodeController,
                   hintText: 'Enter your invite code',
                   labelText: 'Invitation Code',
+                  helperText: 'Use invite code: fitz',
                   prefixIcon: Icons.confirmation_number_outlined,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -183,11 +202,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? AppTheme.success
                           : AppTheme.onSurfaceVariant,
                     ),
-                    onPressed: _validateInvitationCode,
+                    onPressed: () => _validateInvitationCode(),
                     tooltip: 'Validate code',
                   ),
+                  onChanged: (_) {
+                    if (_isInvitationValid || _errorMessage != null) {
+                      setState(() {
+                        _isInvitationValid = false;
+                        _errorMessage = null;
+                      });
+                    }
+                  },
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter an invitation code';
                     }
                     return null;
@@ -200,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Display Name',
                   prefixIcon: Icons.person_outline,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your display name';
                     }
                     return null;
@@ -214,7 +241,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
                     if (!value.contains('@')) {
@@ -258,14 +285,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Phone is optional — show verify button once user types something
+                // Phone is optional for PRE testing — verification is optional too.
                 AuthInputField(
                   controller: _phoneController,
                   hintText: 'Optional',
                   labelText: 'Phone Number',
+                  helperText: 'Optional — leave blank if you prefer',
                   prefixIcon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   enabled: !_isPhoneVerified,
+                  onChanged: (_) => setState(() {}),
                   suffixIcon: _phoneController.text.isNotEmpty
                       ? IconButton(
                           icon: Icon(
@@ -277,17 +306,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 : AppTheme.onSurfaceVariant,
                           ),
                           onPressed: _verifyPhoneNumber,
-                          tooltip: 'Verify phone',
+                          tooltip: 'Verify phone (optional)',
                         )
                       : null,
-                  validator: (value) {
-                    if (value != null &&
-                        value.isNotEmpty &&
-                        !_isPhoneVerified) {
-                      return 'Please verify your phone number or leave it blank';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 24),
                 if (_errorMessage != null) ...[
@@ -321,8 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 AuthButton(
                   text: 'Create Account',
                   isLoading: _isLoading,
-                  onPressed:
-                      _isLoading || !_isInvitationValid ? null : _register,
+                  onPressed: _isLoading ? null : _register,
                 ),
                 const SizedBox(height: 16),
                 Row(

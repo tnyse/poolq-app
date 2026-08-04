@@ -34,7 +34,7 @@ Mock admin is reached from the app drawer → Admin Login (not Firebase Auth).
 ### New testers
 
 1. Open the app (Chrome / device build from the team)
-2. Register with invitation code: **`DEMO2024`** (reusable)
+2. Register with invitation code: **`fitz`** (reusable)
 3. Complete profile if prompted
 4. Submit PRE1 picks
 
@@ -84,7 +84,7 @@ Subject: PoolQ PRE1 internal test — free entry
 You're invited to smoke-test PoolQ for 2026 preseason (PRE1).
 
 What: NFL pick'em — pick every game + tiebreaker. Preseason entry is FREE.
-Invite code (new accounts): DEMO2024
+Invite code (new accounts): fitz
 
 Or use a shared test login (ask us for the current password if you don't have it):
   demo@poolq.app

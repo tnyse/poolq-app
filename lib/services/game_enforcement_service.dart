@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:poolqapp/constants/season_config.dart';
 import 'package:poolqapp/services/local_schedule_service.dart';
 
 class GameEnforcementService {
@@ -15,6 +16,11 @@ class GameEnforcementService {
   /// First game kickoff for [weekName], or null if unknown.
   Future<DateTime?> getFirstKickoff(String weekName) =>
       _localSchedule.getFirstKickoff(weekName);
+
+  /// True if the first game of [weekName] has started (entries locked).
+  Future<bool> areEntriesLocked(String weekName) async {
+    return !(await isPickingAllowed(weekName));
+  }
 
   /// True if picks may still be submitted/edited (before first kickoff).
   Future<bool> isPickingAllowed(String weekName) async {
@@ -31,6 +37,38 @@ class GameEnforcementService {
       'kickoff=${kickoff.toUtc()}',
     );
     return allowed;
+  }
+
+  /// Find the soonest open entry week at/after [preferredWeek].
+  /// Returns null if every remaining week is already locked.
+  Future<String?> resolveOpenEntryWeek([String? preferredWeek]) async {
+    final start = (preferredWeek ?? SeasonConfig.defaultWeekName()).toUpperCase();
+    var idx = SeasonConfig.entryWeekSequence.indexOf(start);
+    if (idx < 0) idx = 0;
+
+    for (var i = idx; i < SeasonConfig.entryWeekSequence.length; i++) {
+      final week = SeasonConfig.entryWeekSequence[i];
+      if (await isPickingAllowed(week)) {
+        debugPrint('GameEnforcementService: open entry week => $week');
+        return week;
+      }
+    }
+    debugPrint('GameEnforcementService: no open entry weeks after $start');
+    return null;
+  }
+
+  /// If [weekName] is locked, return the next open week; otherwise [weekName].
+  Future<({String? week, bool redirected, String? lockedWeek})>
+      resolveEntryWeekOrForward(String weekName) async {
+    if (await isPickingAllowed(weekName)) {
+      return (week: weekName, redirected: false, lockedWeek: null);
+    }
+    final nextPreferred = SeasonConfig.nextWeekName(weekName);
+    if (nextPreferred == null) {
+      return (week: null, redirected: true, lockedWeek: weekName);
+    }
+    final next = await resolveOpenEntryWeek(nextPreferred);
+    return (week: next, redirected: true, lockedWeek: weekName);
   }
 
   /// Check and disqualify unpaid entrants for weeks where games have started

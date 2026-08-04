@@ -44,20 +44,33 @@ class AuthService {
   // Validate invitation code
   Future<InvitationModel?> validateInvitationCode(String code) async {
     try {
-      _logInfo('Validating invitation code: $code');
-      
-      final querySnapshot = await _firestore
-          .collection('invites')
-          .where('code', isEqualTo: code)
-          .limit(1)
-          .get();
+      final normalized = code.trim();
+      _logInfo('Validating invitation code: $normalized');
 
-      if (querySnapshot.docs.isEmpty) {
-        _logError('No matching invite found for code: $code');
+      // Prefer exact match, then uppercase (DEMO2024), then lowercase.
+      DocumentSnapshot? matched;
+      for (final candidate in {
+        normalized,
+        normalized.toUpperCase(),
+        normalized.toLowerCase(),
+      }) {
+        final querySnapshot = await _firestore
+            .collection('invites')
+            .where('code', isEqualTo: candidate)
+            .limit(1)
+            .get();
+        if (querySnapshot.docs.isNotEmpty) {
+          matched = querySnapshot.docs.first;
+          break;
+        }
+      }
+
+      if (matched == null) {
+        _logError('No matching invite found for code: $normalized');
         return null;
       }
 
-      final invitation = InvitationModel.fromFirestore(querySnapshot.docs.first);
+      final invitation = InvitationModel.fromFirestore(matched);
       
       if (!invitation.isValid) {
         String errorReason = '';
@@ -124,7 +137,7 @@ class AuthService {
         phone: phone.trim().isEmpty ? '' : phone,
         displayName: displayName,
         avatar: '',
-        invitationCode: invitationCode,
+        invitationCode: invitation.code,
         invitedBy: invitation.createdBy,
         joinDate: DateTime.now(),
         isActive: true,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:poolqapp/constants/payment_status.dart';
 import 'package:poolqapp/services/app_config_service.dart';
+import 'package:poolqapp/services/game_enforcement_service.dart';
 import '../services/scoring_service.dart';
 
 class PaymentService {
@@ -46,7 +47,38 @@ class PaymentService {
   }
 
   /// Deterministic pick document id — one entry per user per week.
+  /// Future multi-entry (pay again) could use `${uid}_${weekName}_2`, etc.
   static String pickDocumentId(String uid, String weekName) => '${uid}_$weekName';
+
+  /// Returns existing pickrecord for this user/week, or null.
+  Future<Map<String, dynamic>?> getUserEntryForWeek(String weekName) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == 'demo@poolq.com') return null;
+
+    final docId = pickDocumentId(user.uid, weekName);
+    final snap = await _firestore.collection('pickrecord').doc(docId).get();
+    if (!snap.exists) {
+      // Fallback for any legacy auto-id docs
+      final q = await _firestore
+          .collection('pickrecord')
+          .where('uid', isEqualTo: user.uid)
+          .where('week', isEqualTo: weekName)
+          .limit(1)
+          .get();
+      if (q.docs.isEmpty) return null;
+      final data = q.docs.first.data();
+      data['id'] = q.docs.first.id;
+      return data;
+    }
+    final data = snap.data()!;
+    data['id'] = snap.id;
+    return data;
+  }
+
+  Future<bool> hasEntryForWeek(String weekName) async {
+    final entry = await getUserEntryForWeek(weekName);
+    return entry != null;
+  }
 
   /// Save user picks and create pending payment entry
   Future<String> savePicksAndCreatePaymentEntry({
@@ -77,11 +109,20 @@ class PaymentService {
       final status =
           autoVerify ? PaymentStatus.autoVerified : PaymentStatus.pending;
 
+      // Hard gate: never create/update entries after first kickoff.
+      final allowed = await GameEnforcementService().isPickingAllowed(weekName);
+      if (!allowed) {
+        throw Exception(
+          '$weekName entries are locked — the first game has started. No late entries.',
+        );
+      }
+
       final docId = pickDocumentId(user.uid, weekName);
       final picksData = {
         'uid': user.uid,
         'displayName': user.displayName ?? 'Unknown',
         'photoURL': user.photoURL ?? '',
+        'email': user.email ?? '',
         'week': weekName,
         'picks': picks,
         'tiebreaker': int.tryParse(tiebreaker) ?? 0,
@@ -128,25 +169,35 @@ class PaymentService {
   }
 
   /// Player reports that external payment was sent.
-  Future<void> reportPaymentSent(String pickRecordId) async {
+  Future<void> reportPaymentSent(
+    String pickRecordId, {
+    String? bundleId,
+    double? amount,
+    int? weeksCovered,
+  }) async {
     final batch = _firestore.batch();
     final pickRef = _firestore.collection('pickrecord').doc(pickRecordId);
     final trackingRef =
         _firestore.collection('payment_tracking').doc(pickRecordId);
 
-    batch.set(
-      pickRef,
-      {
-        'paymentStatus': PaymentStatus.sent,
-        'paymentReportedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+    final pickUpdates = <String, dynamic>{
+      'paymentStatus': PaymentStatus.sent,
+      'paymentReportedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (bundleId != null) pickUpdates['bundleId'] = bundleId;
+    if (amount != null) pickUpdates['entryFee'] = amount;
+    if (weeksCovered != null) pickUpdates['weeksCovered'] = weeksCovered;
+
+    batch.set(pickRef, pickUpdates, SetOptions(merge: true));
     batch.set(
       trackingRef,
       {
         'status': PaymentStatus.sent,
         'paymentReportedAt': FieldValue.serverTimestamp(),
+        if (bundleId != null) 'bundleId': bundleId,
+        if (amount != null) 'amount': amount,
+        if (weeksCovered != null) 'weeksCovered': weeksCovered,
       },
       SetOptions(merge: true),
     );

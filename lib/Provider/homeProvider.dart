@@ -37,6 +37,23 @@ class DataProvider with ChangeNotifier {
 
   int? amount;
 
+  /// Switch the active pick week (e.g. late entrant forwarded past a locked week).
+  void setActiveWeek(String weekName, {String? year}) {
+    final mode = weekName.startsWith('PRE')
+        ? 'PRE'
+        : weekName.startsWith('POST')
+            ? 'POST'
+            : 'REG';
+    game = {
+      'name': weekName,
+      'year': year ?? game?['year']?.toString() ?? DateTime.now().year.toString(),
+      'mode': mode,
+    };
+    clearPlayerPicks();
+    debugPrint('DataProvider: setActiveWeek => $game');
+    notifyListeners();
+  }
+
   setValue(value) {
     pageIndex = value;
     notifyListeners();

@@ -31,6 +31,38 @@ class SeasonConfig {
     return 2;
   }
 
+  /// Ordered pool weeks for 2026 entry routing.
+  static const List<String> entryWeekSequence = [
+    'PRE1',
+    'PRE2',
+    'PRE3',
+    'REG1',
+    'REG2',
+    'REG3',
+    'REG4',
+    'REG5',
+    'REG6',
+    'REG7',
+    'REG8',
+    'REG9',
+    'REG10',
+    'REG11',
+    'REG12',
+    'REG13',
+    'REG14',
+    'REG15',
+    'REG16',
+    'REG17',
+    'REG18',
+  ];
+
+  /// Next week after [weekName], or null if at end of sequence.
+  static String? nextWeekName(String weekName) {
+    final idx = entryWeekSequence.indexOf(weekName.toUpperCase());
+    if (idx < 0 || idx >= entryWeekSequence.length - 1) return null;
+    return entryWeekSequence[idx + 1];
+  }
+
   static String assetPathForYear(int year) =>
       'assets/data/nfl_schedule_$year.json';
 }

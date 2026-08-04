@@ -8,11 +8,15 @@ import '../../../Provider/homeProvider.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
+import 'package:poolqapp/Module/Screen/Home/EditPlay.dart';
 import '../../../services/nfl_schedule_service.dart';
 import '../../../services/game_state_service.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/services/app_config_service.dart';
 import 'package:poolqapp/services/picks_validation_service.dart';
+import 'package:poolqapp/services/payment_service.dart';
+import 'package:poolqapp/services/game_enforcement_service.dart';
+import 'package:poolqapp/widgets/player/player_picks_modal.dart';
 
 
 class PlayWidget extends StatefulWidget {
@@ -28,10 +32,15 @@ class _PlayWidgetState extends State<PlayWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   List? data;
   bool _useMultipageUI = false; // Flag to enable new multipage UI
+  bool _hasExistingEntry = false;
+  bool _pickingAllowed = true;
+  Map<String, dynamic>? _existingEntry;
+  String? _forwardMessage;
 
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
   final GameStateService _gameStateService = GameStateService();
+  final PaymentService _paymentService = PaymentService();
   
   Future getGame(context) async {
     DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
@@ -78,13 +87,77 @@ class _PlayWidgetState extends State<PlayWidget> {
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
     
-    // Clear any existing picks for new entry (Play screen should always start clean)
-    // Use addPostFrameCallback to avoid setState during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      print('Play: Before clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var weekName = dataProvider.game?['name']?.toString() ?? 'PRE1';
+      final resolved =
+          await GameEnforcementService().resolveEntryWeekOrForward(weekName);
+
+      if (!mounted) return;
+
+      if (resolved.redirected) {
+        if (resolved.week == null) {
+          setState(() {
+            _pickingAllowed = false;
+            _hasExistingEntry = false;
+            _forwardMessage =
+                '${resolved.lockedWeek} is locked and no later weeks are open yet.';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_forwardMessage!),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+
+        dataProvider.setActiveWeek(resolved.week!);
+        weekName = resolved.week!;
+        await getGame(context);
+        if (!mounted) return;
+        setState(() {
+          _forwardMessage =
+              '${resolved.lockedWeek} started - no late entries. Showing ${resolved.week} instead.';
+          _pickingAllowed = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_forwardMessage!),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+
+      final allowed =
+          await GameEnforcementService().isPickingAllowed(weekName);
+      final entry = await _paymentService.getUserEntryForWeek(weekName);
+
+      if (!mounted) return;
+
+      if (entry != null) {
+        // Already entered - don't let them re-run the pick form.
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "You're already entered for $weekName. Showing the leaderboard.",
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        return;
+      }
+
       dataProvider.clearPlayerPicks();
       tieBreakerController.clear();
-      print('Play: After clearing - picks: ${dataProvider.playerPicks}, tiebreaker: ${dataProvider.tiebreaker}');
+      setState(() {
+        _hasExistingEntry = false;
+        _existingEntry = null;
+        _pickingAllowed = allowed;
+      });
     });
     
     // Check if we're in demo mode
@@ -94,9 +167,6 @@ class _PlayWidgetState extends State<PlayWidget> {
       print('Play: Real user mode');
     }
     getGame(context);
-    // _model = createModel(context, () => PlayModel());
-
-    // _model.tieBreakerController ??= TextEditingController();
   }
 
   @override
@@ -151,8 +221,72 @@ class _PlayWidgetState extends State<PlayWidget> {
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       child: Text(
-                        'Preseason � picks are free to enter. Play and learn how the pool works!',
+                        'Preseason - picks are free to enter. Play and learn how the pool works!',
                         style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ),
+              if (_hasExistingEntry)
+                Positioned(
+                  top: MediaQuery.of(context).padding.top +
+                      (showPreBanner ? 64 : 8),
+                  left: 12,
+                  right: 12,
+                  child: Material(
+                    elevation: 3,
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle,
+                              color: Colors.green, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _pickingAllowed
+                                  ? 'You already entered this week (1 entry). Review or edit before kickoff.'
+                                  : 'You entered this week. Entries are locked - review your picks.',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              if (_pickingAllowed) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const EditPlayWidget(),
+                                  ),
+                                );
+                              } else if (_existingEntry != null) {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => PlayerPicksModal(
+                                    playerData: {
+                                      ..._existingEntry!,
+                                      'displayName':
+                                          user?.displayName ?? 'You',
+                                    },
+                                    games:
+                                        data?.cast<Map<String, dynamic>>() ??
+                                            const [],
+                                    weekName: weekName,
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text(
+                              _pickingAllowed ? 'Edit' : 'Review',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -901,6 +1035,46 @@ class _PlayWidgetState extends State<PlayWidget> {
                                     },
                                   );
                                 } else {
+                                  // Block late entries; forward to next open week.
+                                  final weekName =
+                                      dataProvider.game?['name']?.toString() ??
+                                          '';
+                                  final resolved =
+                                      await GameEnforcementService()
+                                          .resolveEntryWeekOrForward(weekName);
+                                  if (resolved.redirected) {
+                                    if (!mounted) return;
+                                    if (resolved.week == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${resolved.lockedWeek} is locked - no late entries.',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    dataProvider
+                                        .setActiveWeek(resolved.week!);
+                                    await getGame(context);
+                                    if (!mounted) return;
+                                    setState(() {
+                                      _pickingAllowed = true;
+                                      _hasExistingEntry = false;
+                                      _forwardMessage =
+                                          '${resolved.lockedWeek} started - switched to ${resolved.week}.';
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(_forwardMessage!),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
                                   // FFAppState().update(() {
                                   dataProvider.tiebreaker =
                                       int.parse(tieBreakerController.text);

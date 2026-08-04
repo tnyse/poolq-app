@@ -495,8 +495,18 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                           }
                                         } else if (!snapshot.data!.docs.isEmpty) {
                                           print('User already has picks for this week');
-                                          customSnackbar(context,
-                                              'You have already submitted picks for week ${dataProvider?.game!["name"].toString().replaceAll("REG", "").replaceAll("PRE", "")}');
+                                          customSnackbar(
+                                            context,
+                                            "You're already entered for this week",
+                                          );
+                                          Navigator.pushAndRemoveUntil(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const HomePage(initial: 1),
+                                            ),
+                                            (route) => false,
+                                          );
                                         } else {
                                           print('Going to save picks and proceed to payment');
                                           if (dataProvider != null) {
@@ -551,17 +561,35 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
 
       final weekForGate = dataProvider.game?['name']?.toString() ?? '';
       if (weekForGate.isNotEmpty) {
-        final allowed =
-            await GameEnforcementService().isPickingAllowed(weekForGate);
-        if (!allowed) {
+        final resolved = await GameEnforcementService()
+            .resolveEntryWeekOrForward(weekForGate);
+        if (resolved.redirected) {
           if (!mounted) return;
+          if (resolved.week == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${resolved.lockedWeek} is locked — no late entries, and no later week is open yet.',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+          dataProvider.setActiveWeek(resolved.week!);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Picks are locked — $weekForGate games have already started.',
+                '${resolved.lockedWeek} already started — no late entries. Switched to ${resolved.week}. Tap Play to enter.',
               ),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
             ),
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage(initial: 0)),
+            (route) => false,
           );
           return;
         }
@@ -1064,17 +1092,32 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
         'uid': user?.uid ?? 'demo_user',
         "displayName": user?.displayName ?? 'Demo User',
         "photoURL": user?.photoURL ?? '',
+        "email": user?.email ?? '',
         "paymentStatus": "verified", // Keep existing verification status for edits
       };
       CollectionReference pickrecord = FirebaseFirestore.instance.collection('pickrecord');
-      
-      if (widget.id != null && widget.id!.isNotEmpty) {
-        // Use set with merge to create or update the document
-        await pickrecord.doc(widget.id).set(picksCreateData, SetOptions(merge: true));
-      } else {
-        // No ID provided, create new document
-        await pickrecord.add(picksCreateData);
+      final weekName = dataProvider.game?['name']?.toString() ?? '';
+      final uid = user?.uid ?? 'demo_user';
+
+      // Always one doc per user/week — never .add() (creates duplicates).
+      final docId = (widget.id != null && widget.id!.isNotEmpty)
+          ? widget.id!
+          : PaymentService.pickDocumentId(uid, weekName);
+
+      final allowed = await GameEnforcementService().isPickingAllowed(weekName);
+      if (!allowed) {
+        Navigator.pop(context);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$weekName is locked — edits closed after kickoff.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
       }
+
+      await pickrecord.doc(docId).set(picksCreateData, SetOptions(merge: true));
       
       await calculateScore(context);
       

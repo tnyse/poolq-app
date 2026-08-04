@@ -18,11 +18,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/firebase_options.dart';
 import 'package:poolqapp/screens/auth/login_screen.dart';
-import 'package:poolqapp/screens/landing_page.dart';
 import 'screens/admin/admin_players_page.dart';
-import 'package:poolqapp/screens/front_page.dart';
+import 'package:poolqapp/screens/invite_friends_page.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/services/app_config_service.dart';
+import 'package:poolqapp/screens/auth/auth_session_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,13 +71,17 @@ Future<void> initializeServices() async {
       debugPrint('Error initializing GetStorage: $e');
     }
 
-    // Initialize auth persistence with timeout
+    // Keep Firebase Auth session across browser visits (web IndexedDB / local).
     try {
+      if (kIsWeb) {
+        await FirebaseAuth.instance
+            .setPersistence(Persistence.LOCAL)
+            .timeout(const Duration(seconds: 3));
+      }
       final authProvider = AuthProviders();
       await authProvider.initializePersistence().timeout(Duration(seconds: 3));
     } catch (e) {
       debugPrint('Error initializing auth persistence: $e');
-      // Continue without auth persistence for demo mode
     }
   } catch (e) {
     debugPrint('Error during service initialization: $e');
@@ -97,10 +101,10 @@ class MyApp extends StatelessWidget {
         title: 'PoolQ',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const LandingPage(),
+        home: const AuthSessionGate(),
         routes: {
-          '/home': (context) => HomePage(),
-          '/front': (context) => const FrontPage(),
+          '/home': (context) => const HomePage(initial: 1),
+          '/front': (context) => const InviteFriendsPage(),
         '/admin-players': (context) => const AdminPlayersPage(),
           '/login': (context) => const LoginScreen(),
           '/register': (context) => RegisterScreen(),

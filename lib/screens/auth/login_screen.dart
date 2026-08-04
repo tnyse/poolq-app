@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   String _errorMessage = '';
   int _retryCount = 0;
   static const int _maxRetries = 3;
+  bool _rememberMe = true;
   
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -65,6 +66,20 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     _fadeController.forward();
     Future.delayed(const Duration(milliseconds: 200), () {
       _slideController.forward();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prefillRememberedEmail();
+    });
+  }
+
+  Future<void> _prefillRememberedEmail() async {
+    final email = await Provider.of<AuthProviders>(context, listen: false)
+        .getRememberedEmail();
+    if (!mounted || email == null || email.isEmpty) return;
+    setState(() {
+      _emailController.text = email;
+      _rememberMe = true;
     });
   }
 
@@ -116,9 +131,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         throw Exception('Please enter a valid email address');
       }
       
-      // Login user
-      final result = await Provider.of<AuthProviders>(context, listen: false)
-          .loginUser(email, password);
+      final auth = Provider.of<AuthProviders>(context, listen: false);
+      final result = await auth.loginUser(
+        email,
+        password,
+        rememberMe: _rememberMe,
+      );
       
       if (!result) {
         throw Exception('Login failed. Please check your credentials.');
@@ -139,7 +157,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       
       // Navigate to home screen
       if (mounted) {
-        _navigationService.navigateAndRemoveUntil(context, HomePage());
+        _navigationService.navigateAndRemoveUntil(
+          context,
+          const HomePage(initial: 1),
+        );
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -271,6 +292,31 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         ),
                         
                         const SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberMe,
+                              activeColor: AppTheme.primaryBlue,
+                              onChanged: (v) {
+                                setState(() => _rememberMe = v ?? true);
+                              },
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() => _rememberMe = !_rememberMe);
+                                },
+                                child: Text(
+                                  'Stay signed in on this device',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         
                         // Forgot password link
                         Align(

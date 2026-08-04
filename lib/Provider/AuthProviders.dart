@@ -32,47 +32,55 @@ class AuthProviders with ChangeNotifier {
   // Initialize persistence
   Future<void> initializePersistence() async {
     if (_isInitialized) return;
-    
+
     try {
-      // Set persistence for web
+      // Web: keep Firebase Auth session in browser storage (survives refresh / return visits).
       if (kIsWeb) {
         await auth.setPersistence(Persistence.LOCAL);
       }
-      
-      // Initialize shared preferences
+
       final prefs = await SharedPreferences.getInstance();
-      
-      // Check for existing session
-      final savedEmail = prefs.getString('user_email');
-      final savedPassword = prefs.getString('user_password');
-      
-      if (savedEmail != null && savedPassword != null) {
-        try {
-          await auth.signInWithEmailAndPassword(
-            email: savedEmail,
-            password: savedPassword,
-          );
-        } catch (e) {
-          // Clear invalid credentials
-          await prefs.remove('user_email');
-          await prefs.remove('user_password');
-        }
+      // Migrate away from insecure plaintext password storage.
+      if (prefs.containsKey('user_password')) {
+        await prefs.remove('user_password');
       }
-      
+
       _isInitialized = true;
     } catch (e) {
       print('Error initializing persistence: $e');
     }
   }
 
-  // Save credentials for persistence
+  /// Remember email only (session itself is Firebase Persistence.LOCAL).
   Future<void> _saveCredentials(String email, String password) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_email', email);
-      await prefs.setString('user_password', password);
+      await prefs.setBool('remember_me', true);
+      await prefs.remove('user_password');
     } catch (e) {
       print('Error saving credentials: $e');
+    }
+  }
+
+  Future<void> clearRememberedEmailOnly() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_email');
+      await prefs.setBool('remember_me', false);
+      await prefs.remove('user_password');
+    } catch (e) {
+      print('Error clearing remembered email: $e');
+    }
+  }
+
+  Future<String?> getRememberedEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('remember_me') == false) return null;
+      return prefs.getString('user_email');
+    } catch (_) {
+      return null;
     }
   }
 
@@ -82,6 +90,7 @@ class AuthProviders with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('user_email');
       await prefs.remove('user_password');
+      await prefs.remove('remember_me');
     } catch (e) {
       print('Error clearing credentials: $e');
     }
@@ -132,6 +141,44 @@ class AuthProviders with ChangeNotifier {
     email = user?.email ?? '';
   }
 
+  /// Hydrate profile model after session restore (AuthProviders.user may be null).
+  Future<void> ensureProfileLoaded() async {
+    await getUserInfo();
+    final firebaseUser = auth.currentUser;
+    if (firebaseUser == null) {
+      _user = null;
+      notifyListeners();
+      return;
+    }
+    if (_user != null && _user!.userId == firebaseUser.uid) {
+      if (image.isEmpty && (firebaseUser.photoURL?.isNotEmpty ?? false)) {
+        image = firebaseUser.photoURL!;
+      }
+      notifyListeners();
+      return;
+    }
+    try {
+      final doc =
+          await _firestore.collection('users').doc(firebaseUser.uid).get();
+      if (doc.exists) {
+        _user = UserModel.fromFirestore(doc);
+        if ((_user!.avatar).isNotEmpty) {
+          image = _user!.avatar;
+        } else {
+          image = firebaseUser.photoURL ?? '';
+        }
+      } else {
+        _user = _fallbackUser(firebaseUser, firebaseUser.email ?? '');
+        image = firebaseUser.photoURL ?? '';
+      }
+    } catch (e) {
+      debugPrint('ensureProfileLoaded: $e');
+      _user = _fallbackUser(firebaseUser, firebaseUser.email ?? '');
+      image = firebaseUser.photoURL ?? '';
+    }
+    notifyListeners();
+  }
+
   // Method used by the new screens
   Future<bool> registerUser(String email, String password) async {
     try {
@@ -170,7 +217,11 @@ class AuthProviders with ChangeNotifier {
 
   // Method used by the new screens — real Firebase auth.
   // Optional debug bypass: --dart-define=BYPASS_AUTH=true (debug builds only).
-  Future<bool> loginUser(String email, String password) async {
+  Future<bool> loginUser(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     const bypassAuth = bool.fromEnvironment('BYPASS_AUTH', defaultValue: false);
     if (kDebugMode && bypassAuth) {
       debugPrint('DEBUG: BYPASS_AUTH enabled — mock login only');
@@ -197,11 +248,22 @@ class AuthProviders with ChangeNotifier {
     }
 
     try {
+      if (kIsWeb) {
+        await auth.setPersistence(
+          rememberMe ? Persistence.LOCAL : Persistence.SESSION,
+        );
+      }
+
       final credential = await auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
-      await _saveCredentials(email.trim(), password);
+
+      if (rememberMe) {
+        await _saveCredentials(email.trim(), password);
+      } else {
+        await clearRememberedEmailOnly();
+      }
 
       final firebaseUser = credential.user;
       if (firebaseUser != null) {

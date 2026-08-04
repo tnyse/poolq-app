@@ -8,21 +8,16 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:poolqapp/Provider/homeProvider.dart';
-// import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:poolqapp/Module/Screen/Home/picks.dart';
-// import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:poolqapp/Module/Screen/Home/picked.dart';
 import 'Play.dart';
 import '../../../services/nfl_schedule_service.dart';
 import '../../../services/leaderboard_privacy_service.dart';
+import '../../../services/payment_service.dart';
+import '../../../services/app_config_service.dart';
+import '../../../constants/payment_status.dart';
 import '../../../widgets/player/player_picks_modal.dart';
-import '../../../services/player_eligibility_service.dart';
-// import 'package:poolqapp/Widget/reuse.dart';
-// import 'package:google_fonts/google_fonts.dart';
-//import 'package:admob_flutter/admob_flutter.dart';
+import '../../../utils/avatar_url.dart';
 
 class LeaderboardWidget extends StatefulWidget {
   const LeaderboardWidget({Key? key}) : super(key: key);
@@ -44,8 +39,248 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   List? normal_data;
   var particularData;
   bool? played;
+  bool _loadingLeaderboard = true;
+  bool _entriesLocked = false;
+  String _activeWeekName = 'PRE1';
   final LeaderboardPrivacyService _privacyService = LeaderboardPrivacyService();
-  final PlayerEligibilityService _eligibilityService = PlayerEligibilityService();
+
+  /// Expected pot (entrants × entry fee) | sum of confirmed payment fees.
+  Widget _buildPotBadge() {
+    final entrants = data?.length ?? 0;
+    final expected = entrants * PaymentService.ENTRY_FEE;
+
+    double confirmed = 0;
+    if (data != null) {
+      for (final row in data!) {
+        if (row is! Map) continue;
+        final status = (row['paymentStatus'] ?? '').toString();
+        if (!PaymentStatus.isEligible(status)) continue;
+        final fee = row['entryFee'];
+        if (fee is num) {
+          confirmed += fee.toDouble();
+        } else {
+          confirmed += PaymentService.ENTRY_FEE;
+        }
+      }
+    }
+
+    String money(double v) =>
+        '\$${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 2)}';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Pot ',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.85),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            money(expected),
+            style: const TextStyle(
+              color: Color(0xFFFFD54F), // expected total
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            ' | ',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            money(confirmed),
+            style: TextStyle(
+              color: confirmed >= expected && expected > 0
+                  ? const Color(0xFF69F0AE) // fully confirmed
+                  : const Color(0xFFFFAB40), // pending confirmations
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerTile(Map<String, dynamic> player, int index) {
+    final uid = (player['uid'] ?? '').toString();
+    final isMe = uid == (user?.uid ?? 'demo_user');
+    final displayName = (player['displayName'] ?? 'Player').toString();
+    final photoURL = (player['photoURL'] ?? '').toString();
+    final email = (player['email'] ?? (isMe ? (user?.email ?? '') : '')).toString();
+    final scoreText = _privacyService.getScoreDisplayText(
+      player,
+      entriesLocked: _entriesLocked,
+      isCurrentUser: isMe,
+    );
+    final bg = isMe ? const Color(0xFF063a73) : const Color(0xFF3474E0);
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(10, 0, 10, 10),
+      child: Material(
+        color: bg,
+        elevation: 1,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => _handlePlayerTap(Map<String, dynamic>.from(player)),
+          child: SizedBox(
+            height: 75,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(15, 1, 1, 1),
+                    child: ClipOval(
+                      child: SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: Image(
+                          image: resolveAvatarImage(
+                            photoUrl: photoURL,
+                            email: email,
+                            size: 100,
+                          ),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            'assets/images/user.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 4, 0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  displayName.toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Lexend Deca',
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              if (isMe) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.25),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.green),
+                                  ),
+                                  child: Text(
+                                    _entriesLocked ? 'YOU' : 'EDIT',
+                                    style: const TextStyle(
+                                      color: Colors.greenAccent,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          Text(
+                            'WEEK ${selectedValue ?? ''} · #${player['rank'] ?? (index + 1)}'
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              fontFamily: 'Lexend Deca',
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white, size: 35),
+                      Text(
+                        scoreText.toUpperCase(),
+                        style: const TextStyle(
+                          fontFamily: 'Lexend Deca',
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handlePlayerTap(Map<String, dynamic> player) {
+    final rowUserId = (player['uid'] ?? '').toString();
+    final isMe = rowUserId == (user?.uid ?? 'demo_user');
+    final weekName = _activeWeekName;
+
+    if (!isMe &&
+        !_privacyService.canViewPlayerPicks(
+          targetPlayerId: rowUserId,
+          entriesLocked: _entriesLocked,
+        )) {
+      _privacyService.showRestrictedAccessDialog(context);
+      return;
+    }
+
+    if (isMe && !_entriesLocked) {
+      // Own picks before lock — review/edit
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => EditPlayWidget()),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (_) => PlayerPicksModal(
+        playerData: player,
+        games: data2?.cast<Map<String, dynamic>>() ?? const [],
+        weekName: weekName,
+        hidePrivateInfo: !isMe && !_entriesLocked,
+      ),
+    );
+  }
 
   Future<void> _showPaymentModal(BuildContext context) async {
     await showDialog(
@@ -153,63 +388,226 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     }
     
     try {
-      print('Fetching games for leaderboard from multiple sources...');
-      
-      String weekName = "${dataProvider.game!["mode"]}$selectedValue";
-      
-      // Try the new schedule service with multiple fallback options
-      List<Map<String, dynamic>> games = await scheduleService.getScheduleWithFallback(weekName);
-      
-      // If no games from live APIs, try the original custom API
+      print('Fetching games for leaderboard...');
+      final mode = dataProvider.game?["mode"]?.toString() ?? 'PRE';
+      final weekName = "$mode$selectedValue";
+
+      // Prefer local 2026 schedule for stable matchups display.
+      List<Map<String, dynamic>> games =
+          await scheduleService.getScheduleForWeekWithLocalFallback(weekName);
       if (games.isEmpty) {
-        print('Trying original API for leaderboard: ${mainUrl}/getnlf/$weekName');
-        
-        var response = await http.get(
-          Uri.parse('${mainUrl}/getnlf/$weekName'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Access-Control-Allow-Origin': '*',
-          },
-        ).timeout(Duration(seconds: 20));
-        
-        if (response.statusCode == 200) {
-          var body = json.decode(response.body);
-          if (body is List && body.isNotEmpty) {
-            setState(() {
-              data2 = body;
-            });
-            return body;
-          }
+        games = await scheduleService.getScheduleWithFallback(weekName);
+      }
+
+      if (games.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            data2 = games;
+          });
         }
-      } else {
-        setState(() {
-          data2 = games;
-        });
-        print('Successfully loaded ${games.length} games for leaderboard from NFL APIs');
+        print('Loaded ${games.length} games for $weekName');
         return games;
       }
-      
+
+      print('Trying original API for leaderboard: ${mainUrl}/getnlf/$weekName');
+      var response = await http.get(
+        Uri.parse('${mainUrl}/getnlf/$weekName'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Access-Control-Allow-Origin': '*',
+        },
+      ).timeout(Duration(seconds: 20));
+
+      if (response.statusCode == 200) {
+        var body = json.decode(response.body);
+        if (body is List && body.isNotEmpty) {
+          if (mounted) setState(() => data2 = body);
+          return body;
+        }
+      }
     } catch (e) {
       print('Error fetching games for leaderboard: $e');
     }
-    
+
+    if (mounted) setState(() => data2 = []);
     return [];
   }
 
   // ${mainUrl}/getnlf/${dataProvider.game!["mode"]}${widget.selectedValue}
   Future getLeaderBoard(context, selectedValue) async {
+    if (mounted) {
+      setState(() => _loadingLeaderboard = true);
+    }
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
-    
-    // Check if we're in demo mode
+
+    final mode = dataProvider.game?["mode"]?.toString() ?? 'PRE';
+    // Always honor the week picker selection (do not reuse stale game.name).
+    final weekName = "$mode$selectedValue";
+    if (dataProvider.game?['name']?.toString() != weekName) {
+      dataProvider.setActiveWeek(weekName);
+    }
+
+    final entriesLocked =
+        await _privacyService.areEntriesLocked(weekName);
+    if (mounted) {
+      setState(() {
+        _entriesLocked = entriesLocked;
+        _activeWeekName = weekName;
+      });
+    }
+
+    // Authenticated players: load week entrants from Firestore pickrecord.
+    if (user != null && user?.email != 'demo@poolq.com') {
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('pickrecord')
+            .where('week', isEqualTo: weekName)
+            .get();
+
+        List<Map<String, dynamic>> rows = snap.docs.map((doc) {
+          final d = doc.data();
+          return <String, dynamic>{
+            'id': doc.id,
+            'uid': d['uid'] ?? '',
+            'displayName': (d['displayName'] ?? 'Player').toString(),
+            'photoURL': d['photoURL'] ?? '',
+            'email': (d['email'] ?? '').toString(),
+            'score': d['score'],
+            'picks': List<String>.from(d['picks'] ?? const []),
+            'tiebreaker': d['tiebreaker'],
+            'week': d['week'] ?? weekName,
+            'paymentStatus': d['paymentStatus'] ?? 'pending',
+            'entryFee': () {
+              final fee = d['entryFee'];
+              if (fee is num) return fee.toDouble();
+              final freePre = AppConfigService().preseasonFree &&
+                  weekName.toUpperCase().startsWith('PRE');
+              return freePre ? 0.0 : PaymentService.ENTRY_FEE;
+            }(),
+            'isActive': d['isActive'] ?? true,
+            'rank': d['rank'],
+            'hasSubmittedPicks': true,
+          };
+        }).where((e) => e['isActive'] != false).toList();
+
+        // Backfill emails for older pickrecords (needed for Gravatar).
+        final missingEmailUids = rows
+            .where((e) => (e['email'] as String).isEmpty &&
+                (e['uid'] as String).isNotEmpty)
+            .map((e) => e['uid'] as String)
+            .toSet()
+            .toList();
+        if (missingEmailUids.isNotEmpty) {
+          try {
+            // Firestore whereIn limit is 10 — chunk if needed.
+            for (var i = 0; i < missingEmailUids.length; i += 10) {
+              final chunk = missingEmailUids.sublist(
+                i,
+                (i + 10 > missingEmailUids.length)
+                    ? missingEmailUids.length
+                    : i + 10,
+              );
+              final usersSnap = await FirebaseFirestore.instance
+                  .collection('users')
+                  .where(FieldPath.documentId, whereIn: chunk)
+                  .get();
+              final byId = {
+                for (final u in usersSnap.docs)
+                  u.id: (u.data()['email'] ?? '').toString(),
+              };
+              for (final row in rows) {
+                final uid = row['uid'] as String;
+                if ((row['email'] as String).isEmpty &&
+                    byId[uid]?.isNotEmpty == true) {
+                  row['email'] = byId[uid];
+                }
+              }
+            }
+          } catch (e) {
+            print('LeaderboardWidget: email backfill failed: $e');
+          }
+        }
+
+        // Current user always gets their Auth email for avatar.
+        if (user?.email != null && user!.email!.isNotEmpty) {
+          for (final row in rows) {
+            if (row['uid'] == user!.uid) {
+              row['email'] = user!.email;
+              if ((row['photoURL'] as String).isEmpty &&
+                  (user!.photoURL?.isNotEmpty ?? false)) {
+                row['photoURL'] = user!.photoURL;
+              }
+            }
+          }
+        }
+
+        rows.sort((a, b) {
+          final as = a['score'];
+          final bs = b['score'];
+          if (as == null && bs == null) {
+            return (a['displayName'] as String)
+                .compareTo(b['displayName'] as String);
+          }
+          if (as == null) return 1;
+          if (bs == null) return -1;
+          final cmp = (bs as num).compareTo(as as num);
+          if (cmp != 0) return cmp;
+          return (a['displayName'] as String)
+              .compareTo(b['displayName'] as String);
+        });
+
+        for (var i = 0; i < rows.length; i++) {
+          rows[i]['rank'] = i + 1;
+        }
+
+        rows = _privacyService.sanitizeLeaderboardData(
+          rows,
+          entriesLocked: entriesLocked,
+        );
+
+        // Pin current user to top for easy access to "my picks".
+        Map<String, dynamic>? mine;
+        final uid = user?.uid;
+        if (uid != null) {
+          final idx = rows.indexWhere((e) => e['uid'] == uid);
+          if (idx >= 0) {
+            mine = rows.removeAt(idx);
+            rows = [mine, ...rows];
+          }
+        }
+
+        if (!mounted) return rows;
+        setState(() {
+          data = rows;
+          normal_data = [...rows];
+          played = rows.isNotEmpty;
+          particularData = mine ?? (rows.isNotEmpty ? rows.first : 'null');
+          _loadingLeaderboard = false;
+        });
+        return rows;
+      } catch (e) {
+        print('LeaderboardWidget: Firestore leaderboard error: $e');
+        if (mounted) {
+          setState(() {
+            data = [];
+            normal_data = [];
+            played = false;
+            particularData = 'null';
+            _loadingLeaderboard = false;
+          });
+        }
+        return [];
+      }
+    }
+
+    // Demo / unauthenticated fallback (local mock only)
     print('LeaderboardWidget: Checking demo mode - user = ${user?.email ?? "null"}');
-    print('LeaderboardWidget: user == null: ${user == null}');
-    print('LeaderboardWidget: user?.email == demo@poolq.com: ${user?.email == 'demo@poolq.com'}');
     if (user == null || user?.email == 'demo@poolq.com') {
       print('LeaderboardWidget: Demo mode detected, using hardcoded demo data instead of Firestore');
       
       // Define weekName outside try block so it's accessible in catch block
-      final weekName = "${dataProvider.game!["mode"]}${selectedValue}";
+      // (weekName already computed above)
       
       try {
         // Use hardcoded demo leaderboard data to avoid Firestore permission issues
@@ -220,7 +618,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
         
         // Determine if this week is completed (has final scores) or in progress
         final isWeekCompleted = false; // No weeks are completed yet - scores should be hidden
-        final isCurrentWeek = weekName == 'REG1'; // REG1 is the current picking week
+        final isCurrentWeek = weekName == 'REG1' || weekName == 'PRE1';
         
         // Add single demo user entry (the actual user) - only ONE entry
         final currentDemoUser = {
@@ -270,6 +668,7 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           normal_data = [...demoLeaderboard];
           this.played = true;
           particularData = demoLeaderboard.first; // Current demo user is always first
+          _loadingLeaderboard = false;
         });
         
         print('Successfully loaded ${demoLeaderboard.length} demo leaderboard entries (no Firestore query in demo mode)');
@@ -339,55 +738,24 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
           normal_data = [...fallbackLeaderboard];
           this.played = true;
           particularData = fallbackLeaderboard.first;
+          _loadingLeaderboard = false;
         });
         
         return fallbackLeaderboard;
       }
     }
     
-    var response = await http.get(
-        Uri.parse(
-            '${mainUrl}/getleaderboard/${dataProvider.game!["mode"]}${selectedValue}'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Access-Control-Allow-Origin': '*',
-        }).timeout(Duration(seconds: 20));
-    var body = json.decode(response.body);
-    print(response.body);
-    print(response.body);
-
-    if (body.length != 0) {
-      List body1 = body["leaderboardList"];
-      bool played = body["played"];
+    // Should not reach here for normal users
+    if (mounted) {
       setState(() {
-        data = body1;
-        normal_data = [...body1];
-        this.played = played;
-        particularData = data!.singleWhere(
-            (element) => element['uid'] == (user?.uid ?? 'demo_user'),
-            orElse: () => "null");
-        if (particularData == "null") {
-          print("done");
-        } else {
-          data!.remove(particularData);
-          data = [particularData, ...?data];
-        }
-        // print(particularData);
-        // print(data);
-      });
-    } else {
-      // No data returned from API – avoid indefinite loading by setting safe defaults
-      setState(() {
-        data = body; // empty list
-        normal_data = body; // empty list
-        // Mark that we attempted to load and there are no plays yet
+        data = [];
+        normal_data = [];
         played = false;
-        // Ensure UI moves past the loading gate
         particularData = "null";
+        _loadingLeaderboard = false;
       });
     }
-
-    return body;
+    return [];
   }
 
   String? selectedValue;
@@ -404,12 +772,13 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     print('LeaderboardWidget: user = ${user?.email ?? "null"}');
     print('LeaderboardWidget: dataProvider.game = ${dataProvider.game}');
 
-    // Set safe defaults to avoid indefinite loading spinners in demo/web
+    // Start empty; show spinner until getLeaderBoard finishes.
     setState(() {
       data = [];
       normal_data = [];
       particularData = "null";
       played = false;
+      _loadingLeaderboard = true;
     });
     
     // Check if dataProvider.game is null
@@ -498,6 +867,38 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
             Column(
               mainAxisSize: MainAxisSize.max,
               children: [
+                Material(
+                  color: _entriesLocked
+                      ? const Color(0xFF2E7D32)
+                      : const Color(0xFF063a73),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _entriesLocked ? Icons.lock_open : Icons.lock_outline,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '$_activeWeekName · ${data?.length ?? 0} entrants · '
+                            '${_privacyService.getPrivacyStatusMessage(entriesLocked: _entriesLocked)}'
+                            '${_entriesLocked ? '' : ' Tap your name to review picks.'}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildPotBadge(),
+                      ],
+                    ),
+                  ),
+                ),
                 Stack(
                   children: [
                     Padding(
@@ -727,1373 +1128,40 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
                     ),
                   ],
                 ),
-                played == false || played == null
-                    ? Builder(
-                        builder: (BuildContext context) {
-                          if (data == null || particularData == null) {
-                            return Center(
-                                child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.fromSwatch()
-                                          .copyWith(
-                                              secondary: Color(0xFF063a73)),
-                                    ),
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Color(0xFF063a73)),
-                                      strokeWidth: 2,
-                                      backgroundColor: Colors.white,
-                                      //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
-                                    )),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                Text('Loading',
-                                    style: TextStyle(
-                                        color: Color(0xFF333333),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600)),
-                              ],
-                            ));
-                          } else if (data!.isEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.all(40.0),
-                              child: Text(
-                                "No Game Play Yet!",
-                                style: TextStyle(fontSize: 25),
-                              ),
-                            );
-                          }
-                          return Expanded(
-                            child: ListView.builder(
-                              itemCount: data!.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                return index == 0
-                                    ? InkWell(
-                                        onTap: () {
-                                          final rowUserId = data![index]["uid"];
-                                          final playerName = data![index]["displayName"];
-                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget: ROW CLICKED - User clicked on player at index $index');
-                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget: rowUserId=$rowUserId, currentUser=${user?.uid ?? 'demo_user'}');
-                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget: Player name: $playerName');
-                                          
-                                          // Show alert dialog to confirm click detection
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Text('🎯 Click Detected!'),
-                                                content: Text('You successfully clicked on "$playerName"! \n\nThe click handler is working correctly. \n\nWould you like to view their picks?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Close dialog
-                                                      
-                                                      // Then navigate based on logic
-                                                      if (user == null || user?.email == 'demo@poolq.com') {
-                                                        print('Opening PlayWidget for demo user - rowUserId=$rowUserId');
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) => PlayWidget(),
-                                                          ),
-                                                        );
-                                                      } else if (rowUserId == (user?.uid ?? 'demo_user')) {
-                                                        print('Opening EditPlayWidget for current user');
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) => EditPlayWidget(),
-                                                          ),
-                                                        );
-                                                      } else {
-                                                        print('Opening PickedWidget for other user');
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) => PickedWidget(
-                                                              userId: rowUserId,
-                                                              selectedValue: selectedValue,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }
-                                                    },
-                                                    child: Text('Yes, View Picks'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Just close dialog
-                                                    },
-                                                    child: Text('Cancel'),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                        child: Column(
-                                          children: [
-                                            Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(10, 0, 10, 10),
-                                              child: Container(
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                                height: 75,
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFF3474E0),
-                                                  // image: DecorationImage(
-                                                  //     image: AssetImage("assets/images/winner.png"),
-                                                  //   fit: BoxFit.cover
-                                                  // ),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Color(0x411D2429),
-                                                      offset: Offset(0, 1),
-                                                    )
-                                                  ],
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Padding(
-                                                  padding: EdgeInsetsDirectional
-                                                      .fromSTEB(8, 8, 8, 8),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .fromSTEB(15, 1,
-                                                                    1, 1),
-                                                        child: Container(
-                                                          height: 50,
-                                                          width: 50,
-                                                          child: data![index]['photoURL']
-                                                                          .toString() ==
-                                                                      "" ||
-                                                                  data![index][
-                                                                          'photoURL'] ==
-                                                                      null
-                                                              ? Image.asset(
-                                                                  "assets/images/user.png",
-                                                                  fit: BoxFit
-                                                                      .cover)
-                                                              : Image.network(
-                                                                  data![index][
-                                                                          'photoURL']
-                                                                      .toString(),
-                                                                  fit: BoxFit
-                                                                      .cover),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Padding(
-                                                          padding:
-                                                              EdgeInsetsDirectional
-                                                                  .fromSTEB(14,
-                                                                      8, 4, 0),
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .max,
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Row(
-                                                                children: [
-                                                                  Text(
-                                                                    '${data![index]['displayName']}'
-                                                                        .toUpperCase(),
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize: 16,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                    ),
-                                                                  ),
-                                                                  if (data![index]["uid"] == (user?.uid ?? 'demo_user') && 
-                                                                      DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
-                                                                    Container(
-                                                                      margin: EdgeInsets.only(left: 8),
-                                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                                      decoration: BoxDecoration(
-                                                                        color: Colors.green.withOpacity(0.2),
-                                                                        borderRadius: BorderRadius.circular(12),
-                                                                        border: Border.all(color: Colors.green, width: 1),
-                                                                      ),
-                                                                      child: Row(
-                                                                        mainAxisSize: MainAxisSize.min,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.edit,
-                                                                            color: Colors.green,
-                                                                            size: 12,
-                                                                          ),
-                                                                          SizedBox(width: 4),
-                                                                          Text(
-                                                                            'Editable',
-                                                                            style: TextStyle(
-                                                                              color: Colors.green,
-                                                                              fontSize: 12,
-                                                                              fontWeight: FontWeight.w500,
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              Expanded(
-                                                                child: Padding(
-                                                                  padding: EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          0,
-                                                                          4,
-                                                                          8,
-                                                                          0),
-                                                                  child:
-                                                                      AutoSizeText(
-                                                                    'week ${selectedValue}'
-                                                                        .toUpperCase(),
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .start,
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          13,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.max,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .end,
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        0,
-                                                                        0,
-                                                                        0,
-                                                                        0),
-                                                            child: Icon(
-                                                              Icons
-                                                                  .chevron_right_rounded,
-                                                              color:
-                                                                  Colors.white,
-                                                              size: 35,
-                                                            ),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        0,
-                                                                        0,
-                                                                        0,
-                                                                        2),
-                                                            child: Text(
-                                                              _privacyService.getScoreDisplayText(
-                                                                data![index],
-                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
-                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
-                                                              )
-                                                                  .toUpperCase(),
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              style: TextStyle(
-                                                                fontFamily:
-                                                                    'Lexend Deca',
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : InkWell(
-                                        onTap: () {
-                                          final rowUserId = data![index]["uid"];
-                                          final playerName = data![index]["displayName"];
-                                          final currentUserHasSubmitted = _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>());
-                                          
-                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: ROW CLICKED - User clicked on player at index $index');
-                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: rowUserId=$rowUserId, currentUser=${user?.uid ?? 'demo_user'}');
-                                          print('🔥🔥🔥 CLICK DETECTED! LeaderboardWidget NON-FIRST: Player name: $playerName');
-                                          
-                                          // Check if user can view this player's picks
-                                          if (!_privacyService.canViewPlayerPicks(rowUserId, currentUserHasSubmitted)) {
-                                            _privacyService.showRestrictedAccessDialog(context);
-                                            return;
-                                          }
-                                          
-                                          // Show player picks modal instead of navigating to separate page
-                                          if (rowUserId == (user?.uid ?? 'demo_user')) {
-                                            // For current user, navigate to edit page
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => EditPlayWidget(),
-                                              ),
-                                            );
-                                          } else {
-                                            // For other players, show picks modal
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return PlayerPicksModal(
-                                                  playerData: data![index],
-                                                  games: data2?.cast<Map<String, dynamic>>() ?? [],
-                                                  weekName: "${dataProvider.game!["mode"]}${selectedValue}",
-                                                  hidePrivateInfo: !currentUserHasSubmitted,
-                                                );
-                                              },
-                                            );
-                                          }
-                                        },
-                                        child: _eligibilityService.applyEligibilityStyle(
-                                          isEligible: _eligibilityService.isPlayerEligible(data![index]),
-                                          child: Column(
-                                            children: [
-                                            Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(10, 0, 10, 10),
-                                              child: Container(
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                                height: 75,
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFF3474E0),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Color(0x411D2429),
-                                                      offset: Offset(0, 1),
-                                                    )
-                                                  ],
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Padding(
-                                                  padding: EdgeInsetsDirectional
-                                                      .fromSTEB(8, 8, 8, 8),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .fromSTEB(15, 1,
-                                                                    1, 1),
-                                                        child: Container(
-                                                          height: 50,
-                                                          width: 50,
-                                                          child: data![index]['photoURL']
-                                                                          .toString() ==
-                                                                      "" ||
-                                                                  data![index][
-                                                                          'photoURL'] ==
-                                                                      null
-                                                              ? Image.asset(
-                                                                  "assets/images/user.png",
-                                                                  fit: BoxFit
-                                                                      .cover)
-                                                              : Image.network(
-                                                                  data![index][
-                                                                          'photoURL']
-                                                                      .toString(),
-                                                                  fit: BoxFit
-                                                                      .cover),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Padding(
-                                                          padding:
-                                                              EdgeInsetsDirectional
-                                                                  .fromSTEB(14,
-                                                                      8, 4, 0),
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .max,
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Row(
-                                                                children: [
-                                                                  Text(
-                                                                    '${data![index]['displayName']}'
-                                                                        .toUpperCase(),
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize: 16,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                    ),
-                                                                  ),
-                                                                  if (data![index]["uid"] == (user?.uid ?? 'demo_user') && 
-                                                                      DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
-                                                                    Container(
-                                                                      margin: EdgeInsets.only(left: 8),
-                                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                                      decoration: BoxDecoration(
-                                                                        color: Colors.green.withOpacity(0.2),
-                                                                        borderRadius: BorderRadius.circular(12),
-                                                                        border: Border.all(color: Colors.green, width: 1),
-                                                                      ),
-                                                                      child: Row(
-                                                                        mainAxisSize: MainAxisSize.min,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.edit,
-                                                                            color: Colors.green,
-                                                                            size: 12,
-                                                                          ),
-                                                                          SizedBox(width: 4),
-                                                                          Text(
-                                                                            'Editable',
-                                                                            style: TextStyle(
-                                                                              color: Colors.green,
-                                                                              fontSize: 12,
-                                                                              fontWeight: FontWeight.w500,
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              Expanded(
-                                                                child: Padding(
-                                                                  padding: EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          0,
-                                                                          4,
-                                                                          8,
-                                                                          0),
-                                                                  child:
-                                                                      AutoSizeText(
-                                                                    'week ${selectedValue}'
-                                                                        .toUpperCase(),
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .start,
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          13,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.max,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .end,
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        0,
-                                                                        0,
-                                                                        0,
-                                                                        0),
-                                                            child: Icon(
-                                                              Icons
-                                                                  .chevron_right_rounded,
-                                                              color:
-                                                                  Colors.white,
-                                                              size: 35,
-                                                            ),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        0,
-                                                                        0,
-                                                                        0,
-                                                                        2),
-                                                            child: Text(
-                                                              _privacyService.getScoreDisplayText(
-                                                                data![index],
-                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
-                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
-                                                              )
-                                                                  .toUpperCase(),
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              style: TextStyle(
-                                                                fontFamily:
-                                                                    'Lexend Deca',
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        ),
-                                      );
-                              },
-                            ),
-                          );
-                        },
-                      )
-                    : Builder(
-                        builder: (BuildContext context) {
-                          if (data == null || particularData == null) {
-                            return Center(
-                                child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.fromSwatch()
-                                          .copyWith(
-                                              secondary: Color(0xFF063a73)),
-                                    ),
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Color(0xFF063a73)),
-                                      strokeWidth: 2,
-                                      backgroundColor: Colors.white,
-                                      //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
-                                    )),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                Text('Loading',
-                                    style: TextStyle(
-                                        color: Color(0xFF333333),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600)),
-                              ],
-                            ));
-                          } else if (data!.isEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.all(40.0),
-                              child: Text(
-                                "No Game Play Yet!",
-                                style: TextStyle(fontSize: 25),
-                              ),
-                            );
-                          }
-                          return Expanded(
-                            child: ListView.builder(
-                              itemCount: data!.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                return index == 0
-                                    ? InkWell(
-                                        onTap: () {
-                                          if (data![index]["uid"] ==
-                                              (user?.uid ?? 'demo_user')) {
-                                            DateTime currentDate =
-                                                DateTime.now();
-                                            DateTime targetDate =
-                                                dataProvider.formatStringDate(
-                                                    data2![0]["date"]);
+                if (_loadingLeaderboard)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
+                        strokeWidth: 2,
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  )
+                else if (data == null || data!.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(40.0),
+                    child: Text(
+                      "No entrants for this week yet",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(top: 8, bottom: 24),
+                      itemCount: data!.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final row = Map<String, dynamic>.from(
+                          data![index] as Map,
+                        );
+                        return _buildPlayerTile(row, index);
+                      },
+                    ),
+                  )
 
-                                            if (currentDate
-                                                    .isAfter(targetDate) ||
-                                                currentDate.isAtSameMomentAs(
-                                                    targetDate)) {
-                                              print(
-                                                  'Current date is greater than or equal to the target date.');
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        PickedWidget(
-                                                            userId: data![index]
-                                                                ["uid"],
-                                                            selectedValue:
-                                                                selectedValue)
-                                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                    ),
-                                              );
-                                            } else {
-                                              print(
-                                                  'Current date is before the target date.');
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        EditPlayWidget()
-                                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                    ),
-                                              );
-                                            }
-                                          } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PickedWidget(
-                                                          userId: data![index]
-                                                              ["uid"],
-                                                          selectedValue:
-                                                              selectedValue)
-                                                  // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                  ),
-                                            );
-                                          }
-                                        },
-                                        child: Column(
-                                          children: [
-                                            Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(10, 0, 10, 10),
-                                              child: Container(
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                                height: 75,
-                                                decoration: BoxDecoration(
-                                                  color: normal_data![0]
-                                                              ["uid"] ==
-                                                          data![index]["uid"]
-                                                      ? null
-                                                      : Color(0xFF3474E0),
-                                                  // remove winner background in demo/rows
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Color(0x411D2429),
-                                                      offset: Offset(0, 1),
-                                                    )
-                                                  ],
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Padding(
-                                                  padding: EdgeInsetsDirectional
-                                                      .fromSTEB(8, 8, 8, 8),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .fromSTEB(15, 1,
-                                                                    1, 1),
-                                                        child: Container(
-                                                          height: 50,
-                                                          width: 50,
-                                                          child: data![index]['photoURL']
-                                                                          .toString() ==
-                                                                      "" ||
-                                                                  data![index][
-                                                                          'photoURL'] ==
-                                                                      null
-                                                              ? Image.asset(
-                                                                  "assets/images/user.png",
-                                                                  fit: BoxFit
-                                                                      .cover)
-                                                              : Image.network(
-                                                                  data![index][
-                                                                          'photoURL']
-                                                                      .toString(),
-                                                                  fit: BoxFit
-                                                                      .cover),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Padding(
-                                                          padding:
-                                                              EdgeInsetsDirectional
-                                                                  .fromSTEB(14,
-                                                                      8, 4, 0),
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .max,
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Row(
-                                                                children: [
-                                                                  Text(
-                                                                    '${data![index]['displayName']}'
-                                                                        .toUpperCase(),
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize: 16,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                    ),
-                                                                  ),
-                                                                  if (data![index]["uid"] == (user?.uid ?? 'demo_user') && 
-                                                                      DateTime.now().isBefore(dataProvider.formatStringDate(data2![0]["date"])))
-                                                                    Container(
-                                                                      margin: EdgeInsets.only(left: 8),
-                                                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                                      decoration: BoxDecoration(
-                                                                        color: Colors.green.withOpacity(0.2),
-                                                                        borderRadius: BorderRadius.circular(12),
-                                                                        border: Border.all(color: Colors.green, width: 1),
-                                                                      ),
-                                                                      child: Row(
-                                                                        mainAxisSize: MainAxisSize.min,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.edit,
-                                                                            color: Colors.green,
-                                                                            size: 12,
-                                                                          ),
-                                                                          SizedBox(width: 4),
-                                                                          Text(
-                                                                            'Editable',
-                                                                            style: TextStyle(
-                                                                              color: Colors.green,
-                                                                              fontSize: 12,
-                                                                              fontWeight: FontWeight.w500,
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                              Expanded(
-                                                                child: Padding(
-                                                                  padding: EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          0,
-                                                                          4,
-                                                                          8,
-                                                                          0),
-                                                                  child:
-                                                                      AutoSizeText(
-                                                                    'week ${selectedValue}'
-                                                                        .toUpperCase(),
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .start,
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          13,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.max,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .end,
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        0,
-                                                                        0,
-                                                                        0,
-                                                                        0),
-                                                            child: Icon(
-                                                              Icons
-                                                                  .chevron_right_rounded,
-                                                              color:
-                                                                  Colors.white,
-                                                              size: 35,
-                                                            ),
-                                                          ),
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(
-                                                                        0,
-                                                                        0,
-                                                                        0,
-                                                                        2),
-                                                            child: Text(
-                                                              _privacyService.getScoreDisplayText(
-                                                                data![index],
-                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
-                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
-                                                              )
-                                                                  .toUpperCase(),
-                                                              textAlign:
-                                                                  TextAlign.end,
-                                                              style: TextStyle(
-                                                                fontFamily:
-                                                                    'Lexend Deca',
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : index == 1
-                                        ? normal_data![0]["uid"] == (user?.uid ?? 'demo_user')
-                                            ? null
-                                            : InkWell(
-                                                onTap: () {
-                                                  if (normal_data![0]["uid"] ==
-                                                      (user?.uid ?? 'demo_user')) {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              EditPlayWidget()
-                                                          // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                          ),
-                                                    );
-                                                  } else {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              PickedWidget(
-                                                                  userId:
-                                                                      normal_data![
-                                                                              0]
-                                                                          [
-                                                                          "uid"],
-                                                                  selectedValue:
-                                                                      selectedValue)
-                                                          // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                          ),
-                                                    );
-                                                  }
-                                                },
-                                                child: Column(
-                                                  children: [
-                                                    Padding(
-                                                      padding:
-                                                          EdgeInsetsDirectional
-                                                              .fromSTEB(10, 0,
-                                                                  10, 10),
-                                                      child: Container(
-                                                        width: MediaQuery.of(
-                                                                context)
-                                                            .size
-                                                            .width,
-                                                        height: 75,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: Color(
-                                                                  0x411D2429),
-                                                              offset:
-                                                                  Offset(0, 1),
-                                                            )
-                                                          ],
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: Stack(
-                                                          children: [
-                                                            Container(
-                                                              width:
-                                                                  MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width,
-                                                              height: 75,
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Colors
-                                                                    .white10,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            8),
-                                                              ),
-                                                              child: Text(""),
-                                                            ),
-                                                            Padding(
-                                                              padding:
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(
-                                                                          8,
-                                                                          8,
-                                                                          8,
-                                                                          8),
-                                                              child: Row(
-                                                                mainAxisSize:
-                                                                    MainAxisSize
-                                                                        .max,
-                                                                children: [
-                                                                  Padding(
-                                                                    padding: EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            15,
-                                                                            1,
-                                                                            1,
-                                                                            1),
-                                                                    child:
-                                                                        Container(
-                                                                      height:
-                                                                          50,
-                                                                      width: 50,
-                                                                      child: normal_data![0]['photoURL'].toString() == "" ||
-                                                                              normal_data![0]['photoURL'] ==
-                                                                                  null
-                                                                          ? Image.asset(
-                                                                              "assets/images/user.png",
-                                                                              fit: BoxFit
-                                                                                  .cover)
-                                                                          : Image.network(
-                                                                              normal_data![0]['photoURL'].toString(),
-                                                                              fit: BoxFit.cover),
-                                                                    ),
-                                                                  ),
-                                                                  Expanded(
-                                                                    child:
-                                                                        Padding(
-                                                                      padding: EdgeInsetsDirectional
-                                                                          .fromSTEB(
-                                                                              14,
-                                                                              8,
-                                                                              4,
-                                                                              0),
-                                                                      child:
-                                                                          Column(
-                                                                        mainAxisSize:
-                                                                            MainAxisSize.max,
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.center,
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          Text(
-                                                                            '${normal_data![0]['displayName']}'.toUpperCase(),
-                                                                            style:
-                                                                                TextStyle(
-                                                                              fontFamily: 'Lexend Deca',
-                                                                              color: Colors.white,
-                                                                              fontSize: 16,
-                                                                              fontWeight: FontWeight.w500,
-                                                                            ),
-                                                                          ),
-                                                                          Expanded(
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: EdgeInsetsDirectional.fromSTEB(0, 4, 8, 0),
-                                                                              child: AutoSizeText(
-                                                                                'week ${selectedValue}'.toUpperCase(),
-                                                                                textAlign: TextAlign.start,
-                                                                                style: TextStyle(
-                                                                                  fontFamily: 'Lexend Deca',
-                                                                                  color: Colors.white,
-                                                                                  fontSize: 13,
-                                                                                  fontWeight: FontWeight.bold,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  Column(
-                                                                    mainAxisSize:
-                                                                        MainAxisSize
-                                                                            .max,
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceBetween,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .end,
-                                                                    children: [
-                                                                      Padding(
-                                                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                                                            0,
-                                                                            0,
-                                                                            0,
-                                                                            0),
-                                                                        child:
-                                                                            Icon(
-                                                                          Icons
-                                                                              .chevron_right_rounded,
-                                                                          color:
-                                                                              Colors.white,
-                                                                          size:
-                                                                              35,
-                                                                        ),
-                                                                      ),
-                                                                      Padding(
-                                                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                                                            0,
-                                                                            0,
-                                                                            0,
-                                                                            2),
-                                                                        child:
-                                                                            Text(
-                                                                          'Score  ${'${normal_data![0]['score']}'}'
-                                                                              .toUpperCase(),
-                                                                          textAlign:
-                                                                              TextAlign.end,
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontFamily:
-                                                                                'Lexend Deca',
-                                                                            color:
-                                                                                Colors.white,
-                                                                            fontSize:
-                                                                                14,
-                                                                            fontWeight:
-                                                                                FontWeight.w500,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )
-                                        : InkWell(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        PickedWidget(
-                                                            userId: data![index]
-                                                                ["uid"],
-                                                            selectedValue:
-                                                                selectedValue)
-                                                    // Picks(userId:data["uid"], selectedValue:selectedValue),
-                                                    ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding: EdgeInsetsDirectional
-                                                      .fromSTEB(10, 0, 10, 10),
-                                                  child: Container(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                            .size
-                                                            .width,
-                                                    height: 75,
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFF3474E0),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color:
-                                                              Color(0x411D2429),
-                                                          offset: Offset(0, 1),
-                                                        )
-                                                      ],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          EdgeInsetsDirectional
-                                                              .fromSTEB(
-                                                                  8, 8, 8, 8),
-                                                      child: Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.max,
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(15, 1,
-                                                                        1, 1),
-                                                            child: Container(
-                                                              height: 50,
-                                                              width: 50,
-                                                              child: data![index]['photoURL']
-                                                                              .toString() ==
-                                                                          "" ||
-                                                                      data![index]
-                                                                              [
-                                                                              'photoURL'] ==
-                                                                          null
-                                                                  ? Image.asset(
-                                                                      "assets/images/user.png",
-                                                                      fit: BoxFit
-                                                                          .cover)
-                                                                  : Image.network(
-                                                                      data![index]['photoURL']
-                                                                          .toString(),
-                                                                      fit: BoxFit
-                                                                          .cover),
-                                                            ),
-                                                          ),
-                                                          Expanded(
-                                                            child: Padding(
-                                                              padding:
-                                                                  EdgeInsetsDirectional
-                                                                      .fromSTEB(14,
-                                                                          8,
-                                                                          4,
-                                                                          0),
-                                                              child: Column(
-                                                                mainAxisSize:
-                                                                    MainAxisSize
-                                                                        .max,
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Text(
-                                                                    '${data![index]['displayName']}'
-                                                                        .toUpperCase(),
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Lexend Deca',
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize: 16,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                    ),
-                                                                  ),
-                                                                  Expanded(
-                                                                    child:
-                                                                        Padding(
-                                                                      padding: EdgeInsetsDirectional
-                                                                          .fromSTEB(
-                                                                              0,
-                                                                              4,
-                                                                              8,
-                                                                              0),
-                                                                      child:
-                                                                          AutoSizeText(
-                                                                        'week ${selectedValue}'
-                                                                            .toUpperCase(),
-                                                                        textAlign:
-                                                                            TextAlign.start,
-                                                                        style:
-                                                                            TextStyle(
-                                                                          fontFamily:
-                                                                              'Lexend Deca',
-                                                                          color: Colors
-                                                                              .white,
-                                                                          fontSize:
-                                                                              13,
-                                                                          fontWeight:
-                                                                              FontWeight.bold,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .max,
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .end,
-                                                            children: [
-                                                              Padding(
-                                                                padding:
-                                                                    EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            0,
-                                                                            0,
-                                                                            0,
-                                                                            0),
-                                                                child: Icon(
-                                                                  Icons
-                                                                      .chevron_right_rounded,
-                                                                  color: Colors
-                                                                      .white,
-                                                                  size: 35,
-                                                                ),
-                                                              ),
-                                                              Padding(
-                                                                padding:
-                                                                    EdgeInsetsDirectional
-                                                                        .fromSTEB(
-                                                                            0,
-                                                                            0,
-                                                                            0,
-                                                                            2),
-                                                                child: Text(
-                                                                  _privacyService.getScoreDisplayText(
-                                                                data![index],
-                                                                _privacyService.hasCurrentUserSubmittedPicks(data!.cast<Map<String, dynamic>>()),
-                                                                data![index]['uid'] == (user?.uid ?? 'demo_user'),
-                                                              )
-                                                                      .toUpperCase(),
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .end,
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontFamily:
-                                                                        'Lexend Deca',
-                                                                    color: Colors
-                                                                        .white,
-                                                                    fontSize:
-                                                                        14,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                              },
-                            ),
-                          );
-                        },
-                      )
               ],
             ),
           ],
@@ -2102,296 +1170,120 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     );
   }
 
-  void _showPicker(BuildContext ctx) {
-    // var utils = Provider.of<Utils>(context, listen: false);
+  void _applyWeekSelection(BuildContext context, String weekNumber) {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final mode = dataProvider.game?["mode"]?.toString() ?? 'PRE';
+    final weekName = "$mode$weekNumber";
+    dataProvider.setActiveWeek(weekName);
+    setState(() {
+      selectedValue = weekNumber;
+      data = null;
+      data2 = null;
+      _loadingLeaderboard = true;
+      _activeWeekName = weekName;
+    });
+    getLeaderBoard(context, weekNumber);
+    getGame(context, weekNumber);
+  }
+
+  void _showWeekPicker(
+    BuildContext ctx, {
+    required String title,
+    required List<String> weekNumbers,
+    required String labelPrefix,
+  }) {
+    var temp = selectedValue?.toString() ?? weekNumbers.first;
+    if (!weekNumbers.contains(temp)) temp = weekNumbers.first;
+    final initial = weekNumbers.indexOf(temp).clamp(0, weekNumbers.length - 1);
+
     showCupertinoModalPopup(
-        barrierDismissible: false,
-        context: ctx,
-        builder: (_) => ClipRRect(
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(16),
-                topLeft: Radius.circular(16),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    height: 20,
-                    width: MediaQuery.of(context).size.width,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(16),
-                          topLeft: Radius.circular(16),
-                        )),
-                    child: Center(
-                      child: Container(
-                        margin: const EdgeInsets.all(8.0),
-                        decoration: BoxDecoration(
-                            color: Colors.black26,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(16),
-                            )),
-                        width: 100,
-                        height: 15,
-                      ),
-                    ),
-                  ),
-                  Material(
-                    child: Container(
-                      color: Colors.white,
-                      width: MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
+      barrierDismissible: true,
+      context: ctx,
+      builder: (_) => ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(16),
+          topLeft: Radius.circular(16),
+        ),
+        child: Material(
+          color: Colors.white,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
                         child: Text(
-                          "Select Week",
-                          style: TextStyle(fontSize: 18, color: Colors.black87),
-                          textAlign: TextAlign.start,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(16),
-                      topLeft: Radius.circular(16),
-                    )),
-                    width: MediaQuery.of(context).size.width,
-                    height: 150,
-                    child: CupertinoPicker(
-                      backgroundColor: Colors.white,
-                      itemExtent: 30,
-                      scrollController: FixedExtentScrollController(
-                          initialItem:
-                              (int.parse(selectedValue.toString()) - 1)),
-                      children: [
-                        Text('Week 1'),
-                        Text('Week 2'),
-                        Text('Week 3'),
-                        Text('Week 4'),
-                        Text('Week 5'),
-                        Text('Week 6'),
-                        Text('Week 7'),
-                        Text('Week 8'),
-                        Text('Week 9'),
-                        Text('Week 10'),
-                        Text('Week 11'),
-                        Text('Week 12'),
-                        Text('Week 13'),
-                        Text('Week 14'),
-                        Text('Week 15'),
-                        Text('Week 16'),
-                        Text('Week 17'),
-                        Text('Week 18'),
-                      ],
-                      onSelectedItemChanged: (value) {
-                        List<String> busStop = [
-                          '1',
-                          '2',
-                          '3',
-                          '5',
-                          '6',
-                          '7',
-                          '8',
-                          '9',
-                          '10',
-                          '11',
-                          '12',
-                          '13',
-                          '14',
-                          '15',
-                          '16',
-                          '17',
-                        ];
-                        setState(() {
-                          selectedValue = busStop[value] as String;
-                        });
-                      },
-                    ),
-                  ),
-                  Container(
-                    color: Colors.white,
-                    width: MediaQuery.of(context).size.width,
-                    height: 34,
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          setState(() {
-                            data = null;
-                          });
-                          getLeaderBoard(context, selectedValue);
-                          getGame(context, selectedValue);
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5)),
-                          padding: EdgeInsets.all(0.0),
-                        ),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5)),
-                          child: Container(
-                            constraints:
-                                BoxConstraints(maxWidth: 100, minHeight: 34.0),
-                            alignment: Alignment.center,
-                            child: Text(
-                              "Done",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
                       ),
-                    ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _applyWeekSelection(context, temp);
+                        },
+                        child: const Text(
+                          "Done",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ));
+                ),
+                SizedBox(
+                  height: 160,
+                  width: MediaQuery.of(context).size.width,
+                  child: CupertinoPicker(
+                    backgroundColor: Colors.white,
+                    itemExtent: 32,
+                    scrollController:
+                        FixedExtentScrollController(initialItem: initial),
+                    onSelectedItemChanged: (value) {
+                      temp = weekNumbers[value];
+                    },
+                    children: [
+                      for (final n in weekNumbers)
+                        Center(child: Text('$labelPrefix $n')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPicker(BuildContext ctx) {
+    _showWeekPicker(
+      ctx,
+      title: "Select week",
+      weekNumbers: [for (var i = 1; i <= 18; i++) '$i'],
+      labelPrefix: "Week",
+    );
   }
 
   void _showPicker2(BuildContext ctx) {
-    // var utils = Provider.of<Utils>(context, listen: false);
-    showCupertinoModalPopup(
-        barrierDismissible: false,
-        context: ctx,
-        builder: (_) => ClipRRect(
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(16),
-                topLeft: Radius.circular(16),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    height: 20,
-                    width: MediaQuery.of(context).size.width,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(16),
-                          topLeft: Radius.circular(16),
-                        )),
-                    child: Center(
-                      child: Container(
-                        margin: const EdgeInsets.all(8.0),
-                        decoration: BoxDecoration(
-                            color: Colors.black26,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(16),
-                            )),
-                        width: 100,
-                        height: 15,
-                      ),
-                    ),
-                  ),
-                  Material(
-                    child: Container(
-                      color: Colors.white,
-                      width: MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Text(
-                          "Select Preseason",
-                          style: TextStyle(fontSize: 18, color: Colors.black87),
-                          textAlign: TextAlign.start,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(16),
-                      topLeft: Radius.circular(16),
-                    )),
-                    width: MediaQuery.of(context).size.width,
-                    height: 150,
-                    child: CupertinoPicker(
-                      backgroundColor: Colors.white,
-                      itemExtent: 30,
-                      scrollController: FixedExtentScrollController(
-                          initialItem:
-                              (int.parse(selectedValue.toString()) - 1)),
-                      children: [
-                        Text('Preseason 1'),
-                        Text('Preseason 2'),
-                        Text('Preseason 3'),
-                        Text('Preseason 4'),
-                        Text('Preseason 5'),
-                        Text('Preseason 6'),
-                        Text('Preseason 7'),
-                        Text('Preseason 8'),
-                        Text('Preseason 9'),
-                        Text('Preseason 10'),
-                      ],
-                      onSelectedItemChanged: (value) {
-                        List<String> busStop = [
-                          '1',
-                          '2',
-                          '3',
-                          '5',
-                          '6',
-                          '7',
-                          '8',
-                          '9',
-                          '10',
-                        ];
-                        setState(() {
-                          selectedValue = busStop[value] as String;
-                        });
-                      },
-                    ),
-                  ),
-                  Container(
-                    color: Colors.white,
-                    width: MediaQuery.of(context).size.width,
-                    height: 34,
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          setState(() {
-                            data = null;
-                          });
-                          getLeaderBoard(context, selectedValue);
-                          getGame(context, selectedValue);
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5)),
-                          padding: EdgeInsets.all(0.0),
-                        ),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5)),
-                          child: Container(
-                            constraints:
-                                BoxConstraints(maxWidth: 100, minHeight: 34.0),
-                            alignment: Alignment.center,
-                            child: Text(
-                              "Done",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ));
+    // NFL preseason pool weeks only (PRE1–PRE3). HoF is PRE0, not a pool week.
+    _showWeekPicker(
+      ctx,
+      title: "Select preseason week",
+      weekNumbers: const ['1', '2', '3'],
+      labelPrefix: "Preseason",
+    );
   }
+
 }

@@ -1,11 +1,11 @@
 {
-    "name": "poolqapp",
-    "short_name": "poolqapp",
+    "name": "PoolQ",
+    "short_name": "PoolQ",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#063a73",
+    "theme_color": "#063a73",
+    "description": "PoolQ is the invite-only NFL picks pool. Make weekly picks, climb the leaderboard, and compete with your crew all season.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

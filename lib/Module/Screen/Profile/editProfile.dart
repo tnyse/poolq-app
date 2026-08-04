@@ -7,6 +7,7 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/Widget/reuse.dart';
+import 'package:poolqapp/utils/avatar_url.dart';
 
 class EditProfile extends StatefulWidget {
   @override
@@ -64,9 +65,12 @@ class _EditProfileState extends State<EditProfile> {
           backgroundColor: const Color(0x1A063a73), // primaryBlue 10% opacity
           backgroundImage: _image != null
               ? FileImage(_image!) as ImageProvider
-              : (authProvider.image.toString().isNotEmpty
-                  ? NetworkImage(authProvider.image.toString())
-                  : const AssetImage('assets/images/user.png') as ImageProvider),
+              : resolveAvatarImage(
+                  photoUrl: authProvider.image.toString(),
+                  email: FirebaseAuth.instance.currentUser?.email ??
+                      authProvider.email,
+                  size: 208,
+                ),
         ),
         Positioned(
           bottom: 0,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
 import 'package:poolqapp/Module/Screen/Profile/editProfile.dart';
 import 'package:poolqapp/Provider/AuthProviders.dart';
@@ -7,14 +8,54 @@ import 'package:poolqapp/Model/user_model.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/screens/auth/login_screen.dart';
 import 'package:poolqapp/services/auth_service.dart';
+import 'package:poolqapp/utils/avatar_url.dart';
 
-class UserProfile extends StatelessWidget {
+class UserProfile extends StatefulWidget {
   const UserProfile({Key? key}) : super(key: key);
+
+  @override
+  State<UserProfile> createState() => _UserProfileState();
+}
+
+class _UserProfileState extends State<UserProfile> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AuthProviders>(context, listen: false).ensureProfileLoaded();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviders>(context);
     final UserModel? user = authProvider.user;
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+
+    // Session restore may have Firebase Auth before AuthProviders.user is set.
+    final email = user?.email.isNotEmpty == true
+        ? user!.email
+        : (firebaseUser?.email ?? '');
+    final displayName = user?.displayName.isNotEmpty == true
+        ? user!.displayName
+        : (firebaseUser?.displayName ?? 'Player');
+    final photoUrl = (authProvider.image.isNotEmpty
+            ? authProvider.image
+            : (user?.avatar ?? firebaseUser?.photoURL ?? ''))
+        .toString();
+
+    if (user == null && firebaseUser == null) {
+      return Scaffold(
+        backgroundColor: AppTheme.surface,
+        appBar: AppBar(
+          title: const Text('Profile'),
+          backgroundColor: AppTheme.surface,
+          foregroundColor: AppTheme.onSurface,
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -25,42 +66,72 @@ class UserProfile extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 1,
         actions: [
-          if (user != null)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Edit Profile',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => EditProfile()),
-                );
-              },
-            ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Profile',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EditProfile()),
+              );
+            },
+          ),
         ],
       ),
-      body: user == null
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  _AvatarHeader(user: user, authProvider: authProvider),
-                  const SizedBox(height: 24),
-                  _InfoCard(user: user),
-                  const SizedBox(height: 32),
-                  _ActionButtons(user: user, authProvider: authProvider),
-                ],
-              ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _AvatarHeader(
+              displayName: displayName,
+              email: email,
+              photoUrl: photoUrl,
             ),
+            const SizedBox(height: 24),
+            _InfoCard(
+              displayName: displayName,
+              email: email,
+              phone: user?.phone ?? firebaseUser?.phoneNumber ?? '',
+            ),
+            const SizedBox(height: 32),
+            if (user != null)
+              _ActionButtons(user: user, authProvider: authProvider)
+            else
+              _ActionButtons(
+                user: authProvider.user ??
+                    UserModel(
+                      userId: firebaseUser!.uid,
+                      userType: 'player',
+                      email: email,
+                      phone: firebaseUser.phoneNumber ?? '',
+                      displayName: displayName,
+                      avatar: photoUrl,
+                      invitationCode: '',
+                      invitedBy: '',
+                      joinDate: DateTime.now(),
+                      isActive: true,
+                      preferences: const {},
+                      statistics: const {},
+                    ),
+                authProvider: authProvider,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _AvatarHeader extends StatelessWidget {
-  final UserModel user;
-  final AuthProviders authProvider;
+  final String displayName;
+  final String email;
+  final String photoUrl;
 
-  const _AvatarHeader({required this.user, required this.authProvider});
+  const _AvatarHeader({
+    required this.displayName,
+    required this.email,
+    required this.photoUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,24 +139,35 @@ class _AvatarHeader extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 44,
-          backgroundColor: const Color(0x1A063a73), // primaryBlue 10% opacity
-          backgroundImage: authProvider.image.toString().isNotEmpty
-              ? NetworkImage(authProvider.image.toString()) as ImageProvider
-              : const AssetImage('assets/images/user.png'),
+          backgroundColor: const Color(0x1A063a73),
+          backgroundImage: resolveAvatarImage(
+            photoUrl: photoUrl,
+            email: email,
+            size: 176,
+          ),
         ),
         const SizedBox(height: 12),
         Text(
-          user.displayName.isNotEmpty ? user.displayName : 'Player',
+          displayName.isNotEmpty ? displayName : 'Player',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppTheme.onSurface,
               ),
         ),
-        if (user.email.isNotEmpty) ...[
+        if (email.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
-            user.email,
+            email,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            photoUrl.isEmpty
+                ? 'Photo from Gravatar (linked to your email)'
+                : 'Custom profile photo',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppTheme.onSurfaceVariant,
                 ),
           ),
@@ -96,9 +178,15 @@ class _AvatarHeader extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  final UserModel user;
+  final String displayName;
+  final String email;
+  final String phone;
 
-  const _InfoCard({required this.user});
+  const _InfoCard({
+    required this.displayName,
+    required this.email,
+    required this.phone,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -110,19 +198,19 @@ class _InfoCard extends StatelessWidget {
             _InfoRow(
               icon: Icons.person_outline,
               label: 'Display Name',
-              value: user.displayName.isNotEmpty ? user.displayName : 'Not set',
+              value: displayName.isNotEmpty ? displayName : 'Not set',
             ),
             const Divider(height: 1, indent: 56),
             _InfoRow(
               icon: Icons.email_outlined,
               label: 'Email',
-              value: user.email.isNotEmpty ? user.email : 'Not set',
+              value: email.isNotEmpty ? email : 'Not set',
             ),
             const Divider(height: 1, indent: 56),
             _InfoRow(
               icon: Icons.phone_outlined,
               label: 'Phone',
-              value: user.phone.isNotEmpty ? user.phone : 'Not set',
+              value: phone.isNotEmpty ? phone : 'Not set',
             ),
           ],
         ),

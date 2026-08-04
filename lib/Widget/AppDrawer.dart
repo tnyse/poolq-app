@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/utils/avatar_url.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({Key? key}) : super(key: key);
@@ -27,9 +28,13 @@ class AppDrawer extends StatelessWidget {
             accountEmail: Text(
               user?.email ?? 'guest@example.com',
             ),
-            currentAccountPicture: user?.photoURL != null
-                ? CircleAvatar(backgroundImage: NetworkImage(user!.photoURL!))
-                : CircleAvatar(child: Icon(Icons.person)),
+            currentAccountPicture: CircleAvatar(
+              backgroundImage: resolveAvatarImage(
+                photoUrl: user?.photoURL,
+                email: user?.email,
+                size: 160,
+              ),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.home),

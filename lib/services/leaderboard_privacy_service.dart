@@ -1,160 +1,131 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:poolqapp/services/game_enforcement_service.dart';
 
-/// Service for managing leaderboard privacy and visibility controls
+/// Leaderboard privacy: own picks always visible; other players' picks
+/// only after the week's first kickoff (entries locked).
 class LeaderboardPrivacyService {
-  static final LeaderboardPrivacyService _instance = LeaderboardPrivacyService._internal();
+  static final LeaderboardPrivacyService _instance =
+      LeaderboardPrivacyService._internal();
   factory LeaderboardPrivacyService() => _instance;
   LeaderboardPrivacyService._internal();
 
-  /// Check if current user has submitted picks for the week
+  final GameEnforcementService _enforcement = GameEnforcementService();
+
+  /// True once the first game of [weekName] has started.
+  Future<bool> areEntriesLocked(String weekName) =>
+      _enforcement.areEntriesLocked(weekName);
+
+  bool isCurrentUser(Map<String, dynamic> entry) {
+    final user = FirebaseAuth.instance.currentUser;
+    final currentUserId = user?.uid ?? 'demo_user';
+    return entry['uid'] == currentUserId;
+  }
+
   bool hasCurrentUserSubmittedPicks(List<Map<String, dynamic>> leaderboardData) {
     final user = FirebaseAuth.instance.currentUser;
     final currentUserId = user?.uid ?? 'demo_user';
-    
-    try {
-      final currentUserEntry = leaderboardData.firstWhere(
-        (entry) => entry['uid'] == currentUserId,
-        orElse: () => {},
-      );
-      
-      return currentUserEntry['hasSubmittedPicks'] == true;
-    } catch (e) {
-      return false;
-    }
+    return leaderboardData.any((entry) => entry['uid'] == currentUserId);
   }
 
-  /// Sanitize leaderboard data based on privacy rules
+  /// Hide other players' picks/scores until entries are locked.
   List<Map<String, dynamic>> sanitizeLeaderboardData(
-    List<Map<String, dynamic>> originalData,
-    bool currentUserHasSubmitted,
-  ) {
+    List<Map<String, dynamic>> originalData, {
+    required bool entriesLocked,
+  }) {
     return originalData.map((entry) {
-      final sanitizedEntry = Map<String, dynamic>.from(entry);
-      
-      // If current user hasn't submitted, hide other players' scores and picks
-      if (!currentUserHasSubmitted) {
-        final user = FirebaseAuth.instance.currentUser;
-        final currentUserId = user?.uid ?? 'demo_user';
-        final isCurrentUser = entry['uid'] == currentUserId;
-        
-        if (!isCurrentUser) {
-          sanitizedEntry['score'] = null; // Hide score
-          sanitizedEntry['picks'] = []; // Hide picks
-          sanitizedEntry['tiebreaker'] = null; // Hide tiebreaker
-        }
+      final sanitized = Map<String, dynamic>.from(entry);
+      final mine = isCurrentUser(entry);
+
+      if (!entriesLocked && !mine) {
+        sanitized['picks'] = <String>[];
+        sanitized['tiebreaker'] = null;
+        // Keep score null/hidden until lock; rank/name stay visible.
+        sanitized['score'] = null;
+        sanitized['picksHidden'] = true;
+      } else {
+        sanitized['picksHidden'] = false;
       }
-      
-      return sanitizedEntry;
+
+      sanitized['hasSubmittedPicks'] = true;
+      return sanitized;
     }).toList();
   }
 
-  /// Get display text for score based on privacy rules
   String getScoreDisplayText(
-    Map<String, dynamic> playerData,
-    bool currentUserHasSubmitted,
-    bool isCurrentUser,
-  ) {
-    // Always show current user's score
+    Map<String, dynamic> playerData, {
+    required bool entriesLocked,
+    required bool isCurrentUser,
+  }) {
     if (isCurrentUser) {
-      return 'Score ${playerData['score'] ?? 0}';
+      final score = playerData['score'];
+      return score == null ? 'Entered' : 'Score $score';
     }
-    
-    // If current user hasn't submitted, hide other players' scores
-    if (!currentUserHasSubmitted) {
-      return 'Score Hidden';
+    if (!entriesLocked) {
+      return 'Locked';
     }
-    
-    // Show score if current user has submitted
-    return 'Score ${playerData['score'] ?? 0}';
+    final score = playerData['score'];
+    return score == null ? '—' : 'Score $score';
   }
 
-  /// Check if picks should be visible for a player
-  bool shouldShowPicks(
-    Map<String, dynamic> playerData,
-    bool currentUserHasSubmitted,
-    bool isCurrentUser,
-  ) {
-    // Always show current user's picks
-    if (isCurrentUser) {
-      return true;
-    }
-    
-    // Hide other players' picks if current user hasn't submitted
-    return currentUserHasSubmitted;
+  bool shouldShowPicks({
+    required bool entriesLocked,
+    required bool isCurrentUser,
+  }) {
+    if (isCurrentUser) return true;
+    return entriesLocked;
   }
 
-  /// Get privacy status message for leaderboard
-  String getPrivacyStatusMessage(bool currentUserHasSubmitted) {
-    if (currentUserHasSubmitted) {
-      return 'All scores and picks are visible';
-    } else {
-      return 'Submit your picks to see other players\' scores';
-    }
-  }
-
-  /// Check if user can view another player's picks
-  bool canViewPlayerPicks(
-    String targetPlayerId,
-    bool currentUserHasSubmitted,
-  ) {
+  bool canViewPlayerPicks({
+    required String targetPlayerId,
+    required bool entriesLocked,
+  }) {
     final user = FirebaseAuth.instance.currentUser;
     final currentUserId = user?.uid ?? 'demo_user';
-    
-    // Always allow viewing own picks
-    if (targetPlayerId == currentUserId) {
-      return true;
-    }
-    
-    // Only allow viewing other players' picks if current user has submitted
-    return currentUserHasSubmitted;
+    if (targetPlayerId == currentUserId) return true;
+    return entriesLocked;
   }
 
-  /// Show restricted access dialog
+  String getPrivacyStatusMessage({required bool entriesLocked}) {
+    if (entriesLocked) {
+      return 'Week locked — all entrants\' picks are visible';
+    }
+    return 'Picks stay private until the first game starts';
+  }
+
   void showRestrictedAccessDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
             children: [
               Icon(Icons.lock_outline, color: Colors.orange, size: 24),
-              const SizedBox(width: 8),
-              Text('Access Restricted'),
+              SizedBox(width: 8),
+              Text('Picks Locked'),
             ],
           ),
-          content: Column(
+          content: const Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Picks must be submitted before you can view other players picks',
+                'Other players\' picks are hidden until the first game of the week kicks off and entries are locked.',
                 style: TextStyle(fontSize: 16),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
-                'This ensures fair play for everyone! 🏈',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey[600],
-                ),
+                'You can always tap your own name to review your picks.',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Got it'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Navigate to picks page
-                Navigator.pushNamed(context, '/play');
-              },
-              child: Text('Make Picks'),
+              child: const Text('Got it'),
             ),
           ],
         );

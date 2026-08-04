@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/utils/avatar_url.dart';
 
 /// Modal to display player information and their picks with helmet icons
 class PlayerPicksModal extends StatelessWidget {
@@ -57,18 +58,11 @@ class PlayerPicksModal extends StatelessWidget {
                   CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.white.withOpacity(0.2),
-                    backgroundImage: playerData['photoURL'] != null && 
-                                   playerData['photoURL'].isNotEmpty
-                        ? NetworkImage(playerData['photoURL'])
-                        : null,
-                    child: playerData['photoURL'] == null || 
-                           playerData['photoURL'].isEmpty
-                        ? Icon(
-                            Icons.person,
-                            size: 30,
-                            color: Colors.white,
-                          )
-                        : null,
+                    backgroundImage: resolveAvatarImage(
+                      photoUrl: (playerData['photoURL'] ?? '').toString(),
+                      email: (playerData['email'] ?? '').toString(),
+                      size: 120,
+                    ),
                   ),
                   
                   const SizedBox(width: 16),

@@ -1,4 +1,5 @@
 import 'PlayerPickWidget.dart';
+import 'HomePage.dart';
 import '../../../Widget/reuse.dart';
 import 'package:flutter/material.dart';
 import '../../../constants.dart';
@@ -12,6 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:poolqapp/Module/Screen/Home/rule.dart';
 import '../../../services/nfl_schedule_service.dart';
 import '../../../services/game_state_service.dart';
+import 'package:poolqapp/services/game_enforcement_service.dart';
 
 class EditPlayWidget extends StatefulWidget {
   const EditPlayWidget({Key? key}) : super(key: key);
@@ -988,6 +990,47 @@ class _EditPlayWidgetState extends State<EditPlayWidget> {
                                     },
                                   );
                                 } else {
+                                  final weekName =
+                                      dataProvider.game?['name']?.toString() ??
+                                          '';
+                                  final resolved =
+                                      await GameEnforcementService()
+                                          .resolveEntryWeekOrForward(weekName);
+                                  if (resolved.redirected) {
+                                    if (!mounted) return;
+                                    if (resolved.week == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            '${resolved.lockedWeek} is locked — edits closed, no later week open.',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    dataProvider
+                                        .setActiveWeek(resolved.week!);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '${resolved.lockedWeek} locked — opening ${resolved.week} entry form.',
+                                        ),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const HomePage(initial: 0),
+                                      ),
+                                      (route) => false,
+                                    );
+                                    return;
+                                  }
+
                                   dataProvider.tiebreaker =
                                       int.parse(tieBreakerController.text);
                                   dataProvider.amount =

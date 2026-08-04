@@ -1,28 +1,15 @@
 import 'Play.dart';
-import 'EditPlay.dart';
-import 'dart:convert';
-import '../Auth/Forget.dart';
 import '../Auth/Signup.dart';
 import '../../../Widget/reuse.dart';
 import 'package:flutter/material.dart';
-import '../../../constants.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../../Widget/countDown.dart';
-import 'package:poolqapp/Model/games.dart';
 import '../../../Provider/homeProvider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:poolqapp/Provider/AuthProviders.dart';
 import 'package:poolqapp/Module/Screen/Home/LeaderbpardWidget.dart';
-import '../../../services/local_schedule_service.dart';
-import 'PlayerPickWidget.dart';
-import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:poolqapp/constants.dart';
-
-// import '/auth/firebase_auth/auth_util.dart';
-//import 'package:admob_flutter/admob_flutter.dart';
+import 'package:poolqapp/Model/games.dart';
+import 'package:poolqapp/widgets/home/home_welcome_cards.dart';
+import 'package:poolqapp/constants/app_theme.dart';
 
 class HomePageWidget extends StatefulWidget {
   PageController? controller;
@@ -35,18 +22,12 @@ class HomePageWidget extends StatefulWidget {
 }
 
 class _HomePageWidgetState extends State<HomePageWidget> {
-  // late HomePageModel _model;
   User? user = FirebaseAuth.instance.currentUser;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   List<GamesModel>? data;
 
   Future getGame(context) async {
-    DataProvider dataProvider = Provider.of<DataProvider>(context, listen: false);
-    
     try {
-      print('Demo mode - using mock games data');
-      
-      // For demo mode, use simple mock data immediately
       setState(() {
         data = [
           GamesModel(
@@ -55,310 +36,158 @@ class _HomePageWidgetState extends State<HomePageWidget> {
             fullname2: "Dallas Cowboys",
             abbreviation: "PHI",
             abbreviation2: "DAL",
-            picture: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/phi.png",
-            picture2: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/dal.png",
-            score: "0",
-            score2: "0",
-          ),
-          GamesModel(
-            date: "Sunday September 7TH, 2025",
-            fullname: "Atlanta Falcons",
-            fullname2: "Tampa Bay Buccaneers",
-            abbreviation: "ATL",
-            abbreviation2: "TB",
-            picture: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/atl.png",
-            picture2: "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/tb.png",
+            picture:
+                "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/phi.png",
+            picture2:
+                "https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/dal.png",
             score: "0",
             score2: "0",
           ),
         ];
       });
-      print('Loaded ${data!.length} mock games for demo');
       return data;
-      
     } catch (e) {
-      print('Error setting up demo games: $e');
-      setState(() {
-        data = [];
-      });
+      setState(() => data = []);
       return [];
     }
   }
 
   @override
   void initState() {
+    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      DataProvider dataProvider =
-          Provider.of<DataProvider>(context, listen: false);
-      if (dataProvider.game == null) {
-        print("dd");
-      } else {
-        print("zz");
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      if (dataProvider.game != null) {
         getGame(context);
       }
-      // check(); // BYPASSED FOR TESTING - REMEMBER TO RE-ENABLE FOR PRODUCTION
     });
-    super.initState();
-
-    // _model = createModel(context, () => HomePageModel());
   }
 
-  // BYPASSED FOR TESTING - REMEMBER TO RE-ENABLE FOR PRODUCTION
-  void check() {
-    // if (!user!.emailVerified) {
-    //   Navigator.pushAndRemoveUntil(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => ForgetWidget(),
-    //     ),
-    //     (r) => false,
-    //   );
-    // }
+  String _deadlineRaw(DataProvider dataProvider) {
+    if (dataProvider.data == null || dataProvider.data!.isEmpty) return '';
+    final first = dataProvider.data![0];
+    if (first is String) return first;
+    return (first['date'] ?? '').toString();
   }
 
-  @override
-  void dispose() {
-    // _model.dispose();
-
-    super.dispose();
+  Future<void> _onLetsPlay(DataProvider dataProvider) async {
+    if (dataProvider.data == null || dataProvider.game == null) {
+      customSnackbar(context, 'loading games');
+      return;
+    }
+    final alreadyEntered = widget.isEmpty == false;
+    if (alreadyEntered) {
+      if (widget.controller != null) {
+        widget.controller!.jumpToPage(1);
+        dataProvider.setValue(1);
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LeaderboardWidget()),
+        );
+      }
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PlayWidget()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // context.watch<FFAppState>();
-    DataProvider dataProvider =
-        Provider.of<DataProvider>(context, listen: true);
+    final dataProvider = Provider.of<DataProvider>(context, listen: true);
+    final alreadyEntered = widget.isEmpty == false;
+    final loading =
+        dataProvider.data == null || dataProvider.game == null;
 
     return Scaffold(
-      // bottomNavigationBar: Container(
-      //     color: Colors.white,
-      //     child: AdmobBanner(
-      //       adUnitId: Provider.of<DataProvider>(context, listen: false)
-      //           .getBannerAdUnitId().toString(),
-      //       adSize: AdmobBannerSize.BANNER,
-      //       listener: (AdmobAdEvent event, Map<String, dynamic> ?args) {},
-      //     )),
       key: scaffoldKey,
-      backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
-          Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height * 1,
-            decoration: BoxDecoration(
-              color: Color(0x90FFFFFF),
-            ),
-            child: Align(
-              alignment: AlignmentDirectional(0, 0),
-              child: Image.asset(
-                'assets/images/gb.jpeg',
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height * 1,
-                fit: BoxFit.cover,
+          Positioned.fill(
+            child: Image.asset('assets/images/gb.jpeg', fit: BoxFit.cover),
+          ),
+          Positioned.fill(
+            child: Container(color: Colors.white38),
+          ),
+          if (loading)
+            const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
               ),
-            ),
-          ),
-          Container(
-            child: Text(""),
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(color: Colors.white38),
-          ),
-          Align(
-            alignment: AlignmentDirectional(0, -0.9),
-            child: Text(
-              'POOL Q',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                color: Colors.white,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 20.0, right: 20),
-            child: Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                onPressed: () async {
-                  FirebaseAuth auth = FirebaseAuth.instance;
-                  await auth.signOut();
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) {
-                        return RegisterWidget();
-                      },
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      },
-                    ),
-                    (route) => false,
-                  );
-                },
-                icon: Icon(
-                  Icons.logout,
-                  size: 30,
-                  color: Color.fromRGBO(6, 58, 115, 1),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding:
-                EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.1),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Image.asset(
-                'assets/images/poolq12.png',
-                width: 200,
-                height: 300,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          Align(
-            alignment: AlignmentDirectional(0, 0),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(
-                  0, 0, 0, MediaQuery.of(context).size.height * 0.21),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(0, 0, 10, 10),
-                    child: Align(
-                        alignment: AlignmentDirectional(0, 0.58),
-                        child: SizedBox(
-                          width: 150,
-                          height: 40,
-                          child: TextButton(
-                            onPressed: () async {
-                              if (dataProvider.data == null ||
-                                  dataProvider.game == null) {
-                                customSnackbar(context, 'loading games');
-                              } else {
-                                // Navigate to PlayWidget for new entry form
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PlayWidget(),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Text(
-                              'Let\'s Play!',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: ButtonStyle(
-                              elevation: MaterialStateProperty.all<double>(2),
-                              shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
-                                      side: BorderSide(
-                                        color: Colors.transparent,
-                                        width: 1,
-                                      ))),
-                              backgroundColor:
-                                  MaterialStateProperty.all<Color>(primary),
-                              textStyle: MaterialStateProperty.all<TextStyle>(
-                                  TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        )),
-                  ),
-                  widget.isEmpty == true
-                      ? Text(
-                          "Enter your picks for this week prior to the deadline",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        )
-                      : Container(),
-                ],
-              ),
-            ),
-          ),
-          dataProvider.data == null || dataProvider.game == null
-              ? Container()
-              : Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: 55,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(3.0),
-                          child: Center(
-                              child: Text(
-                            "ENTRY DEADLINE: "+
-                              (dataProvider.data != null && dataProvider.data!.isNotEmpty
-                                ? (dataProvider.data![0] is String
-                                    ? dataProvider.data![0]
-                                    : (dataProvider.data![0]['date'] ?? ''))
-                                : ''),
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          )),
-                        ),
-                        // Text("${dataProvider.formatStringDate(dataProvider.data?[0]!)}")
-                        Padding(
-                          padding: const EdgeInsets.all(2.0),
-                          child: CountdownTimerDemo(
-                            dataProvider.formatStringDate(
-                              dataProvider.data != null && dataProvider.data!.isNotEmpty
-                                ? (dataProvider.data![0] is String
-                                    ? dataProvider.data![0]
-                                    : (dataProvider.data![0]['date'] ?? ''))
-                                : ''
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    color: primary,
-                  ),
-                ),
-          dataProvider.data == null || dataProvider.game == null
-              ? Center(
-                  child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+            )
+          else
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: Column(
                   children: [
-                    Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.fromSwatch()
-                              .copyWith(secondary: Color(0xFF063a73)),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          if (!mounted) return;
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RegisterWidget(),
+                            ),
+                            (route) => false,
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.logout,
+                          size: 28,
+                          color: Color.fromRGBO(6, 58, 115, 1),
                         ),
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
-                          strokeWidth: 2,
-                          backgroundColor: Colors.white,
-                          //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
-                        )),
-                    SizedBox(
-                      height: 10,
+                      ),
                     ),
-                    Text('Loading',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600)),
+                    Image.asset(
+                      'assets/images/poolq12.png',
+                      width: 140,
+                      height: 150,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 8),
+                    HomeWelcomeCards(
+                      alreadyEntered: alreadyEntered,
+                      onLetsPlay: () => _onLetsPlay(dataProvider),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withOpacity(0.92),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'ENTRY DEADLINE: ${_deadlineRaw(dataProvider)}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          CountdownTimerDemo(
+                            dataProvider.formatStringDate(
+                              _deadlineRaw(dataProvider),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
-                ))
-              : Container()
+                ),
+              ),
+            ),
         ],
       ),
     );

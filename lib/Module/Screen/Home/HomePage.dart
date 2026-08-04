@@ -10,13 +10,13 @@ import 'package:poolqapp/Module/Screen/Home/landingPage.dart';
 import 'package:poolqapp/Module/Screen/Profile/UserProfile.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:poolqapp/constants/app_theme.dart';
-import 'package:poolqapp/screens/front_page.dart';
+import 'package:poolqapp/screens/invite_friends_page.dart';
 
 // import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class HomePage extends StatefulWidget {
   final int? initial;
-  const HomePage({Key? key, this.initial}) : super(key: key);
+  const HomePage({Key? key, this.initial = 1}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -39,8 +39,14 @@ class _HomePageState extends State<HomePage> {
     debugPrint('HomePage: User in initState: ${user?.email ?? "null"}');
     _controller = PageController(
       viewportFraction: 1,
-      initialPage: widget.initial ?? 0
+      initialPage: widget.initial ?? 1,
     );
+    // Keep bottom-nav highlight in sync with default leaderboard tab.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      dataProvider.setValue(widget.initial ?? 1);
+    });
     debugPrint('HomePage: PageController created, calling _initializeData');
     _initializeData(user);
   }
@@ -182,6 +188,11 @@ class _HomePageState extends State<HomePage> {
     debugPrint('HomePage: _initializePickStream completed');
   }
 
+  bool _hasSubmittedPicks(AsyncSnapshot<QuerySnapshot?> snapshot) {
+    final docs = snapshot.data?.docs;
+    return docs != null && docs.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     debugPrint('HomePage: build method called');
@@ -241,7 +252,21 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Row(
           children: [
-            Text('PoolQ'),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/images/app_icon.png',
+                width: 28,
+                height: 28,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/images/poolq12.png',
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
             if (kDebugMode) ...[
               SizedBox(width: 8),
               Container(
@@ -266,11 +291,11 @@ class _HomePageState extends State<HomePage> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.article_outlined),
-            tooltip: 'NFL News',
+            icon: const Icon(Icons.ios_share),
+            tooltip: 'Invite friends',
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FrontPage()),
+                MaterialPageRoute(builder: (_) => const InviteFriendsPage()),
               );
             },
           ),
@@ -295,7 +320,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 HomePageWidget(
                   controller: _controller,
-                  isEmpty: true,
+                  isEmpty: !_hasSubmittedPicks(snapshot),
                 ),
                 const LeaderboardWidget(),
                 const UserProfile(),
@@ -363,7 +388,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               HomePageWidget(
                 controller: _controller,
-                isEmpty: false
+                isEmpty: !_hasSubmittedPicks(snapshot),
               ),
               const LeaderboardWidget(),
               const UserProfile()

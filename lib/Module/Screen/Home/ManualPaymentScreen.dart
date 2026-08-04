@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:poolqapp/services/payment_service.dart';
 import 'package:poolqapp/constants.dart';
+import 'package:poolqapp/constants/payment_bundles.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'HomePage.dart';
 
@@ -25,6 +25,7 @@ class ManualPaymentScreen extends StatefulWidget {
 class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
   final PaymentService _paymentService = PaymentService();
   bool _isLoading = false;
+  PaymentBundle _selectedBundle = PaymentBundle.single;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +90,90 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
 
               SizedBox(height: 24),
 
+              Text(
+                'Choose a plan',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Pay for multiple weeks upfront, or just this week.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 12),
+              ...PaymentBundle.all.map((bundle) {
+                final selected = _selectedBundle.id == bundle.id;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedBundle = bundle),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? primary.withOpacity(0.08)
+                            : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: selected ? primary : Colors.grey[300]!,
+                          width: selected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            color: selected ? primary : Colors.grey,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  bundle.label,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  bundle.description,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '\$${bundle.price.toStringAsFixed(0)}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+
+              SizedBox(height: 8),
+
               // Payment Amount
               Container(
                 width: double.infinity,
@@ -102,14 +187,14 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Entry Fee:',
+                      'Amount due:',
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
-                      '\$${widget.entryFee.toStringAsFixed(2)}',
+                      '\$${_selectedBundle.price.toStringAsFixed(2)}',
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -405,7 +490,12 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
   Future<void> _handleContinue() async {
     setState(() => _isLoading = true);
     try {
-      await _paymentService.reportPaymentSent(widget.pickRecordId);
+      await _paymentService.reportPaymentSent(
+        widget.pickRecordId,
+        bundleId: _selectedBundle.id,
+        amount: _selectedBundle.price,
+        weeksCovered: _selectedBundle.weekCount,
+      );
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
@@ -415,12 +505,16 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
         (route) => false,
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Payment reported — we\'ll verify within 24 hours.',
+            _selectedBundle.id == PaymentBundle.single.id
+                ? 'Payment reported — we\'ll verify within 24 hours.'
+                : 'Payment reported for ${_selectedBundle.label} '
+                    '(\$${_selectedBundle.price.toStringAsFixed(0)}). '
+                    'We\'ll verify within 24 hours.',
           ),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 4),
         ),
       );
     } catch (e) {
