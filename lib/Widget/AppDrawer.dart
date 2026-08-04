@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:poolqapp/Module/Screen/Admin/AdminLogin.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/utils/avatar_url.dart';
 
@@ -63,19 +62,6 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/home');
               // Since we don't have RuleWidget properly set up,
               // we'll navigate to home for now
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.admin_panel_settings),
-            title: const Text('Admin Dashboard'),
-            subtitle: const Text('Manage games and winners'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AdminLogin()),
-              );
             },
           ),
           const Divider(),

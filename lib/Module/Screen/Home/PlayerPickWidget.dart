@@ -416,46 +416,13 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Picks list
-                                  ...((dataProvider?.playerPicks ?? []).asMap().entries.map((e) {
-                                    final abbr = e.value?.toString() ?? '';
-                                    // dataProvider.data is often date labels, not games —
-                                    // only read Map rows that look like schedule games.
-                                    String teamName = '';
-                                    final rows = dataProvider?.data;
-                                    if (rows != null) {
-                                      for (final row in rows) {
-                                        if (row is! Map) continue;
-                                        final game = Map<String, dynamic>.from(row as Map);
-                                        if (game['abbreviation']?.toString() == abbr) {
-                                          teamName = game['home']?.toString() ?? '';
-                                          break;
-                                        }
-                                        if (game['abbreviation2']?.toString() == abbr) {
-                                          teamName = game['away']?.toString() ?? '';
-                                          break;
-                                        }
-                                      }
-                                    }
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        children: [
-                                          TeamLogo(abbr: abbr, size: 72),
-                                          SizedBox(width: 12),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(abbr, style: TextStyle(fontFamily: 'Poppins', fontSize: 18)),
-                                              if (teamName.isNotEmpty)
-                                                Text(teamName, style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Colors.grey[700])),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList()),
+                                  PicksLogoGrid(
+                                    picks: (dataProvider?.playerPicks ?? [])
+                                        .map((e) => e?.toString() ?? '')
+                                        .where((e) => e.isNotEmpty)
+                                        .toList(),
+                                    logoSize: 44,
+                                  ),
                                 Padding(
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       0, 20, 0, 0),
@@ -809,19 +776,13 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                         ),
                       ),
                       SizedBox(height: 12),
-                      ...(dataProvider?.playerPicks ?? []).map((pick) => Padding(
-                        padding: EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              pick,
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      )).toList(),
+                      PicksLogoGrid(
+                        picks: (dataProvider?.playerPicks ?? [])
+                            .map((e) => e.toString())
+                            .where((e) => e.isNotEmpty)
+                            .toList(),
+                        logoSize: 40,
+                      ),
                       SizedBox(height: 12),
                       Text(
                         'Tiebreaker: ${dataProvider?.tiebreaker ?? 0}',

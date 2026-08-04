@@ -78,19 +78,82 @@ class TeamLogo extends StatelessWidget {
     // Clean up abbreviation: trim, remove spaces, uppercase
     final cleanAbbr = abbr.toUpperCase().replaceAll(' ', '').trim();
     final assetPath = 'assets/images/teams/$cleanAbbr.png';
-    
-    // Debug: Print what abbreviation we're trying to load
-    print('TeamLogo Debug: abbr="$abbr", cleanAbbr="$cleanAbbr", assetPath="$assetPath"');
-    
+
     return Image.asset(
       assetPath,
       width: size,
       height: size,
       errorBuilder: (context, error, stackTrace) {
-        print('TeamLogo Error: Failed to load $assetPath - $error');
         return Icon(Icons.sports_football, size: size);
       },
       fit: BoxFit.contain,
+    );
+  }
+}
+
+/// Wrap/grid of picked teams with logos (review + admin pick views).
+class PicksLogoGrid extends StatelessWidget {
+  final List<String> picks;
+  final double logoSize;
+
+  const PicksLogoGrid({
+    Key? key,
+    required this.picks,
+    this.logoSize = 40,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (picks.isEmpty) {
+      return const Text('No picks');
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.start,
+      children: [
+        for (final raw in picks)
+          _PickChip(abbr: raw.toString(), logoSize: logoSize),
+      ],
+    );
+  }
+}
+
+class _PickChip extends StatelessWidget {
+  final String abbr;
+  final double logoSize;
+
+  const _PickChip({required this.abbr, required this.logoSize});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = abbr.toUpperCase().replaceAll(' ', '').trim();
+    return Container(
+      width: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TeamLogo(abbr: label, size: logoSize),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF424242),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

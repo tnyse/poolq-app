@@ -896,7 +896,10 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   }
 
   void _showPicksDialog(BuildContext context, Map<String, dynamic> pickData) {
-    final picks = (pickData['picks'] as List<dynamic>? ?? []).map((e) => e.toString()).toList();
+    final picks = (pickData['picks'] as List<dynamic>? ?? [])
+        .map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
     final tiebreaker = pickData['tiebreaker']?.toString() ?? '—';
     showDialog(
       context: context,
@@ -909,16 +912,12 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final abbr in picks)
-                      Chip(label: Text(abbr)),
-                  ],
-                ),
+                PicksLogoGrid(picks: picks, logoSize: 36),
                 const SizedBox(height: 12),
-                Text('Tiebreaker: $tiebreaker', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Tiebreaker: $tiebreaker',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
