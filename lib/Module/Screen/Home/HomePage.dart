@@ -47,13 +47,13 @@ class _HomePageState extends State<HomePage> {
     debugPrint('HomePage: User in initState: ${user?.email ?? "null"}');
     _controller = PageController(
       viewportFraction: 1,
-      initialPage: widget.initial ?? 1,
+      initialPage: widget.initial ?? 0,
     );
-    // Keep bottom-nav highlight in sync with default leaderboard tab.
+    // Sync bottom-nav with starting tab (0=Home/Play, 1=Leaderboard).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final dataProvider = Provider.of<DataProvider>(context, listen: false);
-      dataProvider.setValue(widget.initial ?? 1);
+      dataProvider.setValue(widget.initial ?? 0);
     });
     debugPrint('HomePage: PageController created, calling _initializeData');
     _initializeData(user);

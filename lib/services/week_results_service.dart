@@ -60,6 +60,7 @@ class WeekResultsService {
       };
 
       await _firestore.collection('week_results').doc(id).set(payload);
+      invalidateLatestDeclared();
 
       // Clear previous "reigning" flag, then set winners as current champions.
       await _clearReigningChampions();
@@ -113,7 +114,20 @@ class WeekResultsService {
   }
 
   /// Most recent declared week result (for home podium / crowns).
-  Future<Map<String, dynamic>?> getLatestDeclaredResult() async {
+  ///
+  /// Shared across callers for the life of a screen session: without the
+  /// `status`+`declaredAt` composite index the fallback costs one read per
+  /// pool week, and the home podium asks for this twice on every mount.
+  Future<Map<String, dynamic>?> getLatestDeclaredResult() {
+    return _latestDeclared ??= _fetchLatestDeclaredResult();
+  }
+
+  Future<Map<String, dynamic>?>? _latestDeclared;
+
+  /// Drop the memoized podium so a freshly declared week shows immediately.
+  void invalidateLatestDeclared() => _latestDeclared = null;
+
+  Future<Map<String, dynamic>?> _fetchLatestDeclaredResult() async {
     try {
       final q = await _firestore
           .collection('week_results')

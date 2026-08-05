@@ -1,4 +1,35 @@
+# PoolQ Flutter web — SPA + cache policy
+# Entry/bootstrap/SW must never stick after a deploy (Messenger-clean vs returning browser).
+
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+  AddType application/javascript .js
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Broad defaults first…
+  <FilesMatch "\.(png|jpg|jpeg|gif|ico|svg|webp|woff2?|ttf|otf)$">
+    Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+  </FilesMatch>
+
+  <FilesMatch "\.(wasm)$">
+    Header set Cache-Control "public, max-age=86400, stale-while-revalidate=86400"
+  </FilesMatch>
+
+  # …then force revalidate for the control plane (must win over any .js rule).
+  # `no-cache` (not `no-store`): the browser still revalidates on every load,
+  # but can answer with a 304 instead of re-downloading ~930KB of main.dart.js
+  # on every visit — the single biggest cause of half-loaded apps on mobile.
+  <FilesMatch "^(index\.html|flutter_bootstrap\.js|flutter\.js|flutter_service_worker\.js|main\.dart\.js|version\.json|manifest\.json|pwa_install\.js)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
 RewriteEngine on
+# SPA fallback only for app routes — never rewrite missing static assets to index.html
+# (that made dead files return HTTP 200 HTML and confused Flutter/mobile).
+RewriteCond %{REQUEST_URI} !^/(assets|canvaskit|icons)/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ /index.html?path=$1 [NC,L,QSA]

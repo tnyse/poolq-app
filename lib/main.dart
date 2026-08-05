@@ -1,10 +1,8 @@
-import 'package:rive/rive.dart' hide Image;  // Hide Image class from rive to avoid naming conflict
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:poolqapp/providers/app_providers.dart';
 import 'package:poolqapp/services/navigation_service.dart';
 import 'package:poolqapp/Module/Screen/Home/HomePage.dart';
@@ -22,6 +20,7 @@ import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/services/app_config_service.dart';
 import 'package:poolqapp/screens/auth/auth_session_gate.dart';
 import 'package:poolqapp/widgets/pwa_install_banner.dart';
+import 'package:poolqapp/services/payment_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,13 +38,11 @@ Future<void> main() async {
 
 Future<void> initializeServices() async {
   try {
-    // Load environment variables first
-    try {
-      await dotenv.load(fileName: "assets/.env");
-    } catch (e) {
-      debugPrint("Warning: Error loading .env file (non-fatal): $e");
-    }
-    
+    // NOTE: no dotenv.load here. Requesting `assets/.env` makes the browser hit
+    // /assets/assets/.env, which WAFs treat as a secrets probe (Comodo rule
+    // 210492) — two hits in 10 minutes permanently IP-bans the player.
+    // Nothing reads dotenv values; add config via AppConfigService instead.
+
     // Initialize Firebase with timeout
     try {
       await Firebase.initializeApp(
@@ -111,7 +108,12 @@ class MyApp extends StatelessWidget {
         },
         home: const AuthSessionGate(),
         routes: {
-          '/home': (context) => const HomePage(initial: 1),
+          // Optional `arguments: int` = tab. Otherwise resolve from entry status.
+          '/home': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments;
+            if (args is int) return HomePage(initial: args);
+            return const _HomeRouteResolver();
+          },
           '/front': (context) => const InviteFriendsPage(),
         '/admin-players': (context) => const AdminPlayersPage(),
           '/login': (context) => const LoginScreen(),
@@ -120,6 +122,56 @@ class MyApp extends StatelessWidget {
           '/admin-dashboard': (context) => const AdminDashboard(),
         },
       ),
+    );
+  }
+}
+
+/// Resolves Home vs Leaderboard tab from whether the user already entered.
+class _HomeRouteResolver extends StatefulWidget {
+  const _HomeRouteResolver();
+
+  @override
+  State<_HomeRouteResolver> createState() => _HomeRouteResolverState();
+}
+
+class _HomeRouteResolverState extends State<_HomeRouteResolver> {
+  late final Future<int> _tabFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabFuture = _resolve();
+  }
+
+  Future<int> _resolve() async {
+    try {
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      if (dataProvider.game == null) {
+        await dataProvider.getWeek().timeout(const Duration(seconds: 6));
+      }
+      final week = dataProvider.game?['name']?.toString();
+      return PaymentService.resolveHomeTabForWeek(week);
+    } catch (e) {
+      debugPrint('HomeRouteResolver: $e');
+      return 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<int>(
+      future: _tabFuture,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF063a73),
+            body: Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          );
+        }
+        return HomePage(initial: snap.data ?? 0);
+      },
     );
   }
 }

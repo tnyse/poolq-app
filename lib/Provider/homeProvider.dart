@@ -221,7 +221,8 @@ class DataProvider with ChangeNotifier {
 
   DateTime formatStringDate(String unformated_date) {
     try {
-      debugPrint('Formatting date: "$unformated_date"');
+      // No tracing here — GroupedListView calls this for every game on every
+      // frame, and console writes on Flutter web are slow enough to jank.
       List<String> dateString = unformated_date.split(' ');
       
       // Check if we have enough parts
@@ -265,7 +266,6 @@ class DataProvider with ChangeNotifier {
           .padLeft(2, '0');
       String year = game?["year"] ?? "2025";
       DateTime date = DateTime.parse("${year}-${formattedMonth}-${formattedDay}");
-      debugPrint('Successfully formatted date: $date');
       return date;
     } catch (e) {
       debugPrint('Error formatting date: $e');

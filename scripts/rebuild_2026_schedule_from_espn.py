@@ -98,8 +98,11 @@ def http_get(url: str) -> dict:
 
 
 def team_obj(abbr: str) -> dict:
-    key = "WSH" if abbr == "WAS" else abbr
-    name, tid, color = TEAM_META.get(key, (abbr, "0", "063a73"))
+    # PoolQ assets use WAS.png (not ESPN's WSH).
+    raw = (abbr or "").upper()
+    key = "WAS" if raw in ("WSH", "WAS") else raw
+    meta_key = "WSH" if key == "WAS" else key
+    name, tid, color = TEAM_META.get(meta_key, TEAM_META.get(key, (abbr, "0", "063a73")))
     return {
         "id": tid,
         "name": name,

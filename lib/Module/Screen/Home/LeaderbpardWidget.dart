@@ -17,6 +17,7 @@ import '../../../services/payment_service.dart';
 import '../../../services/app_config_service.dart';
 import '../../../services/week_results_service.dart';
 import '../../../constants/payment_status.dart';
+import '../../../constants/season_config.dart';
 import '../../../widgets/player/player_picks_modal.dart';
 import '../../../widgets/leaderboard/leaderboard_podium.dart';
 import '../../../utils/avatar_url.dart';
@@ -434,8 +435,11 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     
     try {
       print('Fetching games for leaderboard...');
-      final mode = dataProvider.game?["mode"]?.toString() ?? 'PRE';
-      final weekName = "$mode$selectedValue";
+      final weekName = SeasonConfig.canonicalizeWeekName(
+        selectedValue?.toString() ?? '',
+        mode: dataProvider.game?["mode"]?.toString(),
+        fallbackWeek: dataProvider.game?["name"]?.toString(),
+      );
 
       // Prefer local 2026 schedule for stable matchups display.
       List<Map<String, dynamic>> games =
@@ -486,11 +490,20 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
 
-    final mode = dataProvider.game?["mode"]?.toString() ?? 'PRE';
-    // Always honor the week picker selection (do not reuse stale game.name).
-    final weekName = "$mode$selectedValue";
+    final weekName = SeasonConfig.canonicalizeWeekName(
+      selectedValue?.toString() ?? '',
+      mode: dataProvider.game?["mode"]?.toString(),
+      fallbackWeek: dataProvider.game?["name"]?.toString(),
+    );
+    // Avoid notifyListeners during build/init — schedule week sync after frame.
     if (dataProvider.game?['name']?.toString() != weekName) {
-      dataProvider.setActiveWeek(weekName);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final dp = Provider.of<DataProvider>(context, listen: false);
+        if (dp.game?['name']?.toString() != weekName) {
+          dp.setActiveWeek(weekName);
+        }
+      });
     }
 
     final entriesLocked =
@@ -826,35 +839,27 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
-    print('🌟🌟🌟🌟🌟 LEADERBOARD WIDGET INITSTATE CALLED! 🌟🌟🌟🌟🌟');
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: false);
-    
-    print('LeaderboardWidget: initState called');
-    print('LeaderboardWidget: user = ${user?.email ?? "null"}');
-    print('LeaderboardWidget: dataProvider.game = ${dataProvider.game}');
+
+    debugPrint('LeaderboardWidget: initState — week=${dataProvider.game}');
 
     // Start empty; show spinner until getLeaderBoard finishes.
-    setState(() {
-      data = [];
-      normal_data = [];
-      particularData = "null";
-      played = false;
-      _loadingLeaderboard = true;
-    });
-    
+    data = [];
+    normal_data = [];
+    particularData = "null";
+    played = false;
+    _loadingLeaderboard = true;
+
     // Check if dataProvider.game is null
     if (dataProvider.game != null) {
-      selectedValue = dataProvider.game!["name"]
-          .toString()
-          .replaceAll("REG", "")
-          .replaceAll("PRE", "");
-      print('LeaderboardWidget: selectedValue = $selectedValue');
+      // Keep full week id (MOCK1/PRE1/…) — do not strip only PRE/REG (breaks MOCK).
+      selectedValue = dataProvider.game!["name"].toString();
       getLeaderBoard(context, selectedValue);
       getGame(context, selectedValue);
     } else {
-      print('LeaderboardWidget: dataProvider.game is null, using default PRE1');
-      selectedValue = "1"; // Default for PRE1
+      debugPrint('LeaderboardWidget: no active week, defaulting to MOCK1');
+      selectedValue = SeasonConfig.defaultWeekName();
       getLeaderBoard(context, selectedValue);
       getGame(context, selectedValue);
     }
@@ -889,10 +894,6 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    print('🎯🎯🎯 MAIN LEADERBOARD WIDGET IS BUILDING NOW! 🎯🎯🎯');
-    print('🎯 LeaderboardWidget: BUILD METHOD CALLED - Main leaderboard is displaying');
-    print('🎯 LeaderboardWidget: data length = ${data?.length ?? 0}, particularData = ${particularData != null ? "exists" : "null"}');
-    
     // context.watch<FFAppState>();
     DataProvider dataProvider =
         Provider.of<DataProvider>(context, listen: true);
@@ -1282,18 +1283,21 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
 
   void _applyWeekSelection(BuildContext context, String weekNumber) {
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
-    final mode = dataProvider.game?["mode"]?.toString() ?? 'PRE';
-    final weekName = "$mode$weekNumber";
+    final weekName = SeasonConfig.canonicalizeWeekName(
+      weekNumber,
+      mode: dataProvider.game?["mode"]?.toString(),
+      fallbackWeek: dataProvider.game?["name"]?.toString(),
+    );
     dataProvider.setActiveWeek(weekName);
     setState(() {
-      selectedValue = weekNumber;
+      selectedValue = weekName;
       data = null;
       data2 = null;
       _loadingLeaderboard = true;
       _activeWeekName = weekName;
     });
-    getLeaderBoard(context, weekNumber);
-    getGame(context, weekNumber);
+    getLeaderBoard(context, weekName);
+    getGame(context, weekName);
   }
 
   void _showWeekPicker(
@@ -1302,7 +1306,9 @@ class _LeaderboardWidgetState extends State<LeaderboardWidget> {
     required List<String> weekNumbers,
     required String labelPrefix,
   }) {
-    var temp = selectedValue?.toString() ?? weekNumbers.first;
+    var temp = SeasonConfig.weekNumberToken(
+      selectedValue?.toString() ?? weekNumbers.first,
+    );
     if (!weekNumbers.contains(temp)) temp = weekNumbers.first;
     final initial = weekNumbers.indexOf(temp).clamp(0, weekNumbers.length - 1);
 

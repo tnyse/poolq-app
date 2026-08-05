@@ -24,6 +24,14 @@
         { "fieldPath": "week", "order": "ASCENDING" },
         { "fieldPath": "submittedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "week_results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "declaredAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

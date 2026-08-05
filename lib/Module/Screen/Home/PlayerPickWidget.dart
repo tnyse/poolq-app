@@ -39,8 +39,8 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
   User? user = FirebaseAuth.instance.currentUser;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final _unfocusNode = FocusNode();
-  Stream<QuerySnapshot>? _pickrecord;
-  Stream<DocumentSnapshot>? paymentMethod;
+  Stream<QuerySnapshot?> _pickrecord = Stream.value(null);
+  Stream<DocumentSnapshot?> paymentMethod = Stream.value(null);
   DataProvider? dataProvider;
 
   @override
@@ -51,28 +51,23 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
     // Check if we're in demo mode
     if (user == null || user?.email == 'demo@poolq.com') {
       print('PlayerPicksWidget: Demo mode detected, skipping Firebase streams');
-      // For demo mode, don't set up Firebase streams
-      _pickrecord = Stream.empty();
-      paymentMethod = Stream.empty();
-    } else {
-      // Only set up Firebase streams for real users
-      if (user != null && dataProvider?.game != null) {
-        _pickrecord = FirebaseFirestore.instance
-            .collection('pickrecord')
-            .where("uid", isEqualTo: user!.uid)
-            .where("week", isEqualTo: dataProvider!.game!["name"])
-            .snapshots();
+      _pickrecord = Stream.value(null);
+      paymentMethod = Stream.value(null);
+    } else if (user != null && dataProvider?.game != null) {
+      _pickrecord = FirebaseFirestore.instance
+          .collection('pickrecord')
+          .where("uid", isEqualTo: user!.uid)
+          .where("week", isEqualTo: dataProvider!.game!["name"])
+          .snapshots();
 
-        paymentMethod = FirebaseFirestore.instance
-            .collection('paymentMethod')
-            .doc(user!.uid)
-            .snapshots();
-      } else {
-        _pickrecord = Stream.empty();
-        paymentMethod = Stream.empty();
-      }
+      paymentMethod = FirebaseFirestore.instance
+          .collection('paymentMethod')
+          .doc(user!.uid)
+          .snapshots();
+    } else {
+      _pickrecord = Stream.value(null);
+      paymentMethod = Stream.value(null);
     }
-    // _model = createModel(context, () => PlayerPicksModel());
   }
 
   @override
@@ -145,10 +140,10 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
             centerTitle: true,
             elevation: 4,
           ),
-          body: StreamBuilder<QuerySnapshot>(
+          body: StreamBuilder<QuerySnapshot?>(
               stream: _pickrecord,
               builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                  AsyncSnapshot<QuerySnapshot?> snapshot) {
                 // Check if we're in demo mode
                 if (user == null || user?.email == 'demo@poolq.com') {
                   print('PlayerPicksWidget: Demo mode detected, showing demo content');
@@ -159,8 +154,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                   return Center(child: Text('Something went wrong'));
                 }
 
-                if (snapshot.connectionState == ConnectionState.waiting ||
-                    snapshot.data == null) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
                       child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -176,24 +170,23 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                 Color(0xFF063a73)),
                             strokeWidth: 2,
                             backgroundColor: Colors.white,
-                            //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
                           )),
                       SizedBox(
                         height: 10,
                       ),
                       Text('Loading',
                           style: TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF063a73),
                               fontSize: 18,
                               fontWeight: FontWeight.w600)),
                     ],
                   ));
                 }
 
-                return StreamBuilder<DocumentSnapshot>(
+                return StreamBuilder<DocumentSnapshot?>(
                     stream: paymentMethod,
                     builder: (BuildContext context,
-                        AsyncSnapshot<DocumentSnapshot> snapshot2) {
+                        AsyncSnapshot<DocumentSnapshot?> snapshot2) {
                       if (snapshot2.hasError) {
                         debugPrint(
                           'PlayerPicksWidget: paymentMethod stream error: ${snapshot2.error}',
@@ -226,7 +219,7 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                             ),
                             Text('Loading',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: Color(0xFF063a73),
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600)),
                           ],
@@ -340,14 +333,15 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
                                     child: ElevatedButton(
                                       onPressed: () async {
                                         print('Submit button pressed. Edit mode: ${widget.edit}');
-                                        print('Snapshot docs count: ${snapshot.data!.docs.length}');
+                                        final docs = snapshot.data?.docs ?? const [];
+                                        print('Snapshot docs count: ${docs.length}');
                                         
                                         if (widget.edit == true) {
                                           print('Going to edit mode');
                                           if (dataProvider != null) {
                                             await _saveExistingPicksEdit(context, dataProvider);
                                           }
-                                        } else if (!snapshot.data!.docs.isEmpty) {
+                                        } else if (docs.isNotEmpty) {
                                           print('User already has picks for this week');
                                           customSnackbar(
                                             context,
@@ -982,8 +976,13 @@ class _PlayerPicksWidgetState extends State<PlayerPicksWidget> {
       // Show confirmation modal before navigating
       await _showEntryConfirmationModal(context);
       
-      // Navigate to leaderboard
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      // Navigate to leaderboard after successful entry
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+        arguments: 1,
+      );
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

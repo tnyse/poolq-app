@@ -80,6 +80,21 @@ class PaymentService {
     return entry != null;
   }
 
+  /// Home shell tab after login / session restore:
+  /// - **0** (Home / Play) when the user has no entry for [weekName]
+  /// - **1** (Leaderboard) once they already have picks in
+  static Future<int> resolveHomeTabForWeek(String? weekName) async {
+    final week = (weekName ?? '').trim();
+    if (week.isEmpty) return 0;
+    try {
+      final has = await PaymentService().hasEntryForWeek(week);
+      return has ? 1 : 0;
+    } catch (e) {
+      debugPrint('resolveHomeTabForWeek($week): $e');
+      return 0;
+    }
+  }
+
   /// Save user picks and create pending payment entry
   Future<String> savePicksAndCreatePaymentEntry({
     required List<String> picks,

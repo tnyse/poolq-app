@@ -108,7 +108,7 @@ class _GamePlayWidgetState extends State<GamePlayWidget> {
               Align(
                 alignment: AlignmentDirectional(0, 0),
                 child: Image.asset(
-                  'assets/images/assets.aboutamazon.jpg',
+                  'assets/images/gb.jpeg',
                   width: MediaQuery.of(context).size.width,
                   height: MediaQuery.of(context).size.height * 1,
                   fit: BoxFit.cover,

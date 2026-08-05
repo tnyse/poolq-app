@@ -98,10 +98,26 @@ class TeamLogo extends StatelessWidget {
   final double size;
   const TeamLogo({required this.abbr, this.size = 40, Key? key}) : super(key: key);
 
+  /// ESPN / alternate codes → local `assets/images/teams/{code}.png` filenames.
+  static const Map<String, String> _assetAliases = {
+    'WSH': 'WAS',
+    'JAC': 'JAX',
+    'GBP': 'GB',
+    'KCC': 'KC',
+    'SFO': 'SF',
+    'NEP': 'NE',
+    'NOS': 'NO',
+    'TBB': 'TB',
+  };
+
+  static String assetAbbr(String raw) {
+    final clean = raw.toUpperCase().replaceAll(' ', '').trim();
+    return _assetAliases[clean] ?? clean;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Clean up abbreviation: trim, remove spaces, uppercase
-    final cleanAbbr = abbr.toUpperCase().replaceAll(' ', '').trim();
+    final cleanAbbr = assetAbbr(abbr);
     final assetPath = 'assets/images/teams/$cleanAbbr.png';
 
     return Image.asset(

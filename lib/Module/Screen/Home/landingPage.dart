@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'Play.dart';
 import '../Auth/Signup.dart';
 import '../../../Widget/reuse.dart';
@@ -12,6 +14,7 @@ import 'package:poolqapp/widgets/home/home_welcome_cards.dart';
 import 'package:poolqapp/widgets/home/previous_week_top3.dart';
 import 'package:poolqapp/constants/app_theme.dart';
 import 'package:poolqapp/services/game_enforcement_service.dart';
+import 'package:poolqapp/services/payment_service.dart';
 
 class HomePageWidget extends StatefulWidget {
   PageController? controller;
@@ -28,11 +31,40 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   DateTime? _deadline;
   String? _deadlineWeek;
   bool _deadlineLoading = true;
+  /// Live entry check — StreamBuilder can lag on cold start.
+  bool? _hasEntry;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDeadline());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDeadline();
+      _refreshEntryStatus();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEmpty != widget.isEmpty && widget.isEmpty == false) {
+      _hasEntry = true;
+    }
+  }
+
+  Future<void> _refreshEntryStatus() async {
+    if (!mounted) return;
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    final week = dataProvider.game?['name']?.toString() ?? '';
+    if (week.isEmpty || user == null || user?.email == 'demo@poolq.com') {
+      return;
+    }
+    try {
+      final has = await PaymentService().hasEntryForWeek(week);
+      if (!mounted) return;
+      setState(() => _hasEntry = has);
+    } catch (e) {
+      debugPrint('HomePageWidget: entry status failed: $e');
+    }
   }
 
   Future<void> _loadDeadline() async {
@@ -61,6 +93,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       _deadlineWeek = week;
       _deadlineLoading = false;
     });
+    unawaited(_refreshEntryStatus());
   }
 
   String _deadlineRaw(DataProvider dataProvider) {
@@ -80,8 +113,21 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       customSnackbar(context, 'loading games');
       return;
     }
-    final alreadyEntered = widget.isEmpty == false;
+
+    // Live check — StreamBuilder can lag on cold start and still show "Let's Play".
+    final week = dataProvider.game?['name']?.toString() ?? '';
+    var alreadyEntered = widget.isEmpty == false;
+    if (!alreadyEntered && week.isNotEmpty) {
+      try {
+        alreadyEntered = await PaymentService().hasEntryForWeek(week);
+      } catch (e) {
+        debugPrint('HomePageWidget: entry check failed: $e');
+      }
+    }
+
+    if (!mounted) return;
     if (alreadyEntered) {
+      setState(() => _hasEntry = true);
       if (widget.controller != null) {
         widget.controller!.jumpToPage(1);
         dataProvider.setValue(1);
@@ -181,7 +227,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   @override
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context, listen: true);
-    final alreadyEntered = widget.isEmpty == false;
+    final alreadyEntered = _hasEntry ?? (widget.isEmpty == false);
     final loading = dataProvider.data == null || dataProvider.game == null;
 
     // Reload deadline when active week changes.

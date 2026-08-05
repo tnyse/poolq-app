@@ -138,14 +138,41 @@ class LocalScheduleService {
     }
   }
 
+  /// ESPN alternate codes → PoolQ pick / asset abbreviations.
+  static String normalizeTeamAbbr(String? raw) {
+    final clean = (raw ?? '').toUpperCase().replaceAll(' ', '').trim();
+    switch (clean) {
+      case 'WSH':
+        return 'WAS';
+      case 'JAC':
+        return 'JAX';
+      default:
+        return clean;
+    }
+  }
+
   /// Normalize schedule data to match expected format
   List<Map<String, dynamic>> _normalizeScheduleData(List<dynamic> weekGames) {
     List<Map<String, dynamic>> normalizedGames = [];
     
     for (var game in weekGames) {
       // Handle new format with homeTeam/awayTeam objects
-      var homeTeam = game['homeTeam'] ?? {};
-      var awayTeam = game['awayTeam'] ?? {};
+      final homeTeam = Map<String, dynamic>.from(
+        (game['homeTeam'] as Map?)?.cast<String, dynamic>() ?? const {},
+      );
+      final awayTeam = Map<String, dynamic>.from(
+        (game['awayTeam'] as Map?)?.cast<String, dynamic>() ?? const {},
+      );
+      final homeAbbr = normalizeTeamAbbr(homeTeam['abbreviation']?.toString());
+      final awayAbbr = normalizeTeamAbbr(awayTeam['abbreviation']?.toString());
+      homeTeam['abbreviation'] = homeAbbr;
+      awayTeam['abbreviation'] = awayAbbr;
+      if (homeAbbr.isNotEmpty) {
+        homeTeam['logo'] = 'assets/images/teams/$homeAbbr.png';
+      }
+      if (awayAbbr.isNotEmpty) {
+        awayTeam['logo'] = 'assets/images/teams/$awayAbbr.png';
+      }
       final rawDate = game['date']?.toString() ?? '';
       
       // Convert ISO date to app's expected format
@@ -162,8 +189,8 @@ class LocalScheduleService {
         'completed': game['completed'] == true,
         'fullname': homeTeam['name'] ?? '',
         'fullname2': awayTeam['name'] ?? '',
-        'abbreviation': homeTeam['abbreviation'] ?? '',
-        'abbreviation2': awayTeam['abbreviation'] ?? '',
+        'abbreviation': homeAbbr,
+        'abbreviation2': awayAbbr,
         'picture': homeTeam['logo'] ?? '',
         'picture2': awayTeam['logo'] ?? '',
         'score': game['homeScore']?.toString() ?? '0',

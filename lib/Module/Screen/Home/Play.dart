@@ -148,7 +148,12 @@ class _PlayWidgetState extends State<PlayWidget> {
             duration: const Duration(seconds: 3),
           ),
         );
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/home',
+          (route) => false,
+          arguments: 1,
+        );
         return;
       }
 
@@ -205,7 +210,7 @@ class _PlayWidgetState extends State<PlayWidget> {
               Align(
                 alignment: AlignmentDirectional(0, 0),
                 child: Image.asset(
-                  'assets/images/assets.aboutamazon.jpg',
+                  'assets/images/gb.jpeg',
                   width: MediaQuery.of(context).size.width,
                   height: MediaQuery.of(context).size.height * 1,
                   fit: BoxFit.cover,
@@ -1017,7 +1022,7 @@ class _PlayWidgetState extends State<PlayWidget> {
                       Align(
                         alignment: AlignmentDirectional(0, 0),
                         child: Image.asset(
-                          'assets/images/assets.aboutamazon.jpg',
+                          'assets/images/gb.jpeg',
                           width: MediaQuery.of(context).size.width,
                           height: MediaQuery.of(context).size.height * 1,
                           fit: BoxFit.cover,

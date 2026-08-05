@@ -541,7 +541,7 @@
         "id": "401873277",
         "date": "2026-08-14T23:00Z",
         "name": "Miami Dolphins at Washington Commanders",
-        "shortName": "MIA @ WSH",
+        "shortName": "MIA @ WAS",
         "week": "PRE1",
         "mode": "PRE",
         "weekNumber": 1,
@@ -549,8 +549,8 @@
         "homeTeam": {
           "id": "28",
           "name": "Washington Commanders",
-          "abbreviation": "WSH",
-          "logo": "assets/images/teams/WSH.png",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
           "color": "5a1414"
         },
         "awayTeam": {
@@ -946,7 +946,7 @@
         "id": "401873601",
         "date": "2026-08-22T16:00Z",
         "name": "Washington Commanders at Detroit Lions",
-        "shortName": "WSH @ DET",
+        "shortName": "WAS @ DET",
         "week": "PRE2",
         "mode": "PRE",
         "weekNumber": 2,
@@ -961,8 +961,8 @@
         "awayTeam": {
           "id": "28",
           "name": "Washington Commanders",
-          "abbreviation": "WSH",
-          "logo": "assets/images/teams/WSH.png",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
           "color": "5a1414"
         },
         "homeScore": null,
@@ -1413,7 +1413,7 @@
         "id": "401873302",
         "date": "2026-08-28T22:00Z",
         "name": "Washington Commanders at Baltimore Ravens",
-        "shortName": "WSH @ BAL",
+        "shortName": "WAS @ BAL",
         "week": "PRE3",
         "mode": "PRE",
         "weekNumber": 3,
@@ -1428,8 +1428,8 @@
         "awayTeam": {
           "id": "28",
           "name": "Washington Commanders",
-          "abbreviation": "WSH",
-          "logo": "assets/images/teams/WSH.png",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
           "color": "5a1414"
         },
         "homeScore": null,
@@ -2159,7 +2159,7 @@
         "id": "401872929",
         "date": "2026-09-13T20:25Z",
         "name": "Washington Commanders at Philadelphia Eagles",
-        "shortName": "WSH @ PHI",
+        "shortName": "WAS @ PHI",
         "week": "REG1",
         "mode": "REG",
         "weekNumber": 1,
@@ -2174,8 +2174,8 @@
         "awayTeam": {
           "id": "28",
           "name": "Washington Commanders",
-          "abbreviation": "WSH",
-          "logo": "assets/images/teams/WSH.png",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
           "color": "5a1414"
         },
         "homeScore": null,
@@ -2626,7 +2626,7 @@
         "id": "401872944",
         "date": "2026-09-20T20:25Z",
         "name": "Washington Commanders at Dallas Cowboys",
-        "shortName": "WSH @ DAL",
+        "shortName": "WAS @ DAL",
         "week": "REG2",
         "mode": "REG",
         "weekNumber": 2,
@@ -2641,8 +2641,8 @@
         "awayTeam": {
           "id": "28",
           "name": "Washington Commanders",
-          "abbreviation": "WSH",
-          "logo": "assets/images/teams/WSH.png",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
           "color": "5a1414"
         },
         "homeScore": null,
@@ -3031,7 +3031,7 @@
         "id": "401872955",
         "date": "2026-09-27T17:00Z",
         "name": "Seattle Seahawks at Washington Commanders",
-        "shortName": "SEA @ WSH",
+        "shortName": "SEA @ WAS",
         "week": "REG3",
         "mode": "REG",
         "weekNumber": 3,
@@ -3039,8 +3039,8 @@
         "homeTeam": {
           "id": "28",
           "name": "Washington Commanders",
-          "abbreviation": "WSH",
-          "logo": "assets/images/teams/WSH.png",
+          "abbreviation": "WAS",
+          "logo": "assets/images/teams/WAS.png",
           "color": "5a1414"
         },
         "awayTeam": {

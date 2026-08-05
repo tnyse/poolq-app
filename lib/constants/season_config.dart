@@ -20,6 +20,30 @@ class SeasonConfig {
     return 'REG';
   }
 
+  /// If [raw] is already MOCK1/PRE1/REG1/… return it; if it's just a number,
+  /// prefix [mode] (or mode inferred from [fallbackWeek]).
+  static String canonicalizeWeekName(
+    String raw, {
+    String? mode,
+    String? fallbackWeek,
+  }) {
+    final s = raw.trim();
+    if (s.startsWith('MOCK') ||
+        s.startsWith('PRE') ||
+        s.startsWith('REG') ||
+        s.startsWith('POST')) {
+      return s;
+    }
+    final m = mode ??
+        (fallbackWeek != null ? modeFromWeek(fallbackWeek) : 'REG');
+    return '$m$s';
+  }
+
+  /// Strip season prefix → "1" from "MOCK1" / "PRE1" / "REG12".
+  static String weekNumberToken(String weekName) {
+    return weekName.replaceFirst(RegExp(r'^(MOCK|PRE|REG|POST)'), '');
+  }
+
   static int seasonTypeFromWeek(String weekName) {
     if (weekName.startsWith('MOCK')) return 0;
     if (weekName.startsWith('PRE')) return 1;

@@ -42,8 +42,8 @@ class _PickedWidgetState extends State<PickedWidget> {
   TextEditingController tieBreakerController = TextEditingController();
   User? user = FirebaseAuth.instance.currentUser;
 
-  Stream<QuerySnapshot>? _pickrecord;
-  Stream<QuerySnapshot>? _pickrecordStream;
+  Stream<QuerySnapshot?> _pickrecord = Stream.value(null);
+  Stream<QuerySnapshot?> _pickrecordStream = Stream.value(null);
 
   @override
   void initState() {
@@ -53,11 +53,14 @@ class _PickedWidgetState extends State<PickedWidget> {
     
     print('🎯 PICKED WIDGET INIT: user=${user?.email ?? "null"}, userId=${widget.userId}, selectedValue=${widget.selectedValue}');
 
-    // Skip Firestore entirely in demo mode to avoid permission errors
+    final weekName = dataProvider.game?['name']?.toString() ??
+        (widget.selectedValue?.toString() ?? '');
+
+    // Skip Firestore entirely in legacy demo@.com mode
     if (user == null || user?.email == 'demo@poolq.com') {
       print('🎯 PICKED WIDGET: Demo mode detected - using empty streams');
-      _pickrecord = Stream.empty();
-    } else {
+      _pickrecord = Stream.value(null);
+    } else if (dataProvider.game != null) {
       _pickrecord = FirebaseFirestore.instance
           .collection('pickrecord')
           .where("uid", isEqualTo: user!.uid)
@@ -65,20 +68,28 @@ class _PickedWidgetState extends State<PickedWidget> {
           .snapshots();
     }
 
-    if (widget.userId == null || user == null || user?.email == 'demo@poolq.com') {
-      print('🎯 PICKED WIDGET: Using empty stream for pickrecordStream (demo mode or null userId)');
-      _pickrecordStream = Stream.empty();
+    if (widget.userId == null ||
+        user == null ||
+        user?.email == 'demo@poolq.com') {
+      print('🎯 PICKED WIDGET: Using empty stream for pickrecordStream');
+      _pickrecordStream = Stream.value(null);
     } else {
+      // Prefer full week id; avoid mode+token doubling (MOCK+MOCK1).
+      final targetWeek = (widget.selectedValue != null &&
+              (widget.selectedValue!.startsWith('MOCK') ||
+                  widget.selectedValue!.startsWith('PRE') ||
+                  widget.selectedValue!.startsWith('REG') ||
+                  widget.selectedValue!.startsWith('POST')))
+          ? widget.selectedValue!
+          : (weekName.isNotEmpty
+              ? weekName
+              : '${dataProvider.game?["mode"] ?? "PRE"}${widget.selectedValue}');
       _pickrecordStream = FirebaseFirestore.instance
           .collection('pickrecord')
-          .where("week",
-              isEqualTo: "${dataProvider.game!["mode"]}${widget.selectedValue}")
-          .where("uid", isEqualTo: "${widget.userId}")
+          .where("week", isEqualTo: targetWeek)
+          .where("uid", isEqualTo: widget.userId)
           .snapshots();
     }
-    // _model = createModel(context, () => PlayModel());
-
-    // _model.tieBreakerController ??= TextEditingController();
   }
 
   // Mock data function - disabled in demo mode to avoid Firestore permission errors
@@ -167,18 +178,18 @@ class _PickedWidgetState extends State<PickedWidget> {
         //     ):Container()),
         key: scaffoldKey,
         backgroundColor: Colors.white,
-        body: StreamBuilder<QuerySnapshot>(
+        body: StreamBuilder<QuerySnapshot?>(
             stream: _pickrecordStream,
             builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot2) {
+                (BuildContext context, AsyncSnapshot<QuerySnapshot?> snapshot2) {
               if (snapshot2.hasError) {
                 print('🚨 PICKED WIDGET ERROR: ${snapshot2.error}');
                 print('🚨 PICKED WIDGET: User ID = ${widget.userId}, Selected Value = ${widget.selectedValue}');
                 return Center(child: Text('Something went wrong - ${snapshot2.error}'));
               }
 
-              if (snapshot2.connectionState == ConnectionState.waiting ||
-                  snapshot2.data == null) {
+              // Only block while actively waiting for the first event.
+              if (snapshot2.connectionState == ConnectionState.waiting) {
                 return Center(
                     child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -194,14 +205,13 @@ class _PickedWidgetState extends State<PickedWidget> {
                               AlwaysStoppedAnimation<Color>(Color(0xFF063a73)),
                           strokeWidth: 2,
                           backgroundColor: Colors.white,
-                          //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
                         )),
                     SizedBox(
                       height: 10,
                     ),
                     Text('Loading',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF063a73),
                             fontSize: 18,
                             fontWeight: FontWeight.w600)),
                   ],
@@ -209,45 +219,22 @@ class _PickedWidgetState extends State<PickedWidget> {
               }
 
               return Builder(builder: (context) {
-                return StreamBuilder<QuerySnapshot>(
+                return StreamBuilder<QuerySnapshot?>(
                     stream: _pickrecord,
                     builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                        AsyncSnapshot<QuerySnapshot?> snapshot) {
                       if (snapshot.hasError) {
                         print('🚨 PICKED WIDGET INNER ERROR: ${snapshot.error}');
                         print('🚨 PICKED WIDGET INNER: User ID = ${widget.userId}, Selected Value = ${widget.selectedValue}');
                         return Center(child: Text('Something went wrong - ${snapshot.error}'));
                       }
 
-                      if (snapshot.connectionState == ConnectionState.waiting ||
-                          snapshot.data == null) {
-                        return Center(
-                            child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: ColorScheme.fromSwatch()
-                                      .copyWith(secondary: Color(0xFF063a73)),
-                                ),
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFF063a73)),
-                                  strokeWidth: 2,
-                                  backgroundColor: Colors.white,
-                                  //  valueColor: new AlwaysStoppedAnimation<Color>(color: Color(0xFF9B049B)),
-                                )),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text('Loading',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600)),
-                          ],
-                        ));
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF063a73),
+                          ),
+                        );
                       }
 
                       return Builder(builder: (context) {
@@ -362,7 +349,7 @@ class _PickedWidgetState extends State<PickedWidget> {
                               Align(
                                 alignment: AlignmentDirectional(0, 0),
                                 child: Image.asset(
-                                  'assets/images/assets.aboutamazon.jpg',
+                                  'assets/images/gb.jpeg',
                                   width: MediaQuery.of(context).size.width,
                                   height:
                                       MediaQuery.of(context).size.height * 1,

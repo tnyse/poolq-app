@@ -63,8 +63,35 @@
   <title>PoolQ — NFL Picks Pool</title>
   <link rel="manifest" href="manifest.json">
   <script src="pwa_install.js" defer></script>
+  <!-- Quietly drop any leftover service workers. Do NOT reload — a forced
+       reload on mobile Chrome while CanvasKit is compiling can Aw-Snap. -->
+  <script>
+    (function () {
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            (regs || []).forEach(function (r) { r.unregister(); });
+          });
+        }
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) {
+            (keys || []).forEach(function (k) { caches.delete(k); });
+          });
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #063a73; }
+    #pq-boot {
+      position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-family: system-ui, sans-serif;
+      font-size: 16px; font-weight: 600; letter-spacing: 0.02em;
+    }
+  </style>
 </head>
 <body>
+  <div id="pq-boot">Loading PoolQ…</div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

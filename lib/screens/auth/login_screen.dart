@@ -10,6 +10,7 @@ import 'package:poolqapp/widgets/auth/auth_input_field.dart';
 import 'package:poolqapp/screens/auth/register_screen.dart';
 import 'package:poolqapp/Module/Screen/Home/HomePage.dart';
 import 'package:poolqapp/constants/app_theme.dart';
+import 'package:poolqapp/services/payment_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -153,12 +154,16 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       
       // Initialize game data
       await _initializeGameData();
+
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      final week = dataProvider.game?['name']?.toString();
+      final tab = await PaymentService.resolveHomeTabForWeek(week);
       
-      // Navigate to home screen
+      // Navigate: Home/Play if no picks yet, Leaderboard if already entered
       if (mounted) {
         _navigationService.navigateAndRemoveUntil(
           context,
-          const HomePage(initial: 1),
+          HomePage(initial: tab),
         );
       }
     } on FirebaseAuthException catch (e) {
